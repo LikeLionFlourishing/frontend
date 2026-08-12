@@ -7,3 +7,6 @@ dist-ssr
 .DS_Store
 .vite
 *.tsbuildinfo
+
+# Claude Code 로컬 설정
+.claude
