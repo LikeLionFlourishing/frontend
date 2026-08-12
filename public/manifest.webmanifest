@@ -1,0 +1,13 @@
+{
+  "name": "관리하는 행보관",
+  "short_name": "행보관",
+  "description": "현역 장병을 위한 피부 셀프케어 기록 서비스",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#3b6fd4",
+  "lang": "ko",
+  "icons": []
+}

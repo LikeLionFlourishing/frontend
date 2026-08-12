@@ -1,0 +1,68 @@
+import type { components } from './types.generated';
+
+type S = components['schemas'];
+
+// 화면 코드에서 매번 components['schemas'][...] 를 쓰지 않도록 별칭만 모아둔다.
+// 실제 타입 정의는 openapi.yaml 이 유일한 출처이고, `npm run api:types` 로 재생성한다.
+
+export type AuthSession = S['AuthSession'];
+export type User = S['User'];
+export type Onboarding = S['Onboarding'];
+export type OnboardingRequest = S['OnboardingRequest'];
+export type NotificationSettings = S['NotificationSettings'];
+export type NotificationPermission = S['NotificationPermission'];
+
+export type Home = S['Home'];
+export type DailyCheckIn = S['DailyCheckIn'];
+
+export type InterpretReportRequest = S['InterpretReportRequest'];
+export type ReportInterpretation = S['ReportInterpretation'];
+export type StructuredReportDraft = S['StructuredReportDraft'];
+export type CreateSkinReportRequest = S['CreateSkinReportRequest'];
+export type ConfirmedStructuredReport = S['ConfirmedStructuredReport'];
+export type SkinReportSummary = S['SkinReportSummary'];
+export type SkinReportDetail = S['SkinReportDetail'];
+export type SkinReportList = S['SkinReportList'];
+export type CareResult = S['CareResult'];
+export type SimilarExperience = S['SimilarExperience'];
+
+export type FollowUp = S['FollowUp'];
+export type SaveFollowUpRequest = S['SaveFollowUpRequest'];
+export type PendingFollowUp = S['PendingFollowUp'];
+
+export type SkinReportOptions = S['SkinReportOptions'];
+export type OptionList = S['OptionList'];
+export type Problem = S['Problem'];
+export type AnalyticsEventInput = S['AnalyticsEventInput'];
+
+export type BodyArea = S['BodyArea'];
+export type AppearanceSelection = S['AppearanceSelection'];
+export type Appearance = AppearanceSelection[number];
+export type SensationSelection = S['SensationSelection'];
+export type Sensation = SensationSelection[number];
+export type SituationSelection = S['SituationSelection'];
+export type Situation = SituationSelection[number];
+export type CareAvailability = S['CareAvailability'];
+export type PreCareCheckSelection = S['PreCareCheckSelection'];
+export type PreCareCheck = PreCareCheckSelection[number];
+export type ResultType = S['ResultType'];
+export type ReportStatus = S['ReportStatus'];
+export type SkinChange = S['SkinChange'];
+
+/**
+ * 배타 선택 규칙.
+ *
+ * OpenAPI 의 `not: { allOf: [contains: X, minItems: 2] }` 를 UI 규칙으로 옮긴 것이다.
+ * 서버도 검증하지만, 사용자가 422 를 보기 전에 프론트에서 막는다.
+ */
+export const EXCLUSIVE_OPTION = {
+  appearances: 'UNSURE',
+  sensations: 'NONE',
+  situations: 'NONE_RECALLED',
+  preCareChecks: 'NONE',
+} as const;
+
+/** 관리 전 확인에서 `NONE` 외 항목이 하나라도 있으면 의료진 확인 우선이다. */
+export function resolveResultType(checks: PreCareCheckSelection): ResultType {
+  return checks.some((c) => c !== 'NONE') ? 'CLINICIAN_CHECK' : 'SELF_CARE_GUIDE';
+}

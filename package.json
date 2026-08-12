@@ -1,0 +1,48 @@
+{
+  "name": "haengbogwan-fe",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "oxlint",
+    "typecheck": "tsc -b",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "api:types": "openapi-typescript openapi/openapi.yaml -o src/api/types.generated.ts",
+    "msw:init": "msw init public/ --save"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.101.2",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-router-dom": "^7.18.1",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@tanstack/react-query-devtools": "^5.101.2",
+    "@types/node": "^24.13.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "autoprefixer": "^10.5.2",
+    "msw": "^2.7.0",
+    "openapi-typescript": "^7.13.0",
+    "oxlint": "^1.71.0",
+    "postcss": "^8.5.16",
+    "prettier": "^3.9.4",
+    "tailwindcss": "^3.4.19",
+    "typescript": "~5.9",
+    "vite": "^8.1.1"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
+  }
+}
