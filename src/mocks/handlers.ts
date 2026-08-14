@@ -39,6 +39,8 @@ export const mockState = {
    * 저장 후 재진입·409 를 재현하려면 서버가 값을 들고 있어야 한다.
    */
   savedFollowUps: {} as Record<string, Record<string, unknown>>,
+  /** 등록된 Web Push 구독 id. 해제 404 를 재현하려면 서버가 들고 있어야 한다. */
+  pushSubscriptionIds: new Set<string>(),
   /**
    * 알림 수신 여부. 서버에 저장되는 설정이라 새로고침해도 유지돼야 한다.
    * 모듈 변수로 두면 리로드 때 초기화되므로 sessionStorage 를 쓴다.
@@ -73,6 +75,7 @@ export const mockState = {
     this.today = null;
     this.pendingFollowUp = fx.home.pendingFollowUp;
     this.savedFollowUps = {};
+    this.pushSubscriptionIds = new Set();
     this.notificationEnabled = true;
     this.onboardingCompleted = true;
     this.authenticated = true;
@@ -403,7 +406,34 @@ export const handlers = [
   }),
 
   http.post(`${V1}/analytics-events`, async ({ request }) => {
-    const body = (await request.json()) as { events: unknown[] };
+    const body = (await request.json()) as { events: { name: string }[] };
+    // 어떤 이벤트가 나가는지 개발 중에 바로 보이게 남긴다.
+    console.info('[mock] analytics', body.events.map((e) => e.name).join(', '));
     return HttpResponse.json({ accepted: body.events.length }, { status: 202 });
+  }),
+
+  // --- Push subscriptions ---------------------------------------------------
+  http.post(`${V1}/push-subscriptions`, () => {
+    const id = crypto.randomUUID();
+    mockState.pushSubscriptionIds.add(id);
+    return HttpResponse.json(
+      {
+        id,
+        // 서버는 endpoint 원본을 돌려주지 않는다(capability URL 이라 노출 금지).
+        endpointFingerprint: `fp_${id.slice(0, 8)}`,
+        active: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      { status: 201, headers: { Location: `${V1}/push-subscriptions/${id}` } },
+    );
+  }),
+
+  http.delete(`${V1}/push-subscriptions/:subscriptionId`, ({ params }) => {
+    const id = String(params.subscriptionId);
+    if (!mockState.pushSubscriptionIds.delete(id)) {
+      return problem(404, 'NOT_FOUND', '구독을 찾을 수 없어요.');
+    }
+    return new HttpResponse(null, { status: 204 });
   }),
 ];

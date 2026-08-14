@@ -1,5 +1,6 @@
 import { AI_TIMEOUT_MS, request } from './client';
 import type {
+  AnalyticsEventInput,
   AuthSession,
   CreateSkinReportRequest,
   DailyCheckIn,
@@ -7,6 +8,7 @@ import type {
   Home,
   InterpretReportRequest,
   NotificationSettings,
+  PushSubscription,
   Onboarding,
   OnboardingRequest,
   ReportInterpretation,
@@ -56,7 +58,7 @@ export const notifications = {
     expirationTime: string | null;
     keys: { p256dh: string; auth: string };
     userAgent: string;
-  }) => request('/push-subscriptions', { method: 'POST', body }),
+  }) => request<PushSubscription>('/push-subscriptions', { method: 'POST', body }),
 
   unsubscribePush: (subscriptionId: string) =>
     request<void>(`/push-subscriptions/${subscriptionId}`, { method: 'DELETE' }),
@@ -117,7 +119,7 @@ export const followUps = {
 };
 
 export const analytics = {
-  send: (events: unknown[]) =>
+  send: (events: AnalyticsEventInput[]) =>
     request('/analytics-events', { method: 'POST', body: { events } }).catch(() => {
       // 측정 실패가 사용자 흐름을 막으면 안 된다.
     }),

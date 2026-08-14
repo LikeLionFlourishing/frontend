@@ -10,6 +10,7 @@ export type User = S['User'];
 export type Onboarding = S['Onboarding'];
 export type OnboardingRequest = S['OnboardingRequest'];
 export type NotificationSettings = S['NotificationSettings'];
+export type PushSubscription = S['PushSubscription'];
 export type NotificationPermission = S['NotificationPermission'];
 
 export type Home = S['Home'];

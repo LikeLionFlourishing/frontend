@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { newIdempotencyKey } from '@/api/client';
@@ -9,6 +9,7 @@ import { AiLoading } from '@/components/AiLoading';
 import { MedicalDisclaimer } from '@/components/ResultSection';
 import { PrimaryButton, StepLayout } from '@/components/StepLayout';
 import { labelOf, labelsOf, useReportOptions } from '@/hooks/useReportOptions';
+import { track } from '@/lib/analytics';
 import { formatDotDate } from '@/lib/date';
 import { clsx } from '@/lib/clsx';
 import { SUMMARY_SPARKLES } from '@/components/summarySparkles';
@@ -90,6 +91,12 @@ export function ReportResultPage() {
     queryFn: () => reports.get(reportId!),
     enabled: Boolean(reportId),
   });
+
+  // 결과를 실제로 본 시점에 한 번만 남긴다(보고 저장 성공과 열람은 다른 사건이다).
+  const resultType = reportQuery.data?.resultType;
+  useEffect(() => {
+    if (resultType) track('CARE_RESULT_VIEWED', { resultType });
+  }, [resultType]);
 
   const retry = useMutation({
     mutationFn: () => reports.retryCareGuide(reportId!, newIdempotencyKey()),
@@ -173,7 +180,14 @@ export function ReportResultPage() {
             options={optionsQuery.data}
           />
         ) : (
-          <Deck deck={deck} captionOf={captionOf} onOpen={setOpened} />
+          <Deck
+            deck={deck}
+            captionOf={captionOf}
+            onOpen={(key) => {
+              if (key === 'SIMILAR') track('SIMILAR_EXPERIENCE_VIEWED');
+              setOpened(key);
+            }}
+          />
         )}
 
         {/* AI 설명 생성에 실패하면 규칙의 기본 문구가 내려온다. 재생성은 딱 한 번만 허용된다. */}

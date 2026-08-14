@@ -7,6 +7,7 @@ import { queryKeys } from '@/app/queryClient';
 import { AiLoading } from '@/components/AiLoading';
 import { StepLayout } from '@/components/StepLayout';
 import { useReportOptions } from '@/hooks/useReportOptions';
+import { track } from '@/lib/analytics';
 import { useReportDraftStore } from '@/stores/reportDraftStore';
 import { ConfirmStep, type ConfirmValues } from './report/ConfirmStep';
 import { PreCareStep } from './report/PreCareStep';
@@ -73,6 +74,8 @@ export function ReportFlowPage() {
           : {}),
       }),
     onSuccess: (result) => {
+      const ok = result.processingStatus === 'SUCCESS';
+      track(ok ? 'AI_STRUCTURING_SUCCEEDED' : 'AI_STRUCTURING_FAILED', { aiSucceeded: ok });
       applyInterpretation(result);
       setStep(2);
     },
@@ -99,6 +102,11 @@ export function ReportFlowPage() {
       );
     },
     onSuccess: (report) => {
+      track('REPORT_SUBMITTED', {
+        resultType: report.resultType,
+        // 참고 일러스트를 열어 직접 고른 적이 있는지
+        inputAssistUsed: draft.manualAppearances.length > 0 || draft.manualPrimaryArea !== null,
+      });
       draft.reset();
       navigate(`/report/result/${report.id}`, { replace: true });
     },
@@ -204,7 +212,10 @@ export function ReportFlowPage() {
       {step === 0 && (
         <SkinStatusStep
           onFine={() => saveNoDiscomfort.mutate()}
-          onDiscomfort={() => setStep(1)}
+          onDiscomfort={() => {
+            track('REPORT_STARTED');
+            setStep(1);
+          }}
           savingFine={saveNoDiscomfort.isPending}
           errorMessage={saveNoDiscomfort.isError ? toUserMessage(saveNoDiscomfort.error) : null}
         />
@@ -230,7 +241,10 @@ export function ReportFlowPage() {
           value={draft.rawText}
           onChange={(rawText) => draft.patch({ rawText })}
           onNext={() => interpret.mutate()}
-          onOpenAssist={() => setAssisting(true)}
+          onOpenAssist={() => {
+            track('INPUT_ASSIST_OPENED');
+            setAssisting(true);
+          }}
           submitting={interpret.isPending}
           errorMessage={interpret.isError ? interpretErrorMessage(interpret.error) : null}
         />

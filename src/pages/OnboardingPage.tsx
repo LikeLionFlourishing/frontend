@@ -11,6 +11,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { Wordmark } from '@/components/Wordmark';
 import { PixelArt } from '@/components/PixelArt';
 import { ONBOARDING_TREE, TREE_CELL, TREE_GAP } from '@/components/onboardingTree';
+import { track } from '@/lib/analytics';
 import { clsx } from '@/lib/clsx';
 import { useServiceProfileStore } from '@/stores/serviceProfileStore';
 import type { NotificationPermission as ApiNotificationPermission } from '@/api/schemas';
@@ -51,6 +52,7 @@ export function OnboardingPage() {
       return auth.currentSession();
     },
     onSuccess: (session) => {
+      track('ONBOARDING_COMPLETED');
       setSession(session);
       navigate('/', { replace: true });
     },

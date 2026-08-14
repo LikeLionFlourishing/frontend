@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import { installAnalyticsFlush } from './lib/analytics';
 import './index.css';
 
 async function bootstrap() {
@@ -11,6 +12,8 @@ async function bootstrap() {
       serviceWorker: { url: '/mockServiceWorker.js' },
     });
   }
+
+  installAnalyticsFlush();
 
   createRoot(document.getElementById('root')!).render(
     <StrictMode>

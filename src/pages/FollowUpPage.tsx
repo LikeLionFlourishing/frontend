@@ -11,6 +11,7 @@ import {
   CLINICIAN_CHECK_LABEL,
   SKIN_CHANGE_LABEL,
 } from '@/lib/enumLabels';
+import { track } from '@/lib/analytics';
 import { formatDotDate } from '@/lib/date';
 import type { FollowUp, SaveFollowUpRequest, SkinChange } from '@/api/schemas';
 
@@ -62,6 +63,7 @@ export function FollowUpPage() {
   const save = useMutation({
     mutationFn: (body: SaveFollowUpRequest) => followUps.save(reportId, body),
     onSuccess: (followUp) => {
+      track('FOLLOW_UP_SUBMITTED');
       queryClient.setQueryData(queryKeys.followUp(reportId), followUp);
       // 경과를 남기면 홈의 '경과 확인하기' 와 보고서 상태가 함께 바뀐다.
       queryClient.invalidateQueries({ queryKey: queryKeys.home });

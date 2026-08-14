@@ -4,6 +4,13 @@ import { toUserMessage } from '@/api/problem';
 import { queryKeys } from '@/app/queryClient';
 import { TimeWheel } from '@/components/TimeWheel';
 import { clsx } from '@/lib/clsx';
+import {
+  isPushConfigured,
+  isPushSupported,
+  PushUnavailableError,
+  subscribeToPush,
+  unsubscribeFromPush,
+} from '@/lib/push';
 import { useServiceProfileStore } from '@/stores/serviceProfileStore';
 import { SettingsCard, SettingsLayout, SettingsSection } from './SettingsLayout';
 
@@ -16,13 +23,23 @@ export function NotificationsPage() {
     queryFn: notifications.getSettings,
   });
 
+  /**
+   * 수신 여부(서버 설정)와 기기 구독(Web Push)은 별개다.
+   * 켤 때는 구독을 먼저 만들고 서버 설정을 켠다 — 순서가 반대면
+   * 설정만 켜진 채 알림이 오지 않는 상태가 생긴다.
+   */
   const toggle = useMutation({
-    mutationFn: notifications.updateSettings,
+    mutationFn: async (next: boolean) => {
+      if (next) await subscribeToPush();
+      else await unsubscribeFromPush();
+      return notifications.updateSettings(next);
+    },
     onSuccess: (next) => queryClient.setQueryData(queryKeys.notificationSettings, next),
   });
 
   const enabled = settingsQuery.data?.enabled ?? false;
   const serverTime = settingsQuery.data?.time;
+  const pushReady = isPushSupported() && isPushConfigured();
 
   return (
     <SettingsLayout title="알림 설정">
@@ -37,15 +54,25 @@ export function NotificationsPage() {
             </div>
             <Switch
               checked={enabled}
-              disabled={settingsQuery.isPending || toggle.isPending}
+              // 구독을 만들 수 없는 환경에서 켜면 설정만 켜지고 알림은 안 온다.
+              disabled={settingsQuery.isPending || toggle.isPending || (!enabled && !pushReady)}
               onChange={(next) => toggle.mutate(next)}
               label="알림 받기"
             />
           </div>
         </SettingsCard>
 
+        {!pushReady && !enabled && (
+          <p className="mt-2 px-2 text-xs leading-relaxed text-fg-faint">
+            {isPushSupported()
+              ? // TODO(백엔드): VAPID 공개키를 받으면 `VITE_VAPID_PUBLIC_KEY` 에 넣는다.
+                '알림 서버 준비가 끝나면 켤 수 있어요.'
+              : '이 브라우저는 알림을 지원하지 않아요. 앱을 홈 화면에 추가하면 받을 수 있어요.'}
+          </p>
+        )}
+
         {toggle.isError && (
-          <p className="mt-2 px-2 text-sm text-caution-500">{toUserMessage(toggle.error)}</p>
+          <p className="mt-2 px-2 text-sm text-caution-500">{pushErrorMessage(toggle.error)}</p>
         )}
       </SettingsSection>
 
@@ -109,4 +136,10 @@ function Switch({
       />
     </button>
   );
+}
+
+/** 구독 실패는 원인마다 사용자가 할 일이 다르다. */
+function pushErrorMessage(error: unknown): string {
+  if (error instanceof PushUnavailableError) return error.message;
+  return toUserMessage(error);
 }
