@@ -36,10 +36,11 @@ export function StepLayout({ step, totalSteps, onBack, title, subtitle, children
               ‹
             </button>
           )}
-          {title && <h1 className="text-2xl font-bold leading-snug text-fg">{title}</h1>}
+          {/* 시안 기준 제목 28px / 부제 12px (Figma 텍스트 박스 높이 36 / 14) */}
+          {title && <h1 className="text-[28px] font-bold leading-snug text-fg">{title}</h1>}
         </div>
 
-        {subtitle && <p className="mt-2 text-sm leading-relaxed text-fg-muted">{subtitle}</p>}
+        {subtitle && <p className="mt-2 text-xs leading-relaxed text-fg-muted">{subtitle}</p>}
       </header>
 
       <main className="flex-1 px-5 py-6">{children}</main>
@@ -62,18 +63,19 @@ function StepIndicator({ step, totalSteps }: { step: number; totalSteps: number 
     >
       {Array.from({ length: totalSteps }, (_, i) => {
         const index = i + 1;
-        const done = index <= step;
         return (
           <div key={index} className={clsx('flex items-center', index < totalSteps && 'flex-1')}>
-            <span
-              className={clsx(
-                'size-2.5 shrink-0 rounded-full',
-                done ? 'bg-accent' : 'bg-panel-label',
-              )}
-            />
+            {/*
+             * 시안에서 점은 진행과 무관하게 늘 회색이고, 점 사이를 잇는 선만 파랑으로 찬다.
+             * (개편 전에는 점이 강조 그린으로 바뀌는 형태였다)
+             */}
+            <span className="size-4 shrink-0 rounded-full bg-panel" />
             {index < totalSteps && (
               <span
-                className={clsx('h-0.5 flex-1', index < step ? 'bg-accent' : 'bg-panel-label')}
+                className={clsx(
+                  'h-1.5 flex-1 rounded-full',
+                  index <= step ? 'bg-info' : 'bg-panel',
+                )}
               />
             )}
           </div>
@@ -109,7 +111,27 @@ export function PrimaryButton({ children, onClick, disabled, type = 'button' }: 
   );
 }
 
-/** 보조 동작(다시 작성할래요 등). 밝은 회색 pill. */
+/**
+ * 파란 채움 버튼. 개편 시안에서 `다시 작성할래요` 처럼
+ * 주 CTA(그린)와 나란히 놓이지만 회색으로 내리기엔 무게가 있는 동작에 쓴다.
+ */
+export function InfoButton({ children, onClick, disabled, type = 'button' }: ButtonProps) {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={clsx(
+        'w-full rounded-pill px-5 py-4 text-body-strong transition',
+        disabled ? 'bg-card-raised text-fg-faint' : 'bg-info text-white',
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** 보조 동작. 밝은 회색 pill. */
 export function SecondaryButton({ children, onClick, disabled, type = 'button' }: ButtonProps) {
   return (
     <button

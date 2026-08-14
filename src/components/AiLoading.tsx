@@ -106,10 +106,10 @@ const ROWS = BOOT.length;
 const COLS = BOOT[0]!.length;
 
 /*
- * 마크 전용 색. 강조색(#8CFFB6)이 아니라 시안이 지정한 형광 그린이다.
- * 팔레트에 넣지 않은 건 이 일러스트 외에 쓰이는 곳이 없기 때문이다.
+ * 켜진 점은 강조색과 같다. 꺼진 점의 회색은 이 일러스트에만 쓰여서 팔레트에 넣지 않았다.
+ * (라이트 테마 개편 후에도 시안의 꺼진 점은 그대로 #5F5F5F 다)
  */
-const DOT_ON = 'bg-[#00FF9D]';
+const DOT_ON = 'bg-accent';
 const DOT_OFF = 'bg-[#5F5F5F]';
 
 /**

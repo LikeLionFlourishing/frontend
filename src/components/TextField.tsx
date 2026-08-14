@@ -10,6 +10,8 @@ interface Props {
   autoComplete?: string;
   error?: string | null;
   inputMode?: 'text' | 'email' | 'numeric';
+  /** 로그인 화면만 더 밝은 회색 필드를 쓴다. */
+  surface?: 'panel' | 'soft';
 }
 
 /** 시안의 밝은 회색 입력 필드. 라벨이 필드 안 상단에 붙는다. */
@@ -22,6 +24,7 @@ export function TextField({
   autoComplete,
   error,
   inputMode,
+  surface = 'panel',
 }: Props) {
   const id = useId();
 
@@ -29,7 +32,8 @@ export function TextField({
     <div className="flex flex-col gap-1.5">
       <div
         className={clsx(
-          'rounded-card bg-panel px-5 py-3.5 transition',
+          'rounded-card px-5 py-3.5 transition',
+          surface === 'soft' ? 'bg-panel-soft' : 'bg-panel',
           error && 'ring-2 ring-caution-500',
         )}
       >
@@ -114,7 +118,7 @@ export function DateField({ label, value, onChange }: DateFieldProps) {
         type="date"
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full bg-transparent text-base text-fg outline-none [color-scheme:dark]"
+        className="mt-1 w-full bg-transparent text-base text-fg outline-none"
       />
     </div>
   );

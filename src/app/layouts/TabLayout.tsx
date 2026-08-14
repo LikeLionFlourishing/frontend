@@ -1,11 +1,12 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { clsx } from '@/lib/clsx';
+import { Icon, type IconName } from '@/components/Icon';
 
 // 피부점호는 탭이 아니다. 홈 또는 알림에서만 진입한다. (NEW 유저플로우 3장)
-const TABS = [
-  { to: '/', label: 'Home', icon: '⌂', end: true },
-  { to: '/records', label: '기록', icon: '◷', end: false },
-  { to: '/my', label: '설정', icon: '⚙', end: false },
+const TABS: { to: string; label: string; icon: IconName; end: boolean }[] = [
+  { to: '/', label: 'Home', icon: 'home', end: true },
+  { to: '/records', label: '기록', icon: 'clock', end: false },
+  { to: '/my', label: '설정', icon: 'gear', end: false },
 ];
 
 export function TabLayout() {
@@ -26,15 +27,15 @@ export function TabLayout() {
                 className={({ isActive }) =>
                   clsx(
                     'flex items-center gap-2 rounded-pill px-4 py-2 text-sm transition',
-                    isActive ? 'bg-accent font-semibold text-panel-text' : 'text-fg-muted',
+                    // 라이트 테마에서는 활성 탭이 검정 pill + 흰 글자다.
+                    // (`text-base` 는 글자 크기 유틸리티라 색으로 못 쓴다 → text-white)
+                    isActive ? 'bg-fg font-semibold text-white' : 'text-fg-muted',
                   )
                 }
               >
                 {({ isActive }) => (
                   <>
-                    <span aria-hidden="true" className="text-base">
-                      {tab.icon}
-                    </span>
+                    <Icon name={tab.icon} className="size-5" />
                     {isActive && <span>{tab.label}</span>}
                     {!isActive && <span className="sr-only">{tab.label}</span>}
                   </>

@@ -72,8 +72,8 @@ function AccountStep({
   return (
     <div className="safe-top mx-auto flex min-h-dvh w-full max-w-app flex-col px-5 pt-16">
       <header>
-        <h1 className="text-3xl font-bold text-fg">계정 만들기</h1>
-        <p className="mt-2 text-sm text-fg-muted">이메일로 간단하게 시작하세요.</p>
+        <h1 className="text-[28px] font-bold text-fg">계정 만들기</h1>
+        <p className="mt-2 text-xs text-fg-muted">이메일로 간단하게 시작하세요.</p>
       </header>
 
       <form
@@ -122,7 +122,7 @@ function AccountStep({
 
       <p className="mt-5 text-center text-sm text-fg-muted">
         이미 계정이 있으신가요?{' '}
-        <Link to="/login" className="font-semibold text-accent">
+        <Link to="/login" className="font-semibold text-info">
           로그인
         </Link>
       </p>
@@ -189,12 +189,12 @@ function ConsentStep({
       </button>
 
       <header>
-        <h1 className="text-3xl font-bold leading-snug text-fg">
+        <h1 className="text-[28px] font-bold leading-snug text-fg">
           서비스 이용을 위해
           <br />
           동의가 필요해요
         </h1>
-        <p className="mt-3 text-sm text-fg-muted">
+        <p className="mt-2 text-xs text-fg-muted">
           모든 항목에 동의해야 서비스를 이용할 수 있어요.
         </p>
       </header>
@@ -212,7 +212,7 @@ function ConsentStep({
                 onClick={() => setAgreed((prev) => ({ ...prev, [item.key]: !checked }))}
                 className={clsx(
                   'size-6 shrink-0 rounded-full transition',
-                  checked ? 'bg-accent' : 'bg-card',
+                  checked ? 'bg-info' : 'border border-panel-label bg-base',
                 )}
               />
               <span className="flex-1 text-sm text-panel-text">{item.label}</span>
@@ -238,7 +238,7 @@ function ConsentStep({
 
         <p className="mt-5 text-center text-sm text-fg-muted">
           이미 계정이 있으신가요?{' '}
-          <Link to="/login" className="font-semibold text-accent">
+          <Link to="/login" className="font-semibold text-info">
             로그인
           </Link>
         </p>

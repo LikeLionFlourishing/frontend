@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChoiceList } from '@/components/ChoiceList';
 import { BottomSheet } from '@/components/BottomSheet';
-import { PrimaryButton, SecondaryButton } from '@/components/StepLayout';
+import { InfoButton, PrimaryButton } from '@/components/StepLayout';
 import { labelOf, labelsOf } from '@/hooks/useReportOptions';
 import { EXCLUSIVE_OPTION } from '@/api/schemas';
 import type {
@@ -90,7 +90,7 @@ export function ConfirmStep({ options, values, onChange, onConfirm, onRewrite, a
                 {isEmpty(field.key) ? '선택해주세요' : displayOf(field.key)}
               </span>
             </span>
-            <span aria-hidden="true" className="shrink-0 text-sm text-accent">
+            <span aria-hidden="true" className="shrink-0 text-sm font-medium text-info">
               수정
             </span>
           </button>
@@ -101,7 +101,7 @@ export function ConfirmStep({ options, values, onChange, onConfirm, onRewrite, a
         <PrimaryButton onClick={onConfirm} disabled={!allFilled}>
           확인했어요
         </PrimaryButton>
-        <SecondaryButton onClick={onRewrite}>다시 작성할래요</SecondaryButton>
+        <InfoButton onClick={onRewrite}>다시 작성할래요</InfoButton>
       </div>
 
       {!allFilled && (

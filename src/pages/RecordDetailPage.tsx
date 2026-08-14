@@ -59,16 +59,19 @@ export function RecordDetailPage() {
 
   return (
     <div className="safe-top flex flex-col px-5 pt-4">
-      <button
-        type="button"
-        onClick={() => navigate(-1)}
-        className="-ml-1 self-start text-2xl leading-none text-fg"
-        aria-label="뒤로"
-      >
-        ‹
-      </button>
-
-      <h1 className="mt-2 text-3xl font-bold text-fg">{formatDotDate(report.reportDate)} 기록</h1>
+      <div className="flex items-start gap-2">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="-ml-1 shrink-0 text-2xl leading-none text-fg"
+          aria-label="뒤로"
+        >
+          ‹
+        </button>
+        <h1 className="text-[28px] font-bold leading-snug text-fg">
+          {formatDotDate(report.reportDate)} 기록
+        </h1>
+      </div>
 
       <div className="mt-7 flex flex-col gap-6 pb-10">
         <Section title="내가 작성한 내용">
@@ -93,7 +96,7 @@ export function RecordDetailPage() {
           </Panel>
         </Section>
 
-        <Section title="당시 안내받은 내용">
+        <Section title="당시 안내된 내용">
           <Panel>
             {report.resultType === 'CLINICIAN_CHECK' ? (
               <p className="text-sm leading-relaxed text-panel-text">{care.clinicianMessage}</p>
@@ -110,7 +113,7 @@ export function RecordDetailPage() {
         </Section>
 
         <Section title="피부 변화 기록">
-          <Timeline report={report} followUp={followUp} />
+          <Timeline report={report} followUp={followUp} options={options} />
         </Section>
 
         <Section title="마지막 상태">
@@ -153,7 +156,7 @@ export function RecordDetailPage() {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
-      <h2 className="mb-2 text-body-strong font-semibold text-fg">{title}</h2>
+      <h2 className="mb-2 text-sm font-semibold text-fg">{title}</h2>
       {children}
     </section>
   );
@@ -191,7 +194,26 @@ function StructuredRows({
   );
 }
 
-function Timeline({ report, followUp }: { report: SkinReportDetail; followUp: FollowUp | null }) {
+/**
+ * 시안의 `피부 변화 기록`.
+ *
+ * 왼쪽 레일에 점을 세우고, 오른쪽 패널 안에 항목을 쌓는다.
+ * 항목은 2열이다 — 왼쪽은 상태·행동, 오른쪽은 그날의 변화 요약이다.
+ * 시작일 점만 파랑이고 나머지는 회색이다.
+ *
+ * 지금은 [시작일 → 경과 1건] 두 지점뿐이다. 다일차 추적이 열리면 항목만 늘어난다.
+ */
+function Timeline({
+  report,
+  followUp,
+  options,
+}: {
+  report: SkinReportDetail;
+  followUp: FollowUp | null;
+  options: SkinReportOptions | undefined;
+}) {
+  const c = report.confirmed;
+
   const entries = [
     ...(followUp
       ? [
@@ -199,48 +221,78 @@ function Timeline({ report, followUp }: { report: SkinReportDetail; followUp: Fo
             key: 'follow-up',
             date: formatDotDate(followUp.submittedAt),
             caption: dayCaption(report.reportDate, followUp.submittedAt),
-            title: SKIN_CHANGE_LABEL[followUp.skinChange],
-            detail: followUpDetail(followUp),
-            tone: followUp.skinChange === 'WORSENED' ? 'caution' : 'accent',
-          } as const,
+            state: SKIN_CHANGE_LABEL[followUp.skinChange],
+            action: '관리 방법 실행',
+            // TODO(백엔드): 시안의 `붉은기, 좁쌀 감소` 같은 변화 요약 문구가 계약에 없다.
+            summary: '',
+            actionResult:
+              followUp.kind === 'SELF_CARE'
+                ? ACTION_COMPLETION_LABEL[followUp.actionCompletion]
+                : CLINICIAN_CHECK_LABEL[followUp.clinicianCheckStatus],
+            start: false,
+          },
         ]
       : []),
     {
       key: 'start',
       date: formatDotDate(report.reportDate),
       caption: '(시작일)',
-      title: '불편을 보고했어요',
-      detail: report.rawText,
-      tone: 'muted',
-    } as const,
+      state: '불편해요',
+      action: '보고 내용',
+      summary: [
+        labelsOf(options?.appearances, c.appearances),
+        labelsOf(options?.sensations, c.sensations),
+      ]
+        .filter(Boolean)
+        .join(', '),
+      actionResult: '',
+      start: true,
+    },
   ];
 
   return (
-    <ol className="flex flex-col">
-      {entries.map((entry, index) => (
-        <li key={entry.key} className="flex gap-4">
-          <div className="flex flex-col items-center pt-1.5">
+    <div className="flex gap-3">
+      <div className="flex shrink-0 flex-col items-center pt-5">
+        {entries.map((entry, index) => (
+          <div key={entry.key} className="flex flex-1 flex-col items-center">
             <span
               className={clsx(
-                'size-3 shrink-0 rounded-full',
-                entry.tone === 'accent' && 'bg-accent',
-                entry.tone === 'caution' && 'bg-caution-500',
-                entry.tone === 'muted' && 'bg-panel-label',
+                'size-4 shrink-0 rounded-full',
+                entry.start ? 'bg-info' : 'bg-panel-label',
               )}
             />
-            {index < entries.length - 1 && <span className="w-px flex-1 bg-panel-label/50" />}
+            {index < entries.length - 1 && <span className="w-0.5 flex-1 bg-panel" />}
           </div>
+        ))}
+      </div>
 
-          <div className={clsx('min-w-0 flex-1', index < entries.length - 1 && 'pb-6')}>
-            <p className="text-sm text-fg-muted">
-              {entry.date} <span className="text-fg-faint">{entry.caption}</span>
+      <ol className="min-w-0 flex-1 rounded-card bg-panel px-4 py-4">
+        {entries.map((entry, index) => (
+          <li
+            key={entry.key}
+            className={clsx(index > 0 && 'mt-4 border-t border-panel-strong pt-4')}
+          >
+            <p className="text-body-strong font-semibold text-panel-text">
+              {entry.date}{' '}
+              <span className="text-xs font-normal text-panel-label">{entry.caption}</span>
             </p>
-            <p className="mt-1 text-body-strong font-semibold text-fg">{entry.title}</p>
-            <p className="mt-1 text-sm leading-relaxed text-fg-muted">{entry.detail}</p>
-          </div>
-        </li>
-      ))}
-    </ol>
+
+            <div className="mt-2 flex items-start justify-between gap-3 text-xs">
+              <span className="flex items-center gap-1.5 text-panel-text">
+                <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-accent" />
+                {entry.state}
+              </span>
+              <span className="min-w-0 text-right text-panel-label">{entry.summary}</span>
+            </div>
+
+            <div className="mt-1.5 flex items-start justify-between gap-3 text-xs">
+              <span className="text-panel-text">{entry.action}</span>
+              <span className="min-w-0 text-right text-panel-label">{entry.actionResult}</span>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }
 

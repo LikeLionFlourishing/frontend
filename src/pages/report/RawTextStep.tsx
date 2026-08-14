@@ -55,7 +55,8 @@ export function RawTextStep({
       <button
         type="button"
         onClick={onOpenAssist}
-        className="flex w-full items-center justify-between rounded-pill bg-accent px-6 py-4 text-body-strong font-semibold text-panel-text"
+        // 개편 시안에서 회색 패널로 내려왔다. 강조색은 주 CTA(다음)만 쓴다.
+        className="flex w-full items-center justify-between rounded-pill bg-panel px-6 py-4 text-body-strong font-semibold text-panel-text"
       >
         입력하기 어려우신가요?
         <span aria-hidden="true">›</span>

@@ -5,9 +5,9 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
-    /* 다크 디자인이라 브라우저 UI 도 다크로 맞춘다 */
-    color-scheme: dark;
-    background-color: #000000;
+    /* 라이트 디자인이라 브라우저 UI 도 라이트로 맞춘다 */
+    color-scheme: light;
+    background-color: #ffffff;
   }
 
   body {

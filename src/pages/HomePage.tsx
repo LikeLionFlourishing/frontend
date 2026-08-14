@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { home as homeApi, notifications } from '@/api/endpoints';
 import { toUserMessage } from '@/api/problem';
 import { queryKeys } from '@/app/queryClient';
+import { Icon, type IconName } from '@/components/Icon';
 import { labelOf, labelsOf, useReportOptions } from '@/hooks/useReportOptions';
 import { formatShortDate } from '@/lib/date';
 import { clsx } from '@/lib/clsx';
@@ -77,8 +78,8 @@ function ProfileHeader() {
         <p className="text-xs text-fg-muted">김멋사님</p>
         <p className="text-body-strong font-semibold text-fg">육군 상병</p>
       </div>
-      <button type="button" className="text-xl text-fg" aria-label="알림">
-        ◔
+      <button type="button" className="text-info" aria-label="알림">
+        <Icon name="bell" className="size-6" />
       </button>
     </header>
   );
@@ -89,7 +90,7 @@ function DischargeWidget() {
   return (
     <section aria-label="전역까지 남은 기간" className="-mt-1">
       <p className="text-body-strong font-semibold text-fg">전역까지</p>
-      <p className="text-[64px] font-bold leading-none tracking-tight text-accent">D-187</p>
+      <p className="text-[64px] font-bold leading-none tracking-tight text-info">D-187</p>
     </section>
   );
 }
@@ -137,14 +138,14 @@ function TodayCheckCard({ data, onNavigate }: { data: Home; onNavigate: (to: str
 
           <div className="mt-6 grid grid-cols-2 gap-3">
             <ActionTile
-              icon="▤"
+              icon="note"
               title="경과 확인하기"
               caption={pending ? '어제 기록을 남겨주세요' : '확인할 기록이 없어요'}
               disabled={!pending}
               onClick={() => pending && onNavigate(`/follow-up/${pending.reportId}`)}
             />
             <ActionTile
-              icon="☺"
+              icon="face"
               title="피부 점호 시작"
               caption="상태를 기록하고 관리받기"
               tone="accent"
@@ -165,7 +166,7 @@ function ActionTile({
   tone = 'default',
   disabled,
 }: {
-  icon: string;
+  icon: IconName;
   title: string;
   caption: string;
   onClick: () => void;
@@ -184,9 +185,7 @@ function ActionTile({
         disabled && 'opacity-40',
       )}
     >
-      <span aria-hidden="true" className="text-2xl">
-        {icon}
-      </span>
+      <Icon name={icon} className="size-8" />
       <span className="text-body-strong font-semibold">{title}</span>
       <span className={clsx('text-xs', isAccent ? 'text-panel-label' : 'text-fg-muted')}>
         {caption}
@@ -207,7 +206,7 @@ function BriefingCard() {
       <p className="mt-4 text-body-strong font-semibold text-fg">예상 환경</p>
       <p className="mt-0.5 text-sm text-fg-muted">야외활동 훈련</p>
 
-      <hr className="my-4 border-white/10" />
+      <hr className="my-4 border-panel" />
 
       <div className="flex items-end justify-between gap-2">
         <p className="text-xs leading-relaxed text-fg-muted">
@@ -276,13 +275,10 @@ function NextCheckCard({ time }: { time: string }) {
       <div className="flex items-center justify-between gap-2">
         <div>
           <p className="text-sm text-fg-muted">내일 경과 확인</p>
-          <p className="text-body-strong font-semibold text-accent">{time}</p>
+          <p className="text-body-strong font-semibold text-info">{time}</p>
         </div>
-        <span
-          aria-hidden="true"
-          className="grid size-9 shrink-0 place-items-center rounded-full border border-accent text-accent"
-        >
-          ◔
+        <span className="grid size-9 shrink-0 place-items-center rounded-full border border-dashed border-info text-info">
+          <Icon name="bell" className="size-4" />
         </span>
       </div>
     </MiniCard>

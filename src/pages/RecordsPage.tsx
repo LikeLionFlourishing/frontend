@@ -9,7 +9,7 @@ import { clsx } from '@/lib/clsx';
 import type { SkinReportOptions, SkinReportSummary } from '@/api/schemas';
 
 /**
- * 5. 기록.
+ * 5. 기록조회.
  *
  * 두 영역으로 나뉜다.
  *  - 이어서 확인할 기록: 경과 입력을 기다리는 보고 (`FOLLOW_UP_PENDING`)
@@ -33,10 +33,10 @@ export function RecordsPage() {
   const past = all.filter((r) => r.status !== 'FOLLOW_UP_PENDING');
 
   return (
-    <div className="safe-top flex flex-col gap-6 px-5 pt-5">
+    <div className="safe-top flex flex-col gap-6 px-4 pt-5">
       <header>
-        <h1 className="text-2xl font-bold text-fg">기록조회</h1>
-        <p className="mt-2 text-sm text-fg-muted">이전에 기록한 피부 상태와 변화를 확인해보세요</p>
+        <h1 className="text-[28px] font-bold text-fg">기록조회</h1>
+        <p className="mt-2 text-xs text-fg-muted">이전에 기록한 피부 상태와 변화를 확인해보세요</p>
       </header>
 
       {listQuery.isPending && <ListSkeleton />}
@@ -68,39 +68,29 @@ export function RecordsPage() {
       )}
 
       {pending.length > 0 && (
-        <section>
-          <div className="mb-3 flex items-baseline justify-between">
+        <section className="overflow-hidden rounded-card bg-card-raised">
+          <div className="flex items-baseline justify-between px-5 py-4">
             <h2 className="text-body-strong font-semibold text-fg">이어서 확인할 기록</h2>
             <span className="text-sm text-fg-muted">{pending.length}건</span>
           </div>
 
-          <div className="flex flex-col gap-3">
-            {pending.map((report) => (
-              <PendingCard
-                key={report.id}
-                report={report}
-                options={optionsQuery.data}
-                onCheck={() => navigate(`/follow-up/${report.id}`)}
-              />
-            ))}
-          </div>
+          {pending.map((report) => (
+            <PendingCard
+              key={report.id}
+              report={report}
+              options={optionsQuery.data}
+              onCheck={() => navigate(`/follow-up/${report.id}`)}
+            />
+          ))}
         </section>
       )}
 
       {past.length > 0 && (
-        <section>
-          <h2 className="mb-3 text-body-strong font-semibold text-fg">지난 기록</h2>
-          <div className="flex flex-col gap-3">
-            {past.map((report) => (
-              <PastCard
-                key={report.id}
-                report={report}
-                options={optionsQuery.data}
-                onOpen={() => navigate(`/records/${report.id}`)}
-              />
-            ))}
-          </div>
-        </section>
+        <PastDeck
+          records={past}
+          options={optionsQuery.data}
+          onOpen={(id) => navigate(`/records/${id}`)}
+        />
       )}
 
       {listQuery.hasNextPage && (
@@ -117,7 +107,7 @@ export function RecordsPage() {
   );
 }
 
-/** 시안의 밝은 회색 카드. 경과 입력이 남은 건이라 눈에 띄게 둔다. */
+/** 시안의 초록 카드. 경과 입력이 남은 건이라 눈에 띄게 둔다. */
 function PendingCard({
   report,
   options,
@@ -135,19 +125,29 @@ function PendingCard({
     .join(' · ');
 
   return (
-    <article className="rounded-card bg-panel px-5 py-5">
-      <h3 className="text-body-strong font-semibold text-panel-text">{title}</h3>
+    <article className="rounded-card bg-guide-summary px-5 py-5">
+      <h3 className="text-body-strong font-semibold text-fg">{title}</h3>
 
-      <p className="mt-2 text-sm text-panel-label">시작일 {formatDotDate(report.reportDate)}</p>
+      {/*
+        시안은 여기에 직전 경과(`● 나아졌어요`)와 `최근 변화-` 문구가 있다.
+        지금 계약에서는 경과가 아직 없는 상태라 그 값이 존재하지 않는다.
+        (다일차 추적이 열리면 마지막 경과를 여기에 채운다)
+      */}
+      {report.skinChange ? (
+        <p className="mt-2 flex items-center gap-2 text-sm text-fg">
+          <span aria-hidden="true" className="size-2 rounded-full bg-fg" />
+          {SKIN_CHANGE_LABEL[report.skinChange]}
+        </p>
+      ) : (
+        <p className="mt-2 text-sm text-fg-muted">아직 경과를 남기지 않았어요.</p>
+      )}
 
-      <p className="mt-3 text-sm leading-relaxed text-panel-text">
-        아직 경과를 남기지 않았어요. 오늘 상태를 알려주시면 다음 관리 방법을 안내해 드려요.
-      </p>
+      <p className="mt-2 text-sm text-fg-muted">시작일 {formatDotDate(report.reportDate)}</p>
 
       <button
         type="button"
         onClick={onCheck}
-        className="mt-4 w-full rounded-pill bg-card px-5 py-3 text-body-strong font-semibold text-fg"
+        className="mt-5 w-full rounded-pill bg-card-raised px-5 py-3 text-body-strong font-semibold text-fg"
       >
         상태 확인하기
       </button>
@@ -155,90 +155,98 @@ function PendingCard({
   );
 }
 
-function PastCard({
-  report,
+// --- 지난 기록 덱 --------------------------------------------------------------
+
+/**
+ * 시안 기준 카드 높이 257, 다음 카드까지 158 → 99px 씩 겹친다.
+ * 결과 화면의 카드 덱과 같은 팔레트를 순서대로 돌려 쓴다.
+ *
+ * TODO(디자인): 시안에서 파란 카드가 마침 `위험 신호 포함` 건이라
+ * 색이 순서인지 의미인지 확실치 않다. 지금은 순서로 본다.
+ */
+const CARD_HEIGHT = 257;
+const CARD_PITCH = 158;
+
+const SURFACES = [
+  { bg: 'bg-guide-summary', onDark: false },
+  { bg: 'bg-guide-do', onDark: false },
+  { bg: 'bg-guide-avoid', onDark: false },
+  { bg: 'bg-guide-next', onDark: true },
+  { bg: 'bg-card-raised', onDark: false },
+];
+
+function PastDeck({
+  records,
   options,
   onOpen,
 }: {
-  report: SkinReportSummary;
+  records: SkinReportSummary[];
   options: SkinReportOptions | undefined;
-  onOpen: () => void;
+  onOpen: (id: string) => void;
 }) {
-  // 시안에서 위험 신호가 포함된 기록만 밝은 카드로 구분해 둔다.
-  const isClinician = report.resultType === 'CLINICIAN_CHECK';
-
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className={clsx(
-        'w-full rounded-card px-5 py-5 text-left',
-        isClinician ? 'bg-panel' : 'bg-card-raised',
-      )}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <span
-          className={clsx(
-            'text-body-strong font-semibold',
-            isClinician ? 'text-panel-text' : 'text-fg',
-          )}
-        >
-          {formatListDate(report.reportDate)}
-        </span>
-        <span
-          className={clsx(
-            'shrink-0 text-xs',
-            isClinician ? 'font-semibold text-caution-ink' : 'text-fg-muted',
-          )}
-        >
-          {isClinician
-            ? '▲ 위험 신호 포함'
-            : progressBadge(report.status, report.skinChange ?? null)}
-        </span>
+    <section>
+      <h2 className="sr-only">지난 기록</h2>
+      <div className="relative" style={{ height: CARD_PITCH * (records.length - 1) + CARD_HEIGHT }}>
+        {records.map((report, index) => {
+          const surface = SURFACES[index % SURFACES.length]!;
+          const isClinician = report.resultType === 'CLINICIAN_CHECK';
+
+          return (
+            <button
+              key={report.id}
+              type="button"
+              onClick={() => onOpen(report.id)}
+              style={{ top: index * CARD_PITCH, height: CARD_HEIGHT, zIndex: index }}
+              className={clsx(
+                // 버튼은 내용을 세로 가운데로 두는 게 기본이라 명시적으로 위로 붙인다.
+                'absolute inset-x-0 flex flex-col items-stretch justify-start rounded-card px-5 pt-6 text-left',
+                surface.bg,
+                surface.onDark ? 'text-white' : 'text-fg',
+              )}
+            >
+              <span className="flex items-start justify-between gap-3">
+                <span className="text-body-strong font-semibold">
+                  {formatListDate(report.reportDate)}
+                </span>
+                <span className={clsx('shrink-0 text-xs', surface.onDark ? '' : 'opacity-70')}>
+                  {isClinician
+                    ? '▲ 위험 신호 포함'
+                    : progressBadge(report.status, report.skinChange ?? null)}
+                </span>
+              </span>
+
+              <dl
+                className={clsx(
+                  'mt-6 flex flex-col gap-1.5 text-sm',
+                  surface.onDark ? 'text-white/90' : 'opacity-80',
+                )}
+              >
+                <Row label="부위" value={labelOf(options?.areas, report.primaryArea)} />
+                <Row
+                  label="상태"
+                  value={[
+                    labelsOf(options?.appearances, report.appearances),
+                    labelsOf(options?.sensations, report.sensations),
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                />
+                <Row label="상황" value={labelsOf(options?.situations, report.situations)} />
+              </dl>
+            </button>
+          );
+        })}
       </div>
-
-      <dl
-        className={clsx(
-          'mt-4 flex flex-col gap-1.5 text-sm',
-          isClinician ? 'text-panel-label' : 'text-fg-muted',
-        )}
-      >
-        <Row label="부위" value={labelOf(options?.areas, report.primaryArea)} muted={isClinician} />
-        <Row
-          label="상태"
-          muted={isClinician}
-          value={[
-            labelsOf(options?.appearances, report.appearances),
-            labelsOf(options?.sensations, report.sensations),
-          ]
-            .filter(Boolean)
-            .join(' · ')}
-        />
-        <Row
-          label="상황"
-          muted={isClinician}
-          value={labelsOf(options?.situations, report.situations)}
-        />
-      </dl>
-
-      {report.status === 'EXPIRED' && (
-        <p className={clsx('mt-3 text-xs', isClinician ? 'text-panel-label' : 'text-fg-faint')}>
-          입력 기간이 지나 이전 경험으로는 사용되지 않아요.
-        </p>
-      )}
-
-      {report.status === 'COMPLETED' && report.skinChange && (
-        <p className="sr-only">다음 날 경과: {SKIN_CHANGE_LABEL[report.skinChange]}</p>
-      )}
-    </button>
+    </section>
   );
 }
 
-function Row({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
+function Row({ label, value }: { label: string; value: string }) {
   if (!value) return null;
   return (
     <div className="flex gap-2">
-      <dt className={clsx('shrink-0', muted ? 'text-panel-label' : 'text-fg-faint')}>{label}</dt>
+      <dt className="shrink-0">{label}:</dt>
       <dd className="min-w-0 flex-1">{value}</dd>
     </div>
   );
@@ -247,7 +255,7 @@ function Row({ label, value, muted }: { label: string; value: string; muted?: bo
 function ListSkeleton() {
   return (
     <div className="flex flex-col gap-3">
-      <div className="h-40 animate-pulse rounded-card bg-panel/30" />
+      <div className="h-40 animate-pulse rounded-card bg-card-raised" />
       <div className="h-32 animate-pulse rounded-card bg-card-raised" />
       <div className="h-32 animate-pulse rounded-card bg-card-raised" />
     </div>

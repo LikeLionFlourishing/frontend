@@ -11,6 +11,7 @@ import { useReportDraftStore } from '@/stores/reportDraftStore';
 import { ConfirmStep, type ConfirmValues } from './report/ConfirmStep';
 import { PreCareStep } from './report/PreCareStep';
 import { RawTextStep } from './report/RawTextStep';
+import { AppearanceAssistStep } from './report/AppearanceAssistStep';
 import { SkinStatusStep } from './report/SkinStatusStep';
 import type { ReportInterpretation } from '@/api/schemas';
 
@@ -33,6 +34,11 @@ export function ReportFlowPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>(0);
+  /*
+   * 참고 일러스트 보조 입력. 1단계에서 분기하지만 시안의 인디케이터상 2번째 칸이다.
+   * 단계 번호를 늘리지 않고 별도 상태로 둔다.
+   */
+  const [assisting, setAssisting] = useState(false);
   const [aiFailed, setAiFailed] = useState(false);
 
   const draft = useReportDraftStore();
@@ -159,10 +165,13 @@ export function ReportFlowPage() {
 
   // --- 스텝 ---------------------------------------------------------------
 
-  const header = STEP_HEADER[step];
+  const header = assisting
+    ? { title: '겉모습은 어떤가요?', subtitle: '가장 비슷한 모습을 선택해주세요' }
+    : STEP_HEADER[step];
 
   const goBack = () => {
-    if (step === 0) navigate('/');
+    if (assisting) setAssisting(false);
+    else if (step === 0) navigate('/');
     else setStep((s) => (s - 1) as Step);
   };
 
@@ -176,8 +185,16 @@ export function ReportFlowPage() {
 
   return (
     <StepLayout
-      // 0단계는 진행 인디케이터에 포함하지 않는다.
-      {...(step === 0 ? {} : { step, totalSteps: TOTAL_STEPS })}
+      /*
+       * 개편 시안에서 진행 인디케이터는 `한 문장 피부보고`(1단계) 에만 그려져 있다.
+       * 나머지 단계 프레임에는 인디케이터 그룹 자체가 없어 그대로 따랐다.
+       * TODO(디자인): 흐름 중간에 진행 표시가 사라지는 게 의도인지 확인 필요.
+       */
+      {...(assisting
+        ? { step: 2, totalSteps: TOTAL_STEPS }
+        : step === 1
+          ? { step, totalSteps: TOTAL_STEPS }
+          : {})}
       onBack={goBack}
       title={header.title}
       subtitle={header.subtitle}
@@ -191,15 +208,27 @@ export function ReportFlowPage() {
         />
       )}
 
-      {step === 1 && (
+      {assisting && (
+        <AppearanceAssistStep
+          options={optionsQuery.data}
+          value={draft.manualAppearances}
+          onChange={(manualAppearances) =>
+            // 수동 선택값은 AI 추출값보다 우선한다. (F-02)
+            draft.patch({ manualAppearances, appearances: manualAppearances })
+          }
+          onNext={() => {
+            setAssisting(false);
+            setStep(2);
+          }}
+        />
+      )}
+
+      {step === 1 && !assisting && (
         <RawTextStep
           value={draft.rawText}
           onChange={(rawText) => draft.patch({ rawText })}
           onNext={() => interpret.mutate()}
-          onOpenAssist={() => {
-            // TODO: 얼굴 맵·참고 일러스트 시트. 디자인은 나왔고 API 는 manualSelections 로 받는다.
-            setStep(2);
-          }}
+          onOpenAssist={() => setAssisting(true)}
           submitting={interpret.isPending}
           errorMessage={interpret.isError ? interpretErrorMessage(interpret.error) : null}
         />

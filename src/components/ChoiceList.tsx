@@ -69,8 +69,10 @@ export function ChoiceList(props: Props) {
 
   return (
     <fieldset className="flex flex-col gap-4" disabled={disabled}>
-      {question && <legend className="text-2xl font-bold leading-snug text-fg">{question}</legend>}
-      {hint && <p className="-mt-2 text-sm text-fg-muted">{hint}</p>}
+      {question && (
+        <legend className="text-[28px] font-bold leading-snug text-fg">{question}</legend>
+      )}
+      {hint && <p className="-mt-2 text-xs text-fg-muted">{hint}</p>}
 
       <div className="flex flex-col gap-3">
         {choices.map((choice) => {
@@ -85,7 +87,8 @@ export function ChoiceList(props: Props) {
               className={clsx(
                 'flex w-full items-center gap-3 rounded-pill px-5 py-4 text-left text-body-strong transition',
                 'bg-panel text-panel-text',
-                selected && 'ring-2 ring-accent',
+                // 개편 시안은 선택 상태를 일관되게 파랑으로 쓴다(동의·참고일러스트·진행 표시).
+                selected && 'ring-2 ring-info',
                 disabled && 'opacity-50',
               )}
             >
@@ -93,10 +96,10 @@ export function ChoiceList(props: Props) {
                 aria-hidden="true"
                 className={clsx(
                   'grid size-5 shrink-0 place-items-center rounded-full border-2 transition',
-                  selected ? 'border-accent bg-accent' : 'border-panel-label',
+                  selected ? 'border-info bg-info' : 'border-panel-label',
                 )}
               >
-                {selected && <span className="size-2 rounded-full bg-panel-text" />}
+                {selected && <span className="size-2 rounded-full bg-white" />}
               </span>
               <span>{choice.label}</span>
             </button>

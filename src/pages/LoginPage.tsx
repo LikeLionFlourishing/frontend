@@ -5,6 +5,16 @@ import { auth } from '@/api/endpoints';
 import { ApiError, toUserMessage } from '@/api/problem';
 import { PrimaryButton } from '@/components/StepLayout';
 import { TextField } from '@/components/TextField';
+import { Wordmark } from '@/components/Wordmark';
+import { PixelArt } from '@/components/PixelArt';
+import {
+  DECO_BOTTOM_CELL,
+  DECO_BOTTOM_GAP,
+  DECO_TOP_CELL,
+  DECO_TOP_GAP,
+  LOGIN_DECO_BOTTOM,
+  LOGIN_DECO_TOP,
+} from '@/components/loginDeco';
 import { useAuthStore } from '@/stores/authStore';
 
 export function LoginPage() {
@@ -28,14 +38,26 @@ export function LoginPage() {
   const canSubmit = email.trim().length > 0 && password.length > 0 && !login.isPending;
 
   return (
-    <div className="safe-top mx-auto flex min-h-dvh w-full max-w-app flex-col px-5 pt-16">
-      <header>
-        <h1 className="text-4xl font-bold leading-tight text-fg">
-          관리하는
-          <br />
-          <span className="text-accent">행보관</span>
-        </h1>
-        <p className="mt-4 text-sm leading-relaxed text-fg-muted">
+    <div className="safe-top relative mx-auto flex min-h-dvh w-full max-w-app flex-col overflow-hidden px-4 pt-[73px]">
+      {/* 시안의 배경 픽셀 장식. 프레임 밖으로 걸치는 위치까지 그대로 따랐다. */}
+      <PixelArt
+        bitmap={LOGIN_DECO_TOP}
+        cell={DECO_TOP_CELL}
+        gap={DECO_TOP_GAP}
+        style={{ left: `${(206 / 402) * 100}%`, top: 118 }}
+        className="pointer-events-none absolute"
+      />
+      <PixelArt
+        bitmap={LOGIN_DECO_BOTTOM}
+        cell={DECO_BOTTOM_CELL}
+        gap={DECO_BOTTOM_GAP}
+        style={{ left: `${(-33 / 402) * 100}%`, top: 466 }}
+        className="pointer-events-none absolute"
+      />
+
+      <header className="relative">
+        <Wordmark height={38} />
+        <p className="mt-[9px] text-xs leading-relaxed text-fg-muted">
           오늘의 피부 상태를 간단하게 기록하고,
           <br />
           지금 필요한 관리 방법을 확인해보세요.
@@ -43,7 +65,7 @@ export function LoginPage() {
       </header>
 
       <form
-        className="mt-12 flex flex-col gap-3"
+        className="relative mt-[106px] flex flex-col gap-[9px]"
         onSubmit={(e) => {
           e.preventDefault();
           if (canSubmit) login.mutate();
@@ -55,6 +77,7 @@ export function LoginPage() {
           inputMode="email"
           autoComplete="email"
           placeholder="이메일을 입력하세요"
+          surface="soft"
           value={email}
           onChange={setEmail}
         />
@@ -63,6 +86,7 @@ export function LoginPage() {
           type="password"
           autoComplete="current-password"
           placeholder="비밀번호를 입력하세요"
+          surface="soft"
           value={password}
           onChange={setPassword}
         />
@@ -71,16 +95,16 @@ export function LoginPage() {
           <p className="px-2 text-sm text-caution-500">{loginError(login.error)}</p>
         )}
 
-        <div className="pt-4">
+        <div className="pt-[58px]">
           <PrimaryButton type="submit" disabled={!canSubmit}>
             {login.isPending ? '로그인 중…' : '로그인'}
           </PrimaryButton>
         </div>
       </form>
 
-      <p className="mt-5 text-center text-sm text-fg-muted">
+      <p className="relative mt-[6px] text-center text-sm text-fg-muted">
         계정이 없으신가요?{' '}
-        <Link to="/signup" className="font-semibold text-accent">
+        <Link to="/signup" className="font-semibold text-info">
           회원가입
         </Link>
       </p>
