@@ -35,6 +35,16 @@ export const mockState = {
   /** 미완료 경과. 경과를 저장하면 비운다. */
   pendingFollowUp: fx.home.pendingFollowUp,
   /**
+   * 알림 수신 여부. 서버에 저장되는 설정이라 새로고침해도 유지돼야 한다.
+   * 모듈 변수로 두면 리로드 때 초기화되므로 sessionStorage 를 쓴다.
+   */
+  get notificationEnabled() {
+    return flag('notificationEnabled');
+  },
+  set notificationEnabled(v: boolean) {
+    setFlag('notificationEnabled', v);
+  },
+  /**
    * false 로 두면 온보딩 흐름을 처음부터 볼 수 있다.
    * 새로고침해도 유지돼야 해서 sessionStorage 에 둔다 — 모듈 변수는 리로드 때 날아간다.
    */
@@ -57,6 +67,7 @@ export const mockState = {
     this.scenario = 'happy';
     this.today = null;
     this.pendingFollowUp = fx.home.pendingFollowUp;
+    this.notificationEnabled = true;
     this.onboardingCompleted = true;
     this.authenticated = true;
     localStorage.removeItem('haengbogwan.service-profile');
@@ -136,6 +147,16 @@ export const handlers = [
   }),
 
   http.get(`${V1}/me`, () => HttpResponse.json(currentSession().user)),
+
+  http.delete(`${V1}/me`, ({ request }) => {
+    // 명세상 확인 헤더가 없으면 지우지 않는다. 실수로 계정이 날아가면 안 된다.
+    if (request.headers.get('X-Confirm-Deletion') !== 'delete-account') {
+      return problem(422, 'VALIDATION_ERROR', '삭제 확인이 필요합니다.');
+    }
+    mockState.reset();
+    mockState.authenticated = false;
+    return new HttpResponse(null, { status: 204 });
+  }),
 
   // --- Onboarding -----------------------------------------------------------
   http.put(`${V1}/me/onboarding`, async ({ request }) => {
@@ -341,7 +362,7 @@ export const handlers = [
   // --- Notifications / Analytics -------------------------------------------
   http.get(`${V1}/me/notification-settings`, () =>
     HttpResponse.json({
-      enabled: true,
+      enabled: mockState.notificationEnabled,
       time: '17:30',
       timezone: 'Asia/Seoul',
       permission: 'DEFAULT',
@@ -353,6 +374,7 @@ export const handlers = [
     // 온보딩 마지막 단계가 이 호출이라 여기서 완료로 표시한다.
     // (복무 정보·환경·권역·점호 시각을 저장할 엔드포인트가 계약에 없어서 생긴 우회다)
     mockState.onboardingCompleted = true;
+    mockState.notificationEnabled = body.enabled;
     return HttpResponse.json({
       enabled: body.enabled,
       time: '17:30',

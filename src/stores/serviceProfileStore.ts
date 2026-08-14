@@ -45,7 +45,7 @@ export const REGION_OPTIONS = [
   { value: 'JEJU', label: '제주' },
 ] as const;
 
-interface ServiceProfile {
+export interface ServiceProfile {
   branch: MilitaryBranch | null;
   enlistedOn: string | null;
   dischargeOn: string | null;
@@ -95,6 +95,20 @@ const SERVICE_MONTHS: Record<MilitaryBranch, number> = {
  * 주의: 복무기간은 정책에 따라 바뀐다. 확정 값은 기획에서 관리하고,
  * 최종적으로는 서버가 계산해 내려주는 편이 안전하다.
  */
+/**
+ * 군종이나 입대일이 바뀌면 전역예정일을 다시 추정해 함께 반영한다.
+ * 온보딩과 설정 두 곳에서 같은 규칙을 써야 해서 여기에 둔다.
+ */
+export function applyServiceChange(
+  current: Pick<ServiceProfile, 'branch' | 'enlistedOn'>,
+  change: { branch?: MilitaryBranch; enlistedOn?: string },
+): Partial<ServiceProfile> {
+  const branch = change.branch ?? current.branch;
+  const enlistedOn = change.enlistedOn ?? current.enlistedOn;
+  const dischargeOn = branch && enlistedOn ? estimateDischargeDate(enlistedOn, branch) : null;
+  return { ...change, ...(dischargeOn ? { dischargeOn } : {}) };
+}
+
 export function estimateDischargeDate(enlistedOn: string, branch: MilitaryBranch): string | null {
   const [y, m, d] = enlistedOn.split('-').map(Number);
   if (!y || !m || !d) return null;

@@ -8,13 +8,19 @@ import { ChoiceList } from '@/components/ChoiceList';
 import { PrimaryButton } from '@/components/StepLayout';
 import { DateField, SelectField } from '@/components/TextField';
 import { TimeWheel } from '@/components/TimeWheel';
+import { Icon, type IconName } from '@/components/Icon';
+import { Wordmark } from '@/components/Wordmark';
+import { PixelArt } from '@/components/PixelArt';
+import { ONBOARDING_TREE, TREE_CELL, TREE_GAP } from '@/components/onboardingTree';
+import { clsx } from '@/lib/clsx';
 import {
   BRANCH_OPTIONS,
   ENVIRONMENT_OPTIONS,
   REGION_OPTIONS,
-  estimateDischargeDate,
+  applyServiceChange,
   useServiceProfileStore,
   type MilitaryBranch,
+  type ServiceProfile,
 } from '@/stores/serviceProfileStore';
 
 type Step = 'intro' | 'service' | 'environment' | 'region' | 'time';
@@ -107,35 +113,53 @@ export function OnboardingPage() {
 
 // --- 1. 인트로 ----------------------------------------------------------------
 
-const HIGHLIGHTS = [
-  { title: '30초 기록', caption: '간단하게' },
-  { title: '상황 기록', caption: '피부와 함께한 상황들' },
-  { title: 'AI 가이드', caption: '지금 가능한 관리 행동' },
-  { title: '경과확인', caption: '다음 날 변화 확인' },
+const HIGHLIGHTS: { icon: IconName; title: string; caption: string }[] = [
+  { icon: 'clock', title: '30초 기록', caption: '간단하게' },
+  { icon: 'note', title: '상황 기록', caption: '피부와 함께한 상황들' },
+  { icon: 'help', title: 'AI 가이드', caption: '지금 가능한 관리 행동' },
+  { icon: 'face', title: '경과확인', caption: '다음 날 변화 확인' },
 ];
+
+/** 나무 비트맵의 글자별 색. 일러스트 전용이라 팔레트에 넣지 않았다. */
+const TREE_TINTS: Record<string, string> = {
+  A: 'bg-accent',
+  B: 'bg-[#81B690]',
+  C: 'bg-[#424142]',
+  D: 'bg-[#707070]',
+  E: 'bg-[#728878]',
+};
 
 function IntroStep({ onStart }: { onStart: () => void }) {
   return (
     <div className="safe-top mx-auto flex min-h-dvh w-full max-w-app flex-col px-5 pt-6">
-      <p className="self-end text-sm text-fg-muted">1/2</p>
-
       <header className="mt-8">
-        <h1 className="text-4xl font-bold leading-tight text-fg">
-          관리하는
-          <br />
-          <span className="text-accent">행보관</span>
-        </h1>
-        <p className="mt-4 text-sm leading-relaxed text-fg-muted">
+        <Wordmark height={38} />
+        <p className="mt-4 text-xs leading-relaxed text-fg-muted">
           오늘의 피부 상태를 간단하게 기록하고,
           <br />
           지금 필요한 관리 방법을 확인해보세요.
         </p>
       </header>
 
-      <div className="mt-auto grid grid-cols-4 gap-2 pb-8">
-        {HIGHLIGHTS.map((item) => (
-          <div key={item.title} className="flex flex-col gap-2">
-            <div className="aspect-square rounded-lg bg-panel" aria-hidden="true" />
+      {/* 시안의 픽셀 나무. 이미지가 아니라 도형이라 격자를 추출해 두었다. */}
+      <PixelArt
+        bitmap={ONBOARDING_TREE}
+        cell={TREE_CELL}
+        gap={TREE_GAP}
+        tints={TREE_TINTS}
+        className="mx-auto my-auto"
+      />
+
+      <div className="grid grid-cols-4 pb-8">
+        {HIGHLIGHTS.map((item, index) => (
+          <div
+            key={item.title}
+            className={clsx(
+              'flex flex-col items-center gap-2 px-1 text-center',
+              index > 0 && 'border-l border-panel',
+            )}
+          >
+            <Icon name={item.icon} className="size-7 text-fg" />
             <p className="text-[11px] font-semibold text-fg">{item.title}</p>
             <p className="text-[10px] leading-tight text-fg-muted">{item.caption}</p>
           </div>
@@ -161,24 +185,15 @@ function ServiceStep({
   branch: MilitaryBranch | null;
   enlistedOn: string | null;
   dischargeOn: string | null;
-  onChange: (partial: {
-    branch?: MilitaryBranch;
-    enlistedOn?: string;
-    dischargeOn?: string;
-  }) => void;
+  onChange: (partial: Partial<ServiceProfile>) => void;
   onNext: () => void;
 }) {
-  const handleEnlisted = (value: string) => {
-    // 전역예정일은 자동으로 채우되 사용자가 고칠 수 있게 둔다.
-    const estimated = branch ? estimateDischargeDate(value, branch) : null;
-    onChange({ enlistedOn: value, ...(estimated ? { dischargeOn: estimated } : {}) });
-  };
+  // 전역예정일은 자동으로 채우되 사용자가 고칠 수 있게 둔다. (설정 화면과 같은 규칙)
+  const handleEnlisted = (enlistedOn: string) =>
+    onChange(applyServiceChange({ branch, enlistedOn: null }, { enlistedOn }));
 
-  const handleBranch = (value: string) => {
-    const next = value as MilitaryBranch;
-    const estimated = enlistedOn ? estimateDischargeDate(enlistedOn, next) : null;
-    onChange({ branch: next, ...(estimated ? { dischargeOn: estimated } : {}) });
-  };
+  const handleBranch = (value: string) =>
+    onChange(applyServiceChange({ branch: null, enlistedOn }, { branch: value as MilitaryBranch }));
 
   const valid = Boolean(branch && enlistedOn && dischargeOn);
 
@@ -349,7 +364,7 @@ function ArrowButton({
       <span className="flex-1 text-center">{children}</span>
       <span
         aria-hidden="true"
-        className="grid size-9 place-items-center rounded-full bg-card text-fg"
+        className="grid size-11 place-items-center rounded-full bg-fg text-lg text-white"
       >
         →
       </span>
