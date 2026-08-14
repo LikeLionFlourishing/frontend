@@ -51,15 +51,20 @@ export function RawTextStep({
 
       {errorMessage && <p className="text-sm text-accent">{errorMessage}</p>}
 
-      {/* 한 문장 작성이 어려운 사용자를 위한 선택형 보조 입력 (F-02) */}
+      {/*
+       * 한 문장 작성이 어려운 사용자를 위한 선택형 보조 입력 (F-02).
+       * 시안(15:4652)은 글자를 가운데 두고 화살표만 오른쪽 끝에 붙인다.
+       * 강조색은 주 CTA(다음)만 쓴다.
+       */}
       <button
         type="button"
         onClick={onOpenAssist}
-        // 개편 시안에서 회색 패널로 내려왔다. 강조색은 주 CTA(다음)만 쓴다.
-        className="flex w-full items-center justify-between rounded-pill bg-panel px-6 py-4 text-body-strong font-semibold text-panel-text"
+        className="relative flex h-[67px] w-full items-center justify-center rounded-card bg-panel px-6 text-body-strong font-semibold text-panel-text"
       >
         입력하기 어려우신가요?
-        <span aria-hidden="true">›</span>
+        <span aria-hidden="true" className="absolute right-6 text-panel-label">
+          ›
+        </span>
       </button>
 
       <div className="pt-6">
