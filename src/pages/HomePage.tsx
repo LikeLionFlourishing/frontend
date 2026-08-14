@@ -6,8 +6,9 @@ import { toUserMessage } from '@/api/problem';
 import { queryKeys } from '@/app/queryClient';
 import { Icon, type IconName } from '@/components/Icon';
 import { labelOf, labelsOf, useReportOptions } from '@/hooks/useReportOptions';
-import { formatShortDate } from '@/lib/date';
+import { daysBetween, formatShortDate } from '@/lib/date';
 import { clsx } from '@/lib/clsx';
+import { BRANCH_OPTIONS, useServiceProfileStore } from '@/stores/serviceProfileStore';
 import type { Home, SkinReportOptions } from '@/api/schemas';
 
 /**
@@ -48,7 +49,7 @@ export function HomePage() {
   return (
     <div className="safe-top flex flex-col gap-5 px-5 pt-4">
       <ProfileHeader />
-      <DischargeWidget />
+      <DischargeWidget serverDate={data.serverDate} />
       <TodayCheckCard data={data} onNavigate={navigate} />
 
       <div className="grid grid-cols-2 gap-3">
@@ -73,13 +74,16 @@ export function HomePage() {
 // --- 상단 --------------------------------------------------------------------
 
 function ProfileHeader() {
+  const branch = useServiceProfileStore((s) => s.branch);
+  const label = BRANCH_OPTIONS.find((b) => b.value === branch)?.label;
+
   return (
     <header className="flex items-center gap-3">
       <div className="size-11 shrink-0 rounded-full bg-card-raised" aria-hidden="true" />
       <div className="flex-1">
-        {/* PLACEHOLDER: 복무 정보(군종·계급) 저장 API 가 아직 없다. */}
+        {/* PLACEHOLDER: 이름과 계급을 담을 필드가 계약에 없다. */}
         <p className="text-xs text-fg-muted">김멋사님</p>
-        <p className="text-body-strong font-semibold text-fg">육군 상병</p>
+        <p className="text-body-strong font-semibold text-fg">{label ?? '복무 정보 미입력'}</p>
       </div>
       <button type="button" className="text-info" aria-label="알림">
         <Icon name="bell" className="size-6" />
@@ -88,12 +92,34 @@ function ProfileHeader() {
   );
 }
 
-function DischargeWidget() {
-  // PLACEHOLDER: 입대일·전역예정일 기반 D-Day 산출 API 가 아직 없다.
+/**
+ * 전역까지 남은 일수.
+ *
+ * 전역예정일은 설정 > 프로필 관리에서 받는다. 온보딩 필수 단계가 아니므로
+ * 비어 있는 상태가 정상이고, 그때는 숫자를 지어내지 않고 입력 경로를 안내한다.
+ */
+function DischargeWidget({ serverDate }: { serverDate: string }) {
+  const dischargeOn = useServiceProfileStore((s) => s.dischargeOn);
+
+  if (!dischargeOn) {
+    return (
+      <section aria-label="전역까지 남은 기간" className="-mt-1">
+        <p className="text-body-strong font-semibold text-fg">전역까지</p>
+        <Link to="/my/profile" className="mt-1 block text-sm text-info">
+          전역예정일을 입력하면 D-Day를 보여드려요 ›
+        </Link>
+      </section>
+    );
+  }
+
+  const remaining = daysBetween(serverDate, dischargeOn);
+
   return (
     <section aria-label="전역까지 남은 기간" className="-mt-1">
       <p className="text-body-strong font-semibold text-fg">전역까지</p>
-      <p className="text-[64px] font-bold leading-none tracking-tight text-info">D-187</p>
+      <p className="text-[64px] font-bold leading-none tracking-tight text-info">
+        {remaining > 0 ? `D-${remaining}` : remaining === 0 ? 'D-DAY' : `D+${-remaining}`}
+      </p>
     </section>
   );
 }

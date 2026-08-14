@@ -1,51 +1,51 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { auth, notifications } from '@/api/endpoints';
+import { auth, onboarding } from '@/api/endpoints';
 import { toUserMessage } from '@/api/problem';
 import { useAuthStore } from '@/stores/authStore';
-import { ChoiceList } from '@/components/ChoiceList';
 import { PrimaryButton } from '@/components/StepLayout';
-import { DateField, SelectField } from '@/components/TextField';
 import { TimeWheel } from '@/components/TimeWheel';
 import { Icon, type IconName } from '@/components/Icon';
 import { Wordmark } from '@/components/Wordmark';
 import { PixelArt } from '@/components/PixelArt';
 import { ONBOARDING_TREE, TREE_CELL, TREE_GAP } from '@/components/onboardingTree';
 import { clsx } from '@/lib/clsx';
-import {
-  BRANCH_OPTIONS,
-  ENVIRONMENT_OPTIONS,
-  REGION_OPTIONS,
-  applyServiceChange,
-  useServiceProfileStore,
-  type MilitaryBranch,
-  type ServiceProfile,
-} from '@/stores/serviceProfileStore';
+import { useServiceProfileStore } from '@/stores/serviceProfileStore';
+import type { NotificationPermission as ApiNotificationPermission } from '@/api/schemas';
 
-type Step = 'intro' | 'service' | 'environment' | 'region' | 'time';
+/** 동의 문구 버전. 서버에 그대로 저장되므로 문구를 바꾸면 이 값도 올려야 한다. */
+const CONSENT_VERSION = '2026-08-09';
 
-const ORDER: Step[] = ['intro', 'service', 'environment', 'region', 'time'];
+type Step = 'scope' | 'consent' | 'notification';
+
+const ORDER: Step[] = ['scope', 'consent', 'notification'];
 
 /**
- * 최초 온보딩.
+ * 최초 이용 (유저플로우 1 / 정보구조도 1. 온보딩).
  *
- * 동의는 회원가입 흐름에서 이미 저장했다(`PUT /me/onboarding`).
- * 여기서 받는 복무 정보·환경·권역·점호 시각은 **저장할 API 가 아직 없어서**
- * 로컬 프로필 스토어에 둔다. `serviceProfileStore` 의 TODO 참고.
+ * 문서 기준 세 화면이다 — 이용범위 안내 → 필수 동의 → 알림 설정.
+ * 이 세 값이 `PUT /me/onboarding` 의 본문과 정확히 대응한다.
+ *
+ * 복무 정보·자주 겪는 환경·기상 권역은 문서의 온보딩에 없어서 여기서 뺐다.
+ * 셋 다 설정 > 프로필 관리에서 그대로 편집할 수 있다.
+ * (시안에는 온보딩 단계로 그려져 있으나 2026-08-15 기준 문서를 우선한다)
  */
 export function OnboardingPage() {
   const navigate = useNavigate();
-  const [step, setStep] = useState<Step>('intro');
-  const profile = useServiceProfileStore();
-
+  const [step, setStep] = useState<Step>('scope');
   const setSession = useAuthStore((s) => s.setSession);
+  const checkInTime = useServiceProfileStore((s) => s.checkInTime);
+  const patchProfile = useServiceProfileStore((s) => s.patch);
 
   const finish = useMutation({
-    // 계약에 있는 값은 알림 수신 여부뿐이다. 점호 시각은 서버가 '17:30' 으로 고정하고 있어
-    // 사용자가 고른 시각은 로컬에만 남는다. (serviceProfileStore TODO 참고)
     mutationFn: async (notificationEnabled: boolean) => {
-      await notifications.updateSettings(notificationEnabled);
+      await onboarding.complete({
+        consentVersion: CONSENT_VERSION,
+        sensitiveDataConsent: true,
+        notificationEnabled,
+        notificationPermission: await requestPermission(notificationEnabled),
+      });
       // 온보딩 완료 여부는 세션의 signupcompleted 로 판단하므로 다시 받아온다.
       return auth.currentSession();
     },
@@ -56,10 +56,10 @@ export function OnboardingPage() {
   });
 
   const index = ORDER.indexOf(step);
-  const goNext = () => setStep(ORDER[index + 1] ?? 'time');
+  const goNext = () => setStep(ORDER[index + 1] ?? 'notification');
   const goBack = () => (index === 0 ? navigate(-1) : setStep(ORDER[index - 1]!));
 
-  if (step === 'intro') return <IntroStep onStart={goNext} />;
+  if (step === 'scope') return <ScopeStep onStart={goNext} />;
 
   return (
     <div className="safe-top mx-auto flex min-h-dvh w-full max-w-app flex-col px-5 pt-6">
@@ -72,37 +72,13 @@ export function OnboardingPage() {
         ‹
       </button>
 
-      {step === 'service' && (
-        <ServiceStep
-          branch={profile.branch}
-          enlistedOn={profile.enlistedOn}
-          dischargeOn={profile.dischargeOn}
-          onChange={profile.patch}
-          onNext={goNext}
-        />
-      )}
+      {step === 'consent' && <ConsentStep onNext={goNext} />}
 
-      {step === 'environment' && (
-        <EnvironmentStep
-          value={profile.environments}
-          onChange={(environments) => profile.patch({ environments })}
-          onNext={goNext}
-        />
-      )}
-
-      {step === 'region' && (
-        <RegionStep
-          value={profile.region}
-          onChange={(region) => profile.patch({ region })}
-          onNext={goNext}
-        />
-      )}
-
-      {step === 'time' && (
-        <TimeStep
-          value={profile.checkInTime}
-          onChange={(checkInTime) => profile.patch({ checkInTime })}
-          onFinish={(notificationEnabled) => finish.mutate(notificationEnabled)}
+      {step === 'notification' && (
+        <NotificationStep
+          value={checkInTime}
+          onChange={(checkInTime) => patchProfile({ checkInTime })}
+          onFinish={(enabled) => finish.mutate(enabled)}
           submitting={finish.isPending}
           errorMessage={finish.isError ? toUserMessage(finish.error) : null}
         />
@@ -111,13 +87,27 @@ export function OnboardingPage() {
   );
 }
 
-// --- 1. 인트로 ----------------------------------------------------------------
+/**
+ * 알림을 켤 때만 브라우저 권한을 묻는다.
+ * 켜지 않는 사용자에게 권한 팝업을 띄우면 그 자체가 거절로 기록된다.
+ */
+async function requestPermission(enabled: boolean): Promise<ApiNotificationPermission> {
+  if (typeof Notification === 'undefined') return 'UNSUPPORTED';
+  if (!enabled) return 'DEFAULT';
+
+  const result = await Notification.requestPermission();
+  if (result === 'granted') return 'GRANTED';
+  if (result === 'denied') return 'DENIED';
+  return 'DEFAULT';
+}
+
+// --- 화면 1. 서비스 이용범위 ------------------------------------------------------
 
 const HIGHLIGHTS: { icon: IconName; title: string; caption: string }[] = [
-  { icon: 'clock', title: '30초 기록', caption: '간단하게' },
-  { icon: 'note', title: '상황 기록', caption: '피부와 함께한 상황들' },
-  { icon: 'help', title: 'AI 가이드', caption: '지금 가능한 관리 행동' },
-  { icon: 'face', title: '경과확인', caption: '다음 날 변화 확인' },
+  { icon: 'note', title: '상황 기록', caption: '불편과 직전 상황' },
+  { icon: 'help', title: '관리 안내', caption: '오늘 가능한 행동' },
+  { icon: 'face', title: '경과 확인', caption: '다음 날 변화' },
+  { icon: 'clock', title: '이전 경험', caption: '비슷했던 기록' },
 ];
 
 /** 나무 비트맵의 글자별 색. 일러스트 전용이라 팔레트에 넣지 않았다. */
@@ -129,15 +119,15 @@ const TREE_TINTS: Record<string, string> = {
   E: 'bg-[#728878]',
 };
 
-function IntroStep({ onStart }: { onStart: () => void }) {
+function ScopeStep({ onStart }: { onStart: () => void }) {
   return (
     <div className="safe-top mx-auto flex min-h-dvh w-full max-w-app flex-col px-5 pt-6">
       <header className="mt-8">
         <Wordmark height={38} />
         <p className="mt-4 text-xs leading-relaxed text-fg-muted">
-          오늘의 피부 상태를 간단하게 기록하고,
+          피부 불편과 직전 상황을 기록하고,
           <br />
-          지금 필요한 관리 방법을 확인해보세요.
+          오늘 가능한 관리 행동을 확인하는 서비스예요.
         </p>
       </header>
 
@@ -150,7 +140,7 @@ function IntroStep({ onStart }: { onStart: () => void }) {
         className="mx-auto my-auto"
       />
 
-      <div className="grid grid-cols-4 pb-8">
+      <div className="grid grid-cols-4 pb-6">
         {HIGHLIGHTS.map((item, index) => (
           <div
             key={item.title}
@@ -170,7 +160,7 @@ function IntroStep({ onStart }: { onStart: () => void }) {
        * 유저플로우 1-1 은 제공 범위와 함께 **제공하지 않는 것**을 명시하도록 되어 있다.
        * 진단·처방으로 오인되면 서비스 자체가 성립하지 않으므로 문구를 빼지 않는다.
        */}
-      <p className="mt-6 rounded-card bg-card-raised px-4 py-3 text-[11px] leading-relaxed text-fg-muted">
+      <p className="rounded-card bg-card-raised px-4 py-3 text-[11px] leading-relaxed text-fg-muted">
         피부질환 진단과 의약품 처방은 제공하지 않아요. 증상이 심해지면 의무실이나 의료진에게 확인해
         주세요.
       </p>
@@ -182,121 +172,78 @@ function IntroStep({ onStart }: { onStart: () => void }) {
   );
 }
 
-// --- 2. 복무 정보 --------------------------------------------------------------
+// --- 화면 2. 필수 동의 ------------------------------------------------------------
 
-function ServiceStep({
-  branch,
-  enlistedOn,
-  dischargeOn,
-  onChange,
-  onNext,
-}: {
-  branch: MilitaryBranch | null;
-  enlistedOn: string | null;
-  dischargeOn: string | null;
-  onChange: (partial: Partial<ServiceProfile>) => void;
-  onNext: () => void;
-}) {
-  // 전역예정일은 자동으로 채우되 사용자가 고칠 수 있게 둔다. (설정 화면과 같은 규칙)
-  const handleEnlisted = (enlistedOn: string) =>
-    onChange(applyServiceChange({ branch, enlistedOn: null }, { enlistedOn }));
+/**
+ * 계약이 받는 동의는 `sensitiveDataConsent` 하나뿐이지만, 문서는 두 항목을
+ * 따로 보여주도록 되어 있다. 화면에서 나눠 받고 둘 다 받은 경우에만 진행한다.
+ */
+const CONSENTS = [
+  {
+    key: 'privacy',
+    label: '(필수) 개인정보 수집·이용 동의',
+    detail: '계정 정보와 피부 기록을 서비스 제공 목적으로 처리해요.',
+  },
+  {
+    key: 'sensitive',
+    label: '(필수) 민감정보 처리 동의',
+    detail: '피부 상태 기록은 민감정보에 해당해요. 진단·처방 목적으로 쓰지 않아요.',
+  },
+] as const;
 
-  const handleBranch = (value: string) =>
-    onChange(applyServiceChange({ branch: null, enlistedOn }, { branch: value as MilitaryBranch }));
-
-  const valid = Boolean(branch && enlistedOn && dischargeOn);
+function ConsentStep({ onNext }: { onNext: () => void }) {
+  const [agreed, setAgreed] = useState<Record<string, boolean>>({});
+  const allAgreed = CONSENTS.every((c) => agreed[c.key]);
 
   return (
     <StepBody
-      title={'복무 정보를\n입력해주세요.'}
+      title={'서비스 이용을 위해\n동의가 필요해요'}
       footer={
-        <PrimaryButton onClick={onNext} disabled={!valid}>
+        <PrimaryButton onClick={onNext} disabled={!allAgreed}>
           다음
         </PrimaryButton>
       }
     >
       <div className="flex flex-col gap-3">
-        <SelectField
-          label="군종 선택"
-          value={branch}
-          onChange={handleBranch}
-          options={BRANCH_OPTIONS}
-        />
-        <DateField label="입대일" value={enlistedOn} onChange={handleEnlisted} />
-        <DateField
-          label="전역예정일"
-          value={dischargeOn}
-          onChange={(v) => onChange({ dischargeOn: v })}
-        />
+        {CONSENTS.map((item) => {
+          const checked = Boolean(agreed[item.key]);
+          return (
+            <button
+              key={item.key}
+              type="button"
+              role="checkbox"
+              aria-checked={checked}
+              onClick={() => setAgreed((prev) => ({ ...prev, [item.key]: !checked }))}
+              className="flex items-start gap-3 rounded-card bg-panel px-4 py-4 text-left"
+            >
+              <span
+                aria-hidden="true"
+                className={clsx(
+                  'mt-0.5 size-6 shrink-0 rounded-full transition',
+                  checked ? 'bg-info' : 'border border-panel-label bg-base',
+                )}
+              />
+              <span className="flex-1">
+                <span className="block text-sm font-semibold text-panel-text">{item.label}</span>
+                <span className="mt-1 block text-xs leading-relaxed text-panel-label">
+                  {item.detail}
+                </span>
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       <p className="mt-3 px-2 text-xs leading-relaxed text-fg-faint">
-        전역예정일은 군종과 입대일로 자동 계산했어요. 다르면 직접 수정할 수 있어요.
+        두 항목 모두 동의해야 서비스를 이용할 수 있어요.
       </p>
     </StepBody>
   );
 }
 
-// --- 3. 자주 겪는 환경 ----------------------------------------------------------
+// --- 화면 3. 알림 설정 ------------------------------------------------------------
 
-function EnvironmentStep({
-  value,
-  onChange,
-  onNext,
-}: {
-  value: string[];
-  onChange: (value: string[]) => void;
-  onNext: () => void;
-}) {
-  return (
-    <StepBody
-      title={'자주 겪는 군 생활 환경을\n선택해주세요.'}
-      footer={
-        <PrimaryButton onClick={onNext} disabled={value.length === 0}>
-          다음
-        </PrimaryButton>
-      }
-    >
-      <ChoiceList
-        mode="multi"
-        choices={[...ENVIRONMENT_OPTIONS]}
-        value={value}
-        exclusiveValue="NONE"
-        onChange={onChange}
-      />
-    </StepBody>
-  );
-}
-
-// --- 4. 기상 권역 --------------------------------------------------------------
-
-function RegionStep({
-  value,
-  onChange,
-  onNext,
-}: {
-  value: string | null;
-  onChange: (value: string) => void;
-  onNext: () => void;
-}) {
-  return (
-    <StepBody
-      title={'기상정보 권역을\n선택해주세요'}
-      footer={
-        <PrimaryButton onClick={onNext} disabled={!value}>
-          다음
-        </PrimaryButton>
-      }
-    >
-      {/* 시안은 픽셀 지도에서 권역을 고르는 형태다. 지도 에셋이 나오면 교체한다. */}
-      <ChoiceList mode="single" choices={[...REGION_OPTIONS]} value={value} onChange={onChange} />
-    </StepBody>
-  );
-}
-
-// --- 5. 기본 점호 시각 ----------------------------------------------------------
-
-function TimeStep({
+function NotificationStep({
   value,
   onChange,
   onFinish,
@@ -311,12 +258,12 @@ function TimeStep({
 }) {
   return (
     <StepBody
-      title={'기본 피부점호\n시간을 설정해주세요'}
+      title={'피부 점호 알림을\n설정해주세요'}
       footer={
         <>
           {errorMessage && <p className="mb-3 px-2 text-sm text-caution-500">{errorMessage}</p>}
           <ArrowButton onClick={() => onFinish(true)} disabled={submitting}>
-            {submitting ? '설정 중…' : '시작하기'}
+            {submitting ? '설정 중…' : '알림 받고 시작하기'}
           </ArrowButton>
 
           {/* 유저플로우 1-3 은 알림을 끄고 시작하는 길을 함께 제시한다. */}

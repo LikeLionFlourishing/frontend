@@ -13,8 +13,11 @@ import { SettingsLayout, SettingsSection } from './SettingsLayout';
 /**
  * 프로필 관리.
  *
- * 온보딩에서 받은 값을 다시 고치는 화면이다. 저장 버튼 없이 즉시 반영한다.
- * 저장 위치는 여전히 로컬이다 — `serviceProfileStore` 의 TODO 참고.
+ * 복무 정보·자주 겪는 환경·기상 권역을 **받는 유일한 화면**이다.
+ * 문서의 온보딩(유저플로우 1)은 이용범위·동의·알림 세 화면뿐이라
+ * 최초 이용을 막지 않도록 여기로 옮겼다. 비어 있는 상태가 정상이다.
+ *
+ * 저장 버튼 없이 즉시 반영하며 저장 위치는 로컬이다 — `serviceProfileStore` 의 TODO 참고.
  */
 export function ProfilePage() {
   const profile = useServiceProfileStore();

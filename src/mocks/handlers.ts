@@ -167,6 +167,9 @@ export const handlers = [
   // --- Onboarding -----------------------------------------------------------
   http.put(`${V1}/me/onboarding`, async ({ request }) => {
     const body = (await request.json()) as Record<string, unknown>;
+    // 온보딩 완료를 확정하는 건 이 호출이다. (문서의 `최초 이용` 세 화면이 여기로 모인다)
+    mockState.onboardingCompleted = true;
+    mockState.notificationEnabled = Boolean(body.notificationEnabled);
     return HttpResponse.json({
       consentVersion: String(body.consentVersion ?? '2026-08-09'),
       consentedAt: new Date().toISOString(),
@@ -389,9 +392,6 @@ export const handlers = [
   ),
   http.patch(`${V1}/me/notification-settings`, async ({ request }) => {
     const body = (await request.json()) as { enabled: boolean };
-    // 온보딩 마지막 단계가 이 호출이라 여기서 완료로 표시한다.
-    // (복무 정보·환경·권역·점호 시각을 저장할 엔드포인트가 계약에 없어서 생긴 우회다)
-    mockState.onboardingCompleted = true;
     mockState.notificationEnabled = body.enabled;
     return HttpResponse.json({
       enabled: body.enabled,

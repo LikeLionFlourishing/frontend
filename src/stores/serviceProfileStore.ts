@@ -2,7 +2,10 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 /**
- * 온보딩에서 받지만 **아직 저장할 API 가 없는** 값들.
+ * 설정 > 프로필 관리에서 받지만 **아직 저장할 API 가 없는** 값들.
+ *
+ * 문서의 온보딩은 이용범위·동의·알림 세 화면뿐이라 여기 값들은 필수가 아니다.
+ * 화면은 비어 있는 상태를 정상으로 다뤄야 한다(홈 D-Day 참고).
  *
  * OpenAPI 의 `PUT /me/onboarding` 은 동의와 알림 수신 여부만 받는다.
  * 복무 정보·자주 겪는 환경·기상 권역·기본 점호 시각은 계약에 없어서
