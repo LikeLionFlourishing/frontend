@@ -3,6 +3,7 @@ import { ChoiceList } from '@/components/ChoiceList';
 import { BottomSheet } from '@/components/BottomSheet';
 import { InfoButton, PrimaryButton } from '@/components/StepLayout';
 import { labelOf, labelsOf } from '@/hooks/useReportOptions';
+import { clsx } from '@/lib/clsx';
 import { EXCLUSIVE_OPTION } from '@/api/schemas';
 import type {
   AppearanceSelection,
@@ -15,11 +16,16 @@ import type {
 
 export interface ConfirmValues {
   primaryArea: BodyArea | null;
+  /** 대표 부위 외에 불편한 곳. 계약상 선택값이라 비어 있어도 저장된다. */
+  otherAreasNote: string | null;
   appearances: AppearanceSelection;
   sensations: SensationSelection;
   situations: SituationSelection;
   careAvailability: CareAvailability | null;
 }
+
+/** `otherAreasNote` 의 계약상 상한. */
+const NOTE_MAX_LENGTH = 300;
 
 interface Props {
   options: SkinReportOptions;
@@ -33,12 +39,17 @@ interface Props {
 
 type FieldKey = keyof ConfirmValues;
 
-const FIELDS: { key: FieldKey; label: string }[] = [
-  { key: 'primaryArea', label: '부위' },
-  { key: 'appearances', label: '겉모습' },
-  { key: 'sensations', label: '불편' },
-  { key: 'situations', label: '직전 상황' },
-  { key: 'careAvailability', label: '현재 상태' },
+/**
+ * `required: false` 인 항목은 비어 있어도 다음으로 넘어갈 수 있어야 한다.
+ * 유저플로우 3 의 `다른 부위는 추가 설명에 작성합니다` 가 여기 해당한다.
+ */
+const FIELDS: { key: FieldKey; label: string; required: boolean }[] = [
+  { key: 'primaryArea', label: '부위', required: true },
+  { key: 'otherAreasNote', label: '다른 부위 추가 설명', required: false },
+  { key: 'appearances', label: '겉모습', required: true },
+  { key: 'sensations', label: '불편', required: true },
+  { key: 'situations', label: '직전 상황', required: true },
+  { key: 'careAvailability', label: '현재 상태', required: true },
 ];
 
 /**
@@ -54,6 +65,8 @@ export function ConfirmStep({ options, values, onChange, onConfirm, onRewrite, a
     switch (key) {
       case 'primaryArea':
         return labelOf(options.areas, values.primaryArea);
+      case 'otherAreasNote':
+        return values.otherAreasNote ?? '';
       case 'appearances':
         return labelsOf(options.appearances, values.appearances);
       case 'sensations':
@@ -66,7 +79,7 @@ export function ConfirmStep({ options, values, onChange, onConfirm, onRewrite, a
   };
 
   const isEmpty = (key: FieldKey) => displayOf(key).length === 0;
-  const allFilled = FIELDS.every((f) => !isEmpty(f.key));
+  const allFilled = FIELDS.every((f) => !f.required || !isEmpty(f.key));
 
   return (
     <div className="flex flex-col gap-5">
@@ -86,8 +99,17 @@ export function ConfirmStep({ options, values, onChange, onConfirm, onRewrite, a
           >
             <span className="min-w-0">
               <span className="block text-xs text-panel-label">{field.label}</span>
-              <span className="mt-1 block truncate text-body-strong font-semibold text-panel-text">
-                {isEmpty(field.key) ? '선택해주세요' : displayOf(field.key)}
+              <span
+                className={clsx(
+                  'mt-1 block truncate text-body-strong font-semibold',
+                  isEmpty(field.key) && !field.required ? 'text-panel-label' : 'text-panel-text',
+                )}
+              >
+                {isEmpty(field.key)
+                  ? field.required
+                    ? '선택해주세요'
+                    : '없어요'
+                  : displayOf(field.key)}
               </span>
             </span>
             <span aria-hidden="true" className="shrink-0 text-sm font-medium text-info">
@@ -152,6 +174,14 @@ function EditSheet({
         />
       )}
 
+      {field === 'otherAreasNote' && (
+        <NoteField
+          value={values.otherAreasNote ?? ''}
+          // 빈 문자열이 아니라 null 로 보내야 한다. 계약이 nullable 로 정의돼 있다.
+          onChange={(text) => onChange({ otherAreasNote: text.trim() === '' ? null : text })}
+        />
+      )}
+
       {field === 'appearances' && (
         <ChoiceList
           mode="multi"
@@ -191,5 +221,31 @@ function EditSheet({
         />
       )}
     </BottomSheet>
+  );
+}
+
+/** 대표 부위 하나만 고르게 되어 있어서, 나머지는 여기에 글로 남긴다. (유저플로우 3) */
+function NoteField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="px-1 text-xs leading-relaxed text-fg-muted">
+        대표 부위 말고 다른 곳도 불편하다면 적어주세요. 없으면 비워 두어도 괜찮아요.
+      </p>
+
+      <div className="relative">
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          maxLength={NOTE_MAX_LENGTH}
+          rows={4}
+          placeholder="예: 왼쪽 볼도 살짝 붉어요."
+          aria-label="다른 부위 추가 설명"
+          className="w-full resize-none rounded-card bg-panel px-4 py-4 text-base text-panel-text placeholder:text-panel-label focus:outline-none focus:ring-2 focus:ring-info"
+        />
+        <span className="pointer-events-none absolute bottom-4 right-4 text-xs text-panel-label">
+          {value.length}/{NOTE_MAX_LENGTH}
+        </span>
+      </div>
+    </div>
   );
 }

@@ -176,6 +176,8 @@ function StructuredRows({
   const c = report.confirmed;
   const rows = [
     { label: '부위', value: labelOf(options?.areas, c.primaryArea) },
+    // 선택값이라 비어 있으면 줄 자체를 빼는 편이 읽기 좋다.
+    ...(c.otherAreasNote ? [{ label: '다른 부위', value: c.otherAreasNote }] : []),
     { label: '겉모습', value: labelsOf(options?.appearances, c.appearances) },
     { label: '불편', value: labelsOf(options?.sensations, c.sensations) },
     { label: '상황', value: labelsOf(options?.situations, c.situations) },

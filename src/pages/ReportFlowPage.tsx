@@ -178,6 +178,7 @@ export function ReportFlowPage() {
 
   const confirmValues: ConfirmValues = {
     primaryArea: draft.primaryArea,
+    otherAreasNote: draft.otherAreasNote,
     appearances: draft.appearances,
     sensations: draft.sensations,
     situations: draft.situations,

@@ -116,7 +116,8 @@ export const selfCareReport: SkinReportDetail = {
   rawText: '오늘 아침에 면도하고 야외훈련했는데 오른쪽 턱이 빨갛고 따가워요. 지금은 씻었어요.',
   confirmed: {
     primaryArea: 'RIGHT_CHIN',
-    otherAreasNote: null,
+    // 선택값이지만 시연 데이터는 채워 둔다 — 비어 있으면 이 항목이 있는지도 모른다.
+    otherAreasNote: '왼쪽 볼도 살짝 붉어요.',
     appearances: ['REDNESS'],
     sensations: ['STINGING_BURNING'],
     situations: ['SHAVING', 'SWEAT_OR_DUST_AFTER_TRAINING'],
