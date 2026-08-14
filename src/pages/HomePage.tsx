@@ -60,7 +60,10 @@ export function HomePage() {
             options={optionsQuery.data}
             onOpen={(id) => navigate(`/records/${id}`)}
           />
-          <NextCheckCard time={notificationQuery.data?.time ?? '17:30'} />
+          <NextCheckCard
+            time={notificationQuery.data?.time ?? '17:30'}
+            onOpen={() => navigate('/calendar')}
+          />
         </div>
       </div>
     </div>
@@ -269,18 +272,23 @@ function RecentRecordCard({
   );
 }
 
-function NextCheckCard({ time }: { time: string }) {
+/** 다음 점호 시각. 누르면 날짜별로 시각을 조정하는 캘린더로 간다. */
+function NextCheckCard({ time, onOpen }: { time: string; onOpen: () => void }) {
   return (
     <MiniCard label="NEXT CHECK">
-      <div className="flex items-center justify-between gap-2">
-        <div>
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex w-full items-center justify-between gap-2"
+      >
+        <div className="text-left">
           <p className="text-sm text-fg-muted">내일 경과 확인</p>
           <p className="text-body-strong font-semibold text-info">{time}</p>
         </div>
         <span className="grid size-9 shrink-0 place-items-center rounded-full border border-dashed border-info text-info">
           <Icon name="bell" className="size-4" />
         </span>
-      </div>
+      </button>
     </MiniCard>
   );
 }
