@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ChoiceList } from '@/components/ChoiceList';
 import { BottomSheet } from '@/components/BottomSheet';
+import { Sentences } from '@/components/Sentences';
 import { InfoButton, PrimaryButton } from '@/components/StepLayout';
 import { labelOf, labelsOf } from '@/hooks/useReportOptions';
 import { clsx } from '@/lib/clsx';
@@ -230,7 +231,7 @@ function NoteField({ value, onChange }: { value: string; onChange: (value: strin
   return (
     <div className="flex flex-col gap-2">
       <p className="px-1 text-xs leading-relaxed text-fg-muted">
-        대표 부위 말고 다른 곳도 불편하다면 적어주세요. 없으면 비워 두어도 괜찮아요.
+        <Sentences text="대표 부위 말고 다른 곳도 불편하다면 적어주세요. 없으면 비워 두어도 괜찮아요." />
       </p>
 
       <div className="relative">

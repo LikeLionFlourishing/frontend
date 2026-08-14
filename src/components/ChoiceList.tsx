@@ -107,15 +107,16 @@ export function ChoiceList(props: Props) {
                 disabled && 'opacity-50',
               )}
             >
+              {/* 선택해도 원을 통째로 칠하지 않는다. 흰 원 안에 더 작은 파란 원이 들어간다. */}
               {align === 'start' && (
                 <span
                   aria-hidden="true"
                   className={clsx(
-                    'grid size-[22px] shrink-0 place-items-center rounded-full border-2 transition',
-                    selected ? 'border-info bg-info' : 'border-panel-label',
+                    'grid size-[22px] shrink-0 place-items-center rounded-full border-2 bg-base transition',
+                    selected ? 'border-info' : 'border-panel-label',
                   )}
                 >
-                  {selected && <span className="size-2 rounded-full bg-white" />}
+                  {selected && <span className="size-3 rounded-full bg-info" />}
                 </span>
               )}
               <span>{choice.label}</span>

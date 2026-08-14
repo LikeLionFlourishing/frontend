@@ -1,4 +1,5 @@
 import { ChoiceList } from '@/components/ChoiceList';
+import { Sentences } from '@/components/Sentences';
 import { DateField, SelectField } from '@/components/TextField';
 import {
   BRANCH_OPTIONS,
@@ -46,7 +47,7 @@ export function ProfilePage() {
           />
         </div>
         <p className="mt-3 px-2 text-xs leading-relaxed text-fg-faint">
-          군종이나 입대일을 바꾸면 전역예정일이 다시 계산돼요. 실제와 다르면 직접 고칠 수 있어요.
+          <Sentences text="군종이나 입대일을 바꾸면 전역예정일이 다시 계산돼요. 실제와 다르면 직접 고칠 수 있어요." />
         </p>
       </SettingsSection>
 

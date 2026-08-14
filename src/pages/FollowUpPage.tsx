@@ -5,6 +5,7 @@ import { followUps, reports } from '@/api/endpoints';
 import { ApiError, toUserMessage } from '@/api/problem';
 import { queryClient, queryKeys } from '@/app/queryClient';
 import { ChoiceList } from '@/components/ChoiceList';
+import { Sentences } from '@/components/Sentences';
 import { PrimaryButton, StepLayout } from '@/components/StepLayout';
 import {
   ACTION_COMPLETION_LABEL,
@@ -123,7 +124,9 @@ export function FollowUpPage() {
       footer={
         <>
           {save.isError && (
-            <p className="mb-3 px-2 text-sm text-caution-500">{saveErrorMessage(save.error)}</p>
+            <p className="mb-3 px-2 text-sm text-caution-500">
+              <Sentences text={saveErrorMessage(save.error)} />
+            </p>
           )}
           <PrimaryButton onClick={submit} disabled={!ready || save.isPending}>
             {save.isPending ? '저장 중…' : '기록 저장하기'}

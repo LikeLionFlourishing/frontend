@@ -1,3 +1,4 @@
+import { Sentences } from '@/components/Sentences';
 import { PrimaryButton } from '@/components/StepLayout';
 import { clsx } from '@/lib/clsx';
 
@@ -49,7 +50,11 @@ export function RawTextStep({
         </span>
       </div>
 
-      {errorMessage && <p className="text-sm text-accent">{errorMessage}</p>}
+      {errorMessage && (
+        <p className="text-sm text-caution-500">
+          <Sentences text={errorMessage} />
+        </p>
+      )}
 
       {/*
        * 한 문장 작성이 어려운 사용자를 위한 선택형 보조 입력 (F-02).

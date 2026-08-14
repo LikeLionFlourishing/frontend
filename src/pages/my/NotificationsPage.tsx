@@ -3,6 +3,7 @@ import { notifications } from '@/api/endpoints';
 import { toUserMessage } from '@/api/problem';
 import { queryKeys } from '@/app/queryClient';
 import { TimeWheel } from '@/components/TimeWheel';
+import { Sentences } from '@/components/Sentences';
 import { clsx } from '@/lib/clsx';
 import {
   isPushConfigured,
@@ -64,15 +65,21 @@ export function NotificationsPage() {
 
         {!pushReady && !enabled && (
           <p className="mt-2 px-2 text-xs leading-relaxed text-fg-faint">
-            {isPushSupported()
-              ? // TODO(백엔드): VAPID 공개키를 받으면 `VITE_VAPID_PUBLIC_KEY` 에 넣는다.
-                '알림 서버 준비가 끝나면 켤 수 있어요.'
-              : '이 브라우저는 알림을 지원하지 않아요. 앱을 홈 화면에 추가하면 받을 수 있어요.'}
+            <Sentences
+              text={
+                isPushSupported()
+                  ? // TODO(백엔드): VAPID 공개키를 받으면 `VITE_VAPID_PUBLIC_KEY` 에 넣는다.
+                    '알림 서버 준비가 끝나면 켤 수 있어요.'
+                  : '이 브라우저는 알림을 지원하지 않아요. 앱을 홈 화면에 추가하면 받을 수 있어요.'
+              }
+            />
           </p>
         )}
 
         {toggle.isError && (
-          <p className="mt-2 px-2 text-sm text-caution-500">{pushErrorMessage(toggle.error)}</p>
+          <p className="mt-2 px-2 text-sm text-caution-500">
+            <Sentences text={pushErrorMessage(toggle.error)} />
+          </p>
         )}
       </SettingsSection>
 

@@ -10,6 +10,7 @@ import { TimeWheel } from '@/components/TimeWheel';
 import { Icon, type IconName } from '@/components/Icon';
 import { Wordmark } from '@/components/Wordmark';
 import { PixelArt } from '@/components/PixelArt';
+import { Sentences } from '@/components/Sentences';
 import { ONBOARDING_TREE, TREE_CELL, TREE_GAP } from '@/components/onboardingTree';
 import { track } from '@/lib/analytics';
 import { clsx } from '@/lib/clsx';
@@ -165,8 +166,7 @@ function ScopeStep({ onStart }: { onStart: () => void }) {
        * 진단·처방으로 오인되면 서비스 자체가 성립하지 않으므로 문구를 빼지 않는다.
        */}
       <p className="rounded-card bg-card-raised px-4 py-3 text-[11px] leading-relaxed text-fg-muted">
-        피부질환 진단과 의약품 처방은 제공하지 않아요. 증상이 심해지면 의무실이나 의료진에게 확인해
-        주세요.
+        <Sentences text="피부질환 진단과 의약품 처방은 제공하지 않아요. 증상이 심해지면 의무실이나 의료진에게 확인해 주세요." />
       </p>
 
       <div className="pb-8 pt-6">
@@ -226,13 +226,16 @@ function ConsentStep({ onNext }: { onNext: () => void }) {
                 onClick={() => setAgreed((prev) => ({ ...prev, [item.key]: !checked }))}
                 className="flex flex-1 items-center gap-[13px] text-left"
               >
+                {/* 선택해도 원을 통째로 칠하지 않는다. 흰 원 안에 더 작은 파란 원이 들어간다. */}
                 <span
                   aria-hidden="true"
                   className={clsx(
-                    'size-[22px] shrink-0 rounded-full transition',
-                    checked ? 'bg-info' : 'border-2 border-panel-label bg-base',
+                    'grid size-[22px] shrink-0 place-items-center rounded-full border-2 bg-base transition',
+                    checked ? 'border-info' : 'border-panel-label',
                   )}
-                />
+                >
+                  {checked && <span className="size-3 rounded-full bg-info" />}
+                </span>
                 <span className="text-[11px] font-semibold text-panel-text">{item.label}</span>
               </button>
 

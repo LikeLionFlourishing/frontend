@@ -8,6 +8,7 @@ import { queryKeys } from '@/app/queryClient';
 import { AiLoading } from '@/components/AiLoading';
 import { MedicalDisclaimer } from '@/components/ResultSection';
 import { PrimaryButton, StepLayout } from '@/components/StepLayout';
+import { Sentences } from '@/components/Sentences';
 import { labelOf, labelsOf, useReportOptions } from '@/hooks/useReportOptions';
 import { track } from '@/lib/analytics';
 import { formatDotDate } from '@/lib/date';
@@ -194,7 +195,7 @@ export function ReportResultPage() {
         {!opened && care.aiGenerationStatus === 'FALLBACK' && !care.retryUsed && (
           <div className="mt-4 rounded-card bg-card-raised px-5 py-4">
             <p className="text-sm text-fg-muted">
-              안내 문구를 다시 만들 수 있어요. 관리 내용 자체는 바뀌지 않습니다.
+              <Sentences text="안내 문구를 다시 만들 수 있어요. 관리 내용 자체는 바뀌지 않습니다." />
             </p>
             <button
               type="button"
