@@ -5,6 +5,7 @@ import { auth, onboarding } from '@/api/endpoints';
 import { toUserMessage } from '@/api/problem';
 import { useAuthStore } from '@/stores/authStore';
 import { PrimaryButton } from '@/components/StepLayout';
+import { BottomSheet } from '@/components/BottomSheet';
 import { TimeWheel } from '@/components/TimeWheel';
 import { Icon, type IconName } from '@/components/Icon';
 import { Wordmark } from '@/components/Wordmark';
@@ -103,11 +104,12 @@ async function requestPermission(enabled: boolean): Promise<ApiNotificationPermi
 
 // --- 화면 1. 서비스 이용범위 ------------------------------------------------------
 
+/** 시안(15:6140)의 4분할 소개. 문구와 아이콘 모두 시안 그대로다. */
 const HIGHLIGHTS: { icon: IconName; title: string; caption: string }[] = [
-  { icon: 'note', title: '상황 기록', caption: '불편과 직전 상황' },
-  { icon: 'help', title: '관리 안내', caption: '오늘 가능한 행동' },
-  { icon: 'face', title: '경과 확인', caption: '다음 날 변화' },
-  { icon: 'clock', title: '이전 경험', caption: '비슷했던 기록' },
+  { icon: 'clock', title: '30초 기록', caption: '간단하게' },
+  { icon: 'situation', title: '상황 기록', caption: '피부와 함께한 상황들' },
+  { icon: 'ai', title: 'AI 가이드', caption: '지금 가능한 관리 행동' },
+  { icon: 'progress', title: '경과확인', caption: '다음 날 변화 확인' },
 ];
 
 /** 나무 비트맵의 글자별 색. 일러스트 전용이라 팔레트에 넣지 않았다. */
@@ -125,9 +127,9 @@ function ScopeStep({ onStart }: { onStart: () => void }) {
       <header className="mt-8">
         <Wordmark height={38} />
         <p className="mt-4 text-xs leading-relaxed text-fg-muted">
-          피부 불편과 직전 상황을 기록하고,
+          오늘의 피부 상태를 간단하게 기록하고,
           <br />
-          오늘 가능한 관리 행동을 확인하는 서비스예요.
+          지금 필요한 관리 방법을 확인해보세요.
         </p>
       </header>
 
@@ -193,50 +195,71 @@ const CONSENTS = [
 
 function ConsentStep({ onNext }: { onNext: () => void }) {
   const [agreed, setAgreed] = useState<Record<string, boolean>>({});
+  const [detail, setDetail] = useState<(typeof CONSENTS)[number] | null>(null);
   const allAgreed = CONSENTS.every((c) => agreed[c.key]);
 
   return (
     <StepBody
       title={'서비스 이용을 위해\n동의가 필요해요'}
+      subtitle="모든 항목에 동의해야 서비스를 이용할 수 있어요."
       footer={
         <PrimaryButton onClick={onNext} disabled={!allAgreed}>
           다음
         </PrimaryButton>
       }
     >
-      <div className="flex flex-col gap-3">
+      {/* 시안 15:4618 기준 행 높이 72, 좌 여백 25, 원 22, 우측에 `자세히`. */}
+      <div className="flex flex-col gap-[7px]">
         {CONSENTS.map((item) => {
           const checked = Boolean(agreed[item.key]);
           return (
-            <button
+            <div
               key={item.key}
-              type="button"
-              role="checkbox"
-              aria-checked={checked}
-              onClick={() => setAgreed((prev) => ({ ...prev, [item.key]: !checked }))}
-              className="flex items-start gap-3 rounded-card bg-panel px-4 py-4 text-left"
+              className="flex h-[72px] items-center gap-[13px] rounded-card bg-panel pl-[25px] pr-5"
             >
-              <span
-                aria-hidden="true"
-                className={clsx(
-                  'mt-0.5 size-6 shrink-0 rounded-full transition',
-                  checked ? 'bg-info' : 'border border-panel-label bg-base',
-                )}
-              />
-              <span className="flex-1">
-                <span className="block text-sm font-semibold text-panel-text">{item.label}</span>
-                <span className="mt-1 block text-xs leading-relaxed text-panel-label">
-                  {item.detail}
-                </span>
-              </span>
-            </button>
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={checked}
+                onClick={() => setAgreed((prev) => ({ ...prev, [item.key]: !checked }))}
+                className="flex flex-1 items-center gap-[13px] text-left"
+              >
+                <span
+                  aria-hidden="true"
+                  className={clsx(
+                    'size-[22px] shrink-0 rounded-full transition',
+                    checked ? 'bg-info' : 'border-2 border-panel-label bg-base',
+                  )}
+                />
+                <span className="text-[11px] font-semibold text-panel-text">{item.label}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setDetail(item)}
+                className="shrink-0 text-[11px] text-panel-label underline underline-offset-2"
+              >
+                자세히
+              </button>
+            </div>
           );
         })}
       </div>
 
-      <p className="mt-3 px-2 text-xs leading-relaxed text-fg-faint">
-        두 항목 모두 동의해야 서비스를 이용할 수 있어요.
-      </p>
+      <BottomSheet
+        open={detail !== null}
+        onClose={() => setDetail(null)}
+        title={detail?.label ?? ''}
+        footer={<PrimaryButton onClick={() => setDetail(null)}>닫기</PrimaryButton>}
+      >
+        <p className="whitespace-pre-line text-sm leading-relaxed text-fg-muted">
+          {detail?.detail}
+        </p>
+        {/* TODO(기획·법무): 확정된 약관 전문으로 교체. 지금은 처리 범위만 사실대로 적어 둔다. */}
+        <p className="mt-4 text-xs leading-relaxed text-fg-faint">
+          약관 전문은 준비 중이에요. 확정되면 이 화면에서 전체 내용을 볼 수 있어요.
+        </p>
+      </BottomSheet>
     </StepBody>
   );
 }
@@ -295,16 +318,19 @@ function NotificationStep({
 
 function StepBody({
   title,
+  subtitle,
   children,
   footer,
 }: {
   title: string;
+  subtitle?: string;
   children: React.ReactNode;
   footer: React.ReactNode;
 }) {
   return (
     <>
       <h1 className="whitespace-pre-line text-2xl font-bold leading-snug text-fg">{title}</h1>
+      {subtitle && <p className="mt-2 text-xs text-fg-muted">{subtitle}</p>}
       <div className="mt-10 flex flex-1 flex-col">{children}</div>
       <div className="safe-bottom sticky bottom-0 bg-base pb-6 pt-4">{footer}</div>
     </>
@@ -325,12 +351,13 @@ function ArrowButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex w-full items-center justify-center rounded-pill bg-accent px-6 py-4 text-body-strong font-semibold text-panel-text disabled:opacity-50"
+      // 시안 15:6141 기준 370×79, 화살표 원 59px
+      className="flex h-[79px] w-full items-center rounded-pill bg-accent pl-6 pr-[10px] text-body-strong font-semibold text-panel-text disabled:opacity-50"
     >
       <span className="flex-1 text-center">{children}</span>
       <span
         aria-hidden="true"
-        className="grid size-11 place-items-center rounded-full bg-fg text-lg text-white"
+        className="grid size-[59px] shrink-0 place-items-center rounded-full bg-fg text-xl text-white"
       >
         →
       </span>

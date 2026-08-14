@@ -52,10 +52,11 @@ export function HomePage() {
       <DischargeWidget serverDate={data.serverDate} />
       <TodayCheckCard data={data} onNavigate={navigate} />
 
-      <div className="grid grid-cols-2 gap-3">
+      {/* 시안 기준 좌우 6px, 위아래 8px 간격이다. (15:8672 / 15:8681 / 15:8688) */}
+      <div className="grid grid-cols-2 gap-[6px]">
         <BriefingCard />
 
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           <RecentRecordCard
             data={data}
             options={optionsQuery.data}
@@ -331,7 +332,7 @@ function RecentRecordCard({
           type="button"
           onClick={() => onOpen(recent.id)}
           aria-label="기록 자세히 보기"
-          className="grid size-9 shrink-0 place-items-center rounded-full bg-accent text-panel-text"
+          className="grid size-[46px] shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#CFFFE0] to-[#8CFFB6] text-panel-text"
         >
           <span aria-hidden="true">↗</span>
         </button>
@@ -364,7 +365,9 @@ function NextCheckCard({ time, onOpen }: { time: string; onOpen: () => void }) {
 
 function MiniCard({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <section className="flex flex-1 flex-col rounded-card bg-card-raised px-4 py-4">
+    // 시안에서 하단 카드 세 장은 TODAY'S CHECK 과 같은 #FBFBFB 다.
+    // (카드 안의 타일만 한 단계 진한 #F1F1F1 을 쓴다)
+    <section className="flex flex-1 flex-col rounded-card bg-card px-4 py-4">
       <p className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-fg-faint">{label}</p>
       {children}
     </section>

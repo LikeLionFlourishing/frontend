@@ -34,9 +34,22 @@ export function RecordsPage() {
 
   return (
     <div className="safe-top flex flex-col gap-6 px-4 pt-5">
+      {/* 시안(15:8708)은 탭 루트인데도 제목 왼쪽에 뒤로가기가 있다. */}
       <header>
-        <h1 className="text-[28px] font-bold text-fg">기록조회</h1>
-        <p className="mt-2 text-xs text-fg-muted">이전에 기록한 피부 상태와 변화를 확인해보세요</p>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="-ml-1 shrink-0 text-2xl leading-none text-fg"
+            aria-label="뒤로"
+          >
+            ‹
+          </button>
+          <h1 className="text-[28px] font-bold text-fg">기록조회</h1>
+        </div>
+        <p className="mt-1 pl-6 text-xs text-fg-muted">
+          이전에 기록한 피부 상태와 변화를 확인해보세요
+        </p>
       </header>
 
       {listQuery.isPending && <ListSkeleton />}

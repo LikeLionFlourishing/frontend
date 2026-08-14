@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Icon, type IconName } from '@/components/Icon';
 import { useAuthStore } from '@/stores/authStore';
 import { SettingsCard, SettingsDivider, SettingsHeader } from './my/SettingsLayout';
@@ -34,12 +34,13 @@ const GROUPS: MenuItem[][] = [
 ];
 
 export function MyPage() {
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
 
   return (
     <div className="safe-top mx-auto w-full max-w-app px-4 pt-4">
-      {/* 탭으로 진입하는 루트라 뒤로가기를 두지 않는다. */}
-      <SettingsHeader title="설정" />
+      {/* 시안(15:4748)은 탭 루트인데도 뒤로가기가 있다. */}
+      <SettingsHeader title="설정" onBack={() => navigate(-1)} />
 
       <ProfileCard email={user?.email ?? ''} />
 
