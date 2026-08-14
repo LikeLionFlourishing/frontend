@@ -89,13 +89,14 @@ export function ConfirmStep({ options, values, onChange, onConfirm, onRewrite, a
         </p>
       )}
 
-      <div className="flex flex-col gap-3">
+      {/* 시안(15:4686) 기준 행 75 · 간격 9 · 좌우 여백 22 */}
+      <div className="flex flex-col gap-[9px]">
         {FIELDS.map((field) => (
           <button
             key={field.key}
             type="button"
             onClick={() => setEditing(field.key)}
-            className="flex w-full items-center justify-between gap-3 rounded-card bg-panel px-5 py-4 text-left"
+            className="flex h-[75px] w-full items-center justify-between gap-3 rounded-card bg-panel px-[22px] text-left"
           >
             <span className="min-w-0">
               <span className="block text-xs text-panel-label">{field.label}</span>
@@ -119,7 +120,7 @@ export function ConfirmStep({ options, values, onChange, onConfirm, onRewrite, a
         ))}
       </div>
 
-      <div className="flex flex-col gap-3 pt-6">
+      <div className="flex flex-col gap-[9px] pt-6">
         <PrimaryButton onClick={onConfirm} disabled={!allFilled}>
           확인했어요
         </PrimaryButton>

@@ -92,7 +92,10 @@ interface ButtonProps {
   type?: 'button' | 'submit';
 }
 
-/** 네온 그린 풀폭 버튼. 화면당 하나가 원칙이다. */
+/**
+ * 네온 그린 풀폭 버튼. 화면당 하나가 원칙이다.
+ * 시안의 주 버튼은 어느 화면에서나 370×79 다.
+ */
 export function PrimaryButton({ children, onClick, disabled, type = 'button' }: ButtonProps) {
   return (
     <button
@@ -100,7 +103,7 @@ export function PrimaryButton({ children, onClick, disabled, type = 'button' }: 
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        'w-full rounded-pill px-5 py-4 text-body-strong transition',
+        'flex h-[79px] w-full items-center justify-center rounded-pill px-5 text-body-strong transition',
         disabled
           ? 'bg-card-raised text-fg-faint'
           : 'bg-accent text-panel-text active:bg-accent-pressed',
@@ -122,7 +125,7 @@ export function InfoButton({ children, onClick, disabled, type = 'button' }: But
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        'w-full rounded-pill px-5 py-4 text-body-strong transition',
+        'flex h-[79px] w-full items-center justify-center rounded-pill px-5 text-body-strong transition',
         disabled ? 'bg-card-raised text-fg-faint' : 'bg-info text-white',
       )}
     >
@@ -139,7 +142,7 @@ export function SecondaryButton({ children, onClick, disabled, type = 'button' }
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        'w-full rounded-pill px-5 py-4 text-body-strong transition',
+        'flex h-[79px] w-full items-center justify-center rounded-pill px-5 text-body-strong transition',
         'bg-panel text-panel-label',
         disabled && 'opacity-50',
       )}

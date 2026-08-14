@@ -30,14 +30,15 @@ export function TextField({
 
   return (
     <div className="flex flex-col gap-1.5">
+      {/* 시안(로그인 15:5969) 기준 369×83, 좌 여백 25, 라벨 20px 지점. */}
       <div
         className={clsx(
-          'rounded-card px-5 py-3.5 transition',
+          'h-[83px] rounded-card px-[25px] pt-5 transition',
           surface === 'soft' ? 'bg-panel-soft' : 'bg-panel',
           error && 'ring-2 ring-caution-500',
         )}
       >
-        <label htmlFor={id} className="block text-xs font-semibold text-panel-text">
+        <label htmlFor={id} className="block text-body-strong font-semibold text-panel-text">
           {label}
         </label>
         <input
@@ -49,7 +50,7 @@ export function TextField({
           autoComplete={autoComplete}
           inputMode={inputMode}
           aria-invalid={Boolean(error)}
-          className="mt-1 w-full bg-transparent text-base text-panel-text outline-none placeholder:text-panel-label"
+          className="mt-[9px] w-full bg-transparent text-xs text-panel-text outline-none placeholder:text-panel-label"
         />
       </div>
 
