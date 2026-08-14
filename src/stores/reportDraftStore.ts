@@ -78,6 +78,6 @@ export const useReportDraftStore = create<ReportDraftState>()(
       },
       reset: () => set({ ...EMPTY }),
     }),
-    { name: 'haengbogwan.report-draft' },
+    { name: 'jedaero.report-draft' },
   ),
 );

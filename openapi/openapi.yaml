@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: 관리하는 행보관 API
+  title: 제대로 API
   version: 1.0.0
   summary: 현역 장병용 피부 셀프케어 PWA의 P0 API 계약
   description: |
@@ -14,7 +14,7 @@ info:
     상태 변경 요청은 세션 쿠키와 X-CSRF-Token 헤더를 함께 요구합니다.
     이메일 인증, 비밀번호 재설정, 익명 사용자는 MVP 범위에서 제외합니다.
   contact:
-    name: 관리하는 행보관 개발팀
+    name: 제대로 개발팀
   license:
     name: Proprietary
     identifier: LicenseRef-Proprietary

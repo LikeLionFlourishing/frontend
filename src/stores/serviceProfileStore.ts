@@ -76,7 +76,7 @@ export const useServiceProfileStore = create<ServiceProfileState>()(
       patch: (partial) => set(partial),
       reset: () => set({ ...EMPTY }),
     }),
-    { name: 'haengbogwan.service-profile' },
+    { name: 'jedaero.service-profile' },
   ),
 );
 

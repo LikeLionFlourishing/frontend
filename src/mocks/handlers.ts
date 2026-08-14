@@ -70,14 +70,14 @@ export const mockState = {
     this.notificationEnabled = true;
     this.onboardingCompleted = true;
     this.authenticated = true;
-    localStorage.removeItem('haengbogwan.service-profile');
-    localStorage.removeItem('haengbogwan.report-draft');
+    localStorage.removeItem('jedaero.service-profile');
+    localStorage.removeItem('jedaero.report-draft');
   },
 
   /** 온보딩을 처음부터 다시 보고 싶을 때. 로컬 프로필도 함께 비운다. */
   replayOnboarding() {
     this.onboardingCompleted = false;
-    localStorage.removeItem('haengbogwan.service-profile');
+    localStorage.removeItem('jedaero.service-profile');
     location.href = '/onboarding';
   },
 
@@ -85,7 +85,7 @@ export const mockState = {
   replaySignup() {
     this.authenticated = false;
     this.onboardingCompleted = false;
-    localStorage.removeItem('haengbogwan.service-profile');
+    localStorage.removeItem('jedaero.service-profile');
     location.href = '/signup';
   },
 };
