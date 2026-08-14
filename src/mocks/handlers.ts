@@ -35,6 +35,11 @@ export const mockState = {
   /** 미완료 경과. 경과를 저장하면 비운다. */
   pendingFollowUp: fx.home.pendingFollowUp,
   /**
+   * 저장된 경과. 계약상 기록당 한 번만 남길 수 있어서
+   * 저장 후 재진입·409 를 재현하려면 서버가 값을 들고 있어야 한다.
+   */
+  savedFollowUps: {} as Record<string, Record<string, unknown>>,
+  /**
    * 알림 수신 여부. 서버에 저장되는 설정이라 새로고침해도 유지돼야 한다.
    * 모듈 변수로 두면 리로드 때 초기화되므로 sessionStorage 를 쓴다.
    */
@@ -67,6 +72,7 @@ export const mockState = {
     this.scenario = 'happy';
     this.today = null;
     this.pendingFollowUp = fx.home.pendingFollowUp;
+    this.savedFollowUps = {};
     this.notificationEnabled = true;
     this.onboardingCompleted = true;
     this.authenticated = true;
@@ -342,21 +348,33 @@ export const handlers = [
   }),
 
   // --- Follow-ups -----------------------------------------------------------
-  http.get(`${V1}/skin-reports/:reportId/follow-up`, () =>
-    problem(404, 'NOT_FOUND', '아직 경과를 기록하지 않았어요.'),
-  ),
+  http.get(`${V1}/skin-reports/:reportId/follow-up`, ({ params }) => {
+    const saved = mockState.savedFollowUps[String(params.reportId)];
+    if (!saved) return problem(404, 'NOT_FOUND', '아직 경과를 기록하지 않았어요.');
+    return HttpResponse.json(saved);
+  }),
 
   http.put(`${V1}/skin-reports/:reportId/follow-up`, async ({ params, request }) => {
     await delay(200);
+    const reportId = String(params.reportId);
     const body = (await request.json()) as Record<string, unknown>;
+    const saved = mockState.savedFollowUps[reportId];
 
+    if (saved) {
+      // 같은 본문이면 기존 값을 그대로, 다른 본문이면 409. (계약 그대로)
+      const same = (
+        ['kind', 'skinChange', 'actionCompletion', 'clinicianCheckStatus'] as const
+      ).every((key) => saved[key] === body[key]);
+      if (same) return HttpResponse.json(saved);
+      return problem(409, 'CONFLICT', '이미 경과를 저장했어요.');
+    }
+
+    const followUp = { reportId, ...body, submittedAt: new Date().toISOString() };
+    mockState.savedFollowUps[reportId] = followUp;
     // 경과를 남기면 미완료 경과가 사라진다.
     mockState.pendingFollowUp = null;
 
-    return HttpResponse.json(
-      { reportId: String(params.reportId), ...body, submittedAt: new Date().toISOString() },
-      { status: 201 },
-    );
+    return HttpResponse.json(followUp, { status: 201 });
   }),
 
   // --- Notifications / Analytics -------------------------------------------

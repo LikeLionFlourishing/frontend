@@ -10,6 +10,11 @@ interface BaseProps {
   hint?: string;
   choices: Choice[];
   disabled?: boolean;
+  /**
+   * `center` 는 라디오 없이 글자만 가운데 두는 형태다.
+   * 경과 확인의 두 번째 질문(`안내받은 관리를 어떻게 실행했나요?`)이 시안에서 이 모양이다.
+   */
+  align?: 'start' | 'center';
 }
 
 interface SingleProps extends BaseProps {
@@ -36,10 +41,12 @@ type Props = SingleProps | MultiProps;
  * 오늘 군생활 확인, 겉모습, 느껴지는 불편, 직전 상황, 관리 상태,
  * 관리 전 확인, 경과(오늘은 어떤가요), 행동 실행 여부까지 전부 여기에 해당한다.
  *
- * 디자인: 검정 배경 위 밝은 회색 pill 카드, 선택 시 네온 그린 테두리 + 라디오 채움.
+ * 선택지 하나의 규격은 시안의 공유 컴포넌트(`Frame 1707481896`, 370×72)를 따른다.
+ * 라디오 22px · 좌측 여백 25px · 라디오-라벨 간격 13px · 라벨 11px.
+ * 여러 화면이 같은 인스턴스를 쓰므로 여기서만 고치면 전부 따라온다.
  */
 export function ChoiceList(props: Props) {
-  const { question, hint, choices, disabled } = props;
+  const { question, hint, choices, disabled, align = 'start' } = props;
 
   const isSelected = (value: string) =>
     props.mode === 'single' ? props.value === value : props.value.includes(value);
@@ -70,11 +77,14 @@ export function ChoiceList(props: Props) {
   return (
     <fieldset className="flex flex-col gap-4" disabled={disabled}>
       {question && (
-        <legend className="text-[28px] font-bold leading-snug text-fg">{question}</legend>
+        <legend className="whitespace-pre-line text-[28px] font-bold leading-snug text-fg">
+          {question}
+        </legend>
       )}
       {hint && <p className="-mt-2 text-xs text-fg-muted">{hint}</p>}
 
-      <div className="flex flex-col gap-3">
+      {/* 시안 간격 7px */}
+      <div className="flex flex-col gap-[7px]">
         {choices.map((choice) => {
           const selected = isSelected(choice.value);
           return (
@@ -85,22 +95,29 @@ export function ChoiceList(props: Props) {
               aria-checked={selected}
               onClick={() => handleSelect(choice.value)}
               className={clsx(
-                'flex w-full items-center gap-3 rounded-pill px-5 py-4 text-left text-body-strong transition',
-                'bg-panel text-panel-text',
-                // 개편 시안은 선택 상태를 일관되게 파랑으로 쓴다(동의·참고일러스트·진행 표시).
-                selected && 'ring-2 ring-info',
+                'flex min-h-[72px] w-full items-center gap-[13px] rounded-card py-3 text-[11px] transition',
+                align === 'center' ? 'justify-center px-5 text-center' : 'pl-[25px] pr-4 text-left',
+                /*
+                 * 개편 시안은 선택 상태를 일관되게 파랑으로 쓴다.
+                 * 라디오가 없는 `center` 형태는 테두리만으로는 선택이 잘 안 보여서
+                 * 상황 선택 타일(15:6483)처럼 파랑으로 채운다.
+                 */
+                selected && align === 'center' ? 'bg-info text-white' : 'bg-panel text-panel-text',
+                selected && align === 'start' && 'ring-2 ring-info',
                 disabled && 'opacity-50',
               )}
             >
-              <span
-                aria-hidden="true"
-                className={clsx(
-                  'grid size-5 shrink-0 place-items-center rounded-full border-2 transition',
-                  selected ? 'border-info bg-info' : 'border-panel-label',
-                )}
-              >
-                {selected && <span className="size-2 rounded-full bg-white" />}
-              </span>
+              {align === 'start' && (
+                <span
+                  aria-hidden="true"
+                  className={clsx(
+                    'grid size-[22px] shrink-0 place-items-center rounded-full border-2 transition',
+                    selected ? 'border-info bg-info' : 'border-panel-label',
+                  )}
+                >
+                  {selected && <span className="size-2 rounded-full bg-white" />}
+                </span>
+              )}
               <span>{choice.label}</span>
             </button>
           );
