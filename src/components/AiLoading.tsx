@@ -63,12 +63,22 @@ export function AiLoading({ title, subtitle, stages }: Props) {
     >
       <BootMark fill={progress / 100} />
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-5">
         <h1 className="whitespace-pre-line text-2xl font-bold leading-snug text-fg">{title}</h1>
-        {/* key 를 바꿔 문구가 교체될 때마다 등장 애니메이션을 다시 태운다 */}
-        <p key={stageIndex} className="animate-stage-in text-sm text-fg-muted">
-          {hasStages ? stageList[stageIndex] : subtitle}
-        </p>
+
+        {/*
+         * 시안(로딩1~5)은 고정 문구 한 줄이다. 진행은 마크가 차오르는 것으로 보여준다.
+         * 단계 문구는 그 아래 한 줄로만 덧붙인다 — 고정 문구를 갈아끼우면
+         * 시안이 정한 안내가 화면에 아예 안 나온다.
+         */}
+        <p className="text-[11px] text-fg">{subtitle}</p>
+
+        {hasStages && (
+          // key 를 바꿔 문구가 교체될 때마다 등장 애니메이션을 다시 태운다
+          <p key={stageIndex} className="animate-stage-in text-[11px] text-fg-faint">
+            {stageList[stageIndex]}
+          </p>
+        )}
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { reports } from '@/api/endpoints';
 import { toUserMessage } from '@/api/problem';
 import { queryKeys } from '@/app/queryClient';
-import { StepLayout } from '@/components/StepLayout';
+import { PrimaryButton, StepLayout } from '@/components/StepLayout';
 import { labelOf, labelsOf, useReportOptions } from '@/hooks/useReportOptions';
 import { daysBetween, formatDotDate } from '@/lib/date';
 import {
@@ -76,13 +76,13 @@ export function RecordDetailPage() {
       <div className="mt-7 flex flex-col gap-6 pb-10">
         <Section title="내가 작성한 내용">
           <Panel>
-            <p className="text-sm leading-relaxed text-panel-text">{report.rawText}</p>
+            <p className="text-xs leading-relaxed text-panel-text">{report.rawText}</p>
           </Panel>
         </Section>
 
         <Section title="관리 전 확인 내용">
           <Panel>
-            <p className="text-sm leading-relaxed text-panel-text">
+            <p className="text-xs leading-relaxed text-panel-text">
               {report.preCareChecks.includes('NONE')
                 ? '해당되는 항목이 없어요.'
                 : labelsOf(options?.preCareChecks, report.preCareChecks)}
@@ -99,11 +99,11 @@ export function RecordDetailPage() {
         <Section title="당시 안내된 내용">
           <Panel>
             {report.resultType === 'CLINICIAN_CHECK' ? (
-              <p className="text-sm leading-relaxed text-panel-text">{care.clinicianMessage}</p>
+              <p className="text-xs leading-relaxed text-panel-text">{care.clinicianMessage}</p>
             ) : (
               <ul className="flex flex-col gap-2">
                 {[...care.doToday, ...care.avoidToday, ...care.checkNext].map((item) => (
-                  <li key={item} className="text-sm leading-relaxed text-panel-text">
+                  <li key={item} className="text-xs leading-relaxed text-panel-text">
                     {item}
                   </li>
                 ))}
@@ -123,12 +123,12 @@ export function RecordDetailPage() {
                 <p className="text-body-strong font-semibold text-panel-text">
                   {SKIN_CHANGE_LABEL[followUp.skinChange]}
                 </p>
-                <p className="mt-2 text-sm leading-relaxed text-panel-label">
+                <p className="mt-2 text-xs leading-relaxed text-panel-label">
                   {followUpDetail(followUp)}
                 </p>
               </>
             ) : (
-              <p className="text-sm leading-relaxed text-panel-text">
+              <p className="text-xs leading-relaxed text-panel-text">
                 {report.status === 'EXPIRED'
                   ? '입력 기간이 지나 경과가 기록되지 않았어요.'
                   : '아직 경과를 기록하지 않았어요.'}
@@ -138,13 +138,9 @@ export function RecordDetailPage() {
         </Section>
 
         {report.status === 'FOLLOW_UP_PENDING' && (
-          <button
-            type="button"
-            onClick={() => navigate(`/follow-up/${report.id}`)}
-            className="w-full rounded-pill bg-accent px-5 py-4 text-body-strong font-semibold text-panel-text"
-          >
+          <PrimaryButton onClick={() => navigate(`/follow-up/${report.id}`)}>
             지금 경과 남기기
-          </button>
+          </PrimaryButton>
         )}
       </div>
     </div>
@@ -188,8 +184,8 @@ function StructuredRows({
     <dl className="flex flex-col gap-3">
       {rows.map((row) => (
         <div key={row.label} className="flex gap-4">
-          <dt className="w-20 shrink-0 text-sm font-semibold text-panel-text">{row.label}</dt>
-          <dd className="min-w-0 flex-1 text-sm text-panel-label">{row.value}</dd>
+          <dt className="w-20 shrink-0 text-[13px] font-semibold text-panel-text">{row.label}</dt>
+          <dd className="min-w-0 flex-1 text-xs text-panel-label">{row.value}</dd>
         </div>
       ))}
     </dl>
