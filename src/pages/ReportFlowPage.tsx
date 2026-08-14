@@ -13,6 +13,7 @@ import { PreCareStep } from './report/PreCareStep';
 import { RawTextStep } from './report/RawTextStep';
 import { AppearanceAssistStep } from './report/AppearanceAssistStep';
 import { SkinStatusStep } from './report/SkinStatusStep';
+import { seedPreCareChecks } from '@/api/schemas';
 import type { ReportInterpretation } from '@/api/schemas';
 
 /** 0 은 `오늘 피부 상태`(유저플로우 3-2). 인디케이터에는 포함되지 않는다. */
@@ -240,7 +241,13 @@ export function ReportFlowPage() {
           values={confirmValues}
           aiFailed={aiFailed}
           onChange={(partial) => draft.patch(partial)}
-          onConfirm={() => setStep(3)}
+          onConfirm={() => {
+            // 유저플로우 6. 진물 연동 — 미리 선택만 하고 확정은 다음 화면에서 사용자가 한다.
+            draft.patch({
+              preCareChecks: seedPreCareChecks(draft.appearances, draft.preCareChecks),
+            });
+            setStep(3);
+          }}
           onRewrite={() => setStep(1)}
         />
       )}

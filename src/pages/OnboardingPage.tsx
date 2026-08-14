@@ -44,8 +44,8 @@ export function OnboardingPage() {
   const finish = useMutation({
     // 계약에 있는 값은 알림 수신 여부뿐이다. 점호 시각은 서버가 '17:30' 으로 고정하고 있어
     // 사용자가 고른 시각은 로컬에만 남는다. (serviceProfileStore TODO 참고)
-    mutationFn: async () => {
-      await notifications.updateSettings(true);
+    mutationFn: async (notificationEnabled: boolean) => {
+      await notifications.updateSettings(notificationEnabled);
       // 온보딩 완료 여부는 세션의 signupcompleted 로 판단하므로 다시 받아온다.
       return auth.currentSession();
     },
@@ -102,7 +102,7 @@ export function OnboardingPage() {
         <TimeStep
           value={profile.checkInTime}
           onChange={(checkInTime) => profile.patch({ checkInTime })}
-          onFinish={() => finish.mutate()}
+          onFinish={(notificationEnabled) => finish.mutate(notificationEnabled)}
           submitting={finish.isPending}
           errorMessage={finish.isError ? toUserMessage(finish.error) : null}
         />
@@ -166,7 +166,16 @@ function IntroStep({ onStart }: { onStart: () => void }) {
         ))}
       </div>
 
-      <div className="pb-8">
+      {/*
+       * 유저플로우 1-1 은 제공 범위와 함께 **제공하지 않는 것**을 명시하도록 되어 있다.
+       * 진단·처방으로 오인되면 서비스 자체가 성립하지 않으므로 문구를 빼지 않는다.
+       */}
+      <p className="mt-6 rounded-card bg-card-raised px-4 py-3 text-[11px] leading-relaxed text-fg-muted">
+        피부질환 진단과 의약품 처방은 제공하지 않아요. 증상이 심해지면 의무실이나 의료진에게 확인해
+        주세요.
+      </p>
+
+      <div className="pb-8 pt-6">
         <ArrowButton onClick={onStart}>시작하기</ArrowButton>
       </div>
     </div>
@@ -296,7 +305,7 @@ function TimeStep({
 }: {
   value: string;
   onChange: (value: string) => void;
-  onFinish: () => void;
+  onFinish: (notificationEnabled: boolean) => void;
   submitting?: boolean;
   errorMessage?: string | null;
 }) {
@@ -306,9 +315,19 @@ function TimeStep({
       footer={
         <>
           {errorMessage && <p className="mb-3 px-2 text-sm text-caution-500">{errorMessage}</p>}
-          <ArrowButton onClick={onFinish} disabled={submitting}>
+          <ArrowButton onClick={() => onFinish(true)} disabled={submitting}>
             {submitting ? '설정 중…' : '시작하기'}
           </ArrowButton>
+
+          {/* 유저플로우 1-3 은 알림을 끄고 시작하는 길을 함께 제시한다. */}
+          <button
+            type="button"
+            onClick={() => onFinish(false)}
+            disabled={submitting}
+            className="mt-3 w-full py-3 text-center text-sm font-medium text-fg-faint underline underline-offset-4 disabled:opacity-50"
+          >
+            알림 없이 이용하기
+          </button>
         </>
       }
     >

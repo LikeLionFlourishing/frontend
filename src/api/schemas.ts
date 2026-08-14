@@ -66,3 +66,19 @@ export const EXCLUSIVE_OPTION = {
 export function resolveResultType(checks: PreCareCheckSelection): ResultType {
   return checks.some((c) => c !== 'NONE') ? 'CLINICIAN_CHECK' : 'SELF_CARE_GUIDE';
 }
+
+/**
+ * 겉모습에 `진물`이 있으면 관리 전 확인의 `고름·진물·물집`을 **미리 선택해 둔다**.
+ * (유저플로우 6. 진물 연동)
+ *
+ * 미리 선택일 뿐 확정이 아니다. 사용자가 그 화면에서 끄면 그대로 꺼진다 —
+ * AI 추출만으로 의료진 확인 분기를 확정하면 안 되기 때문이다.
+ * 이미 손댄 값이 있으면 덮어쓰지 않는다(뒤로 갔다 돌아온 경우).
+ */
+export function seedPreCareChecks(
+  appearances: AppearanceSelection,
+  current: PreCareCheckSelection,
+): PreCareCheckSelection {
+  if (current.length > 0) return current;
+  return appearances.includes('OOZING') ? ['PUS_OOZING_BLISTER'] : current;
+}

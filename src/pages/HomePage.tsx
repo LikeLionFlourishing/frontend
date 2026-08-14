@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { home as homeApi, notifications } from '@/api/endpoints';
 import { toUserMessage } from '@/api/problem';
 import { queryKeys } from '@/app/queryClient';
@@ -100,15 +100,50 @@ function DischargeWidget() {
 
 // --- TODAY'S CHECK -----------------------------------------------------------
 
+/**
+ * 홈의 주 카드.
+ *
+ * 무엇을 먼저 보여줄지는 서버가 `priority` 로 정해 준다(유저플로우 2. 홈 진입).
+ * 미완료 경과가 있으면 그게 최우선이고, 오늘 점호는 그 다음이다.
+ */
 function TodayCheckCard({ data, onNavigate }: { data: Home; onNavigate: (to: string) => void }) {
-  const answeredToday = data.today !== null;
   const pending = data.pendingFollowUp;
+  // `priority` 가 FOLLOW_UP 이어도 대상 기록이 없으면 보낼 곳이 없다.
+  const followUpFirst = data.priority === 'FOLLOW_UP' && pending !== null;
+  const answeredToday = data.today !== null;
 
   return (
     <section className="rounded-card bg-card px-5 py-6">
       <p className="text-[11px] font-semibold tracking-[0.2em] text-fg-faint">TODAY&apos;S CHECK</p>
 
-      {answeredToday ? (
+      {followUpFirst ? (
+        <>
+          <h2 className="mt-3 text-2xl font-bold leading-snug text-fg">
+            어제 기록한 피부 불편은
+            <br />
+            오늘 어떤가요?
+          </h2>
+          <p className="mt-2 text-sm text-fg-muted">
+            {formatShortDate(pending.reportDate)} 기록의 경과를 남겨주세요.
+          </p>
+
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <ActionTile
+              icon="note"
+              title="경과 확인하기"
+              caption="어제 기록의 변화 남기기"
+              tone="accent"
+              onClick={() => onNavigate(`/follow-up/${pending.reportId}`)}
+            />
+            <ActionTile
+              icon="face"
+              title="피부 점호 시작"
+              caption="오늘 상태 기록하기"
+              onClick={() => onNavigate('/report')}
+            />
+          </div>
+        </>
+      ) : answeredToday ? (
         <>
           <h2 className="mt-3 text-2xl font-bold leading-snug text-fg">
             오늘 점호를
@@ -134,18 +169,18 @@ function TodayCheckCard({ data, onNavigate }: { data: Home; onNavigate: (to: str
       ) : (
         <>
           <h2 className="mt-3 text-2xl font-bold leading-snug text-fg">
-            오늘 피부 상태는
+            금일 피부 상태,
             <br />
-            어떤가요?
+            이상 있나요?
           </h2>
 
           <div className="mt-6 grid grid-cols-2 gap-3">
             <ActionTile
               icon="note"
               title="경과 확인하기"
-              caption={pending ? '어제 기록을 남겨주세요' : '확인할 기록이 없어요'}
-              disabled={!pending}
-              onClick={() => pending && onNavigate(`/follow-up/${pending.reportId}`)}
+              caption="확인할 기록이 없어요"
+              disabled
+              onClick={() => {}}
             />
             <ActionTile
               icon="face"
@@ -243,6 +278,13 @@ function RecentRecordCard({
     );
   }
 
+  // 정보구조도상 `최근 피부 기록` 아래에 `전체 기록 보기`가 붙는다.
+  const seeAll = (
+    <Link to="/records" className="mt-3 block text-xs font-semibold text-info">
+      전체 기록 보기 ›
+    </Link>
+  );
+
   const summary = [
     labelOf(options?.areas, recent.primaryArea),
     labelsOf(options?.appearances, recent.appearances),
@@ -268,6 +310,7 @@ function RecentRecordCard({
           <span aria-hidden="true">↗</span>
         </button>
       </div>
+      {seeAll}
     </MiniCard>
   );
 }

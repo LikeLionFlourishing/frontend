@@ -1,4 +1,9 @@
+import { useState } from 'react';
+import { Icon } from '@/components/Icon';
+import { PrimaryButton } from '@/components/StepLayout';
 import { clsx } from '@/lib/clsx';
+
+type Choice = 'FINE' | 'DISCOMFORT';
 
 interface Props {
   onFine: () => void;
@@ -8,31 +13,46 @@ interface Props {
 }
 
 /**
- * 3-2. 오늘 피부 상태.
+ * 오늘 피부 상태 (유저플로우 2. 홈 진입 / 시안 15:6623).
  *
- * `괜찮아요` 는 한 번의 선택으로 저장되고 바로 끝난다 (F-01 수용 기준).
- * 대부분의 날이 이 경로이므로 여기서 길어지면 리텐션이 죽는다.
+ * 고르고 나서 `다음` 을 눌러야 진행된다. 탭 즉시 저장하면
+ * `불편 없음` 이 실수로 저장되고, 같은 날 되돌릴 방법이 화면에 없다.
+ * (같은 날 피부 보고를 새로 쓰면 서버가 대체하지만 사용자는 그걸 모른다)
  *
  * 미응답을 `불편 없음` 으로 저장하지 않는다 — 사용자가 직접 고른 경우에만 저장한다.
  */
 export function SkinStatusStep({ onFine, onDiscomfort, savingFine, errorMessage }: Props) {
-  return (
-    <div className="flex flex-col gap-3">
-      <StatusTile
-        title="괜찮아요"
-        caption="오늘은 특별한 불편이 없어요"
-        onClick={onFine}
-        disabled={savingFine}
-      />
-      <StatusTile
-        title="불편해요"
-        caption="피부 불편을 보고할게요"
-        tone="accent"
-        onClick={onDiscomfort}
-        disabled={savingFine}
-      />
+  const [choice, setChoice] = useState<Choice | null>(null);
 
-      {errorMessage && <p className="pt-2 text-sm text-accent">{errorMessage}</p>}
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="grid grid-cols-2 gap-3">
+        <StatusTile
+          title="특별한 불편 없음"
+          caption="피부 점호 완료"
+          selected={choice === 'FINE'}
+          onClick={() => setChoice('FINE')}
+          disabled={savingFine}
+        />
+        <StatusTile
+          title="불편해요"
+          caption="이어서 기록할게요"
+          selected={choice === 'DISCOMFORT'}
+          onClick={() => setChoice('DISCOMFORT')}
+          disabled={savingFine}
+        />
+      </div>
+
+      {errorMessage && <p className="text-sm text-caution-500">{errorMessage}</p>}
+
+      <div className="pt-6">
+        <PrimaryButton
+          onClick={() => (choice === 'FINE' ? onFine() : onDiscomfort())}
+          disabled={!choice || savingFine}
+        >
+          {savingFine ? '저장 중…' : '다음'}
+        </PrimaryButton>
+      </div>
     </div>
   );
 }
@@ -40,32 +60,33 @@ export function SkinStatusStep({ onFine, onDiscomfort, savingFine, errorMessage 
 function StatusTile({
   title,
   caption,
+  selected,
   onClick,
-  tone = 'default',
   disabled,
 }: {
   title: string;
   caption: string;
+  selected: boolean;
   onClick: () => void;
-  tone?: 'default' | 'accent';
   disabled?: boolean;
 }) {
-  const isAccent = tone === 'accent';
   return (
     <button
       type="button"
+      role="radio"
+      aria-checked={selected}
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        'w-full rounded-card px-5 py-6 text-left transition',
-        isAccent ? 'bg-accent text-panel-text' : 'bg-panel text-panel-text',
+        'flex aspect-[3/4] flex-col items-center justify-center gap-3 rounded-card px-4 text-center transition',
+        selected ? 'bg-info text-white' : 'bg-panel text-panel-text',
         disabled && 'opacity-50',
       )}
     >
-      <span className="block text-xl font-bold">{title}</span>
-      <span
-        className={clsx('mt-1 block text-sm', isAccent ? 'text-panel-label' : 'text-panel-label')}
-      >
+      {/* TODO(디자인): 시안은 픽셀 아트 얼굴 두 종이다. 에셋이 나오면 교체한다. */}
+      <Icon name="face" className="size-16" />
+      <span className="block text-body-strong font-semibold">{title}</span>
+      <span className={clsx('block text-xs', selected ? 'text-white/80' : 'text-panel-label')}>
         {caption}
       </span>
     </button>
