@@ -25,16 +25,51 @@ interface CardMeta {
   onDark?: boolean;
   /** `public/illustrations/{art}.png`. 없는 카드도 있다. */
   art?: 'summary' | 'do' | 'avoid' | 'similar';
+  /**
+   * 카드 가운데에 번지는 빛 색. 시안의 카드는 단색이 아니라
+   * 배경색 위에 다른 색조의 블롭이 하나 얹혀 있다(요약 카드만 단색).
+   */
+  glow?: string;
 }
 
 const CARDS: CardMeta[] = [
   { key: 'SUMMARY', title: '현재 기록 요약', surface: 'bg-guide-summary', art: 'summary' },
-  { key: 'DO_TODAY', title: '오늘 할 일', surface: 'bg-guide-do', art: 'do' },
-  { key: 'AVOID_TODAY', title: '오늘 피할 일', surface: 'bg-guide-avoid', art: 'avoid' },
+  { key: 'DO_TODAY', title: '오늘 할 일', surface: 'bg-guide-do', art: 'do', glow: '#8CE3B0' },
+  {
+    key: 'AVOID_TODAY',
+    title: '오늘 피할 일',
+    surface: 'bg-guide-avoid',
+    art: 'avoid',
+    glow: '#A8A7E2',
+  },
   // 시안에서 이 카드만 일러스트가 비어 있다.
-  { key: 'CHECK_NEXT', title: '다음에 확인 할 변화', surface: 'bg-guide-next', onDark: true },
-  { key: 'SIMILAR', title: '유사 기록 보기', surface: 'bg-guide-similar', art: 'similar' },
+  {
+    key: 'CHECK_NEXT',
+    title: '다음에 확인 할 변화',
+    surface: 'bg-guide-next',
+    onDark: true,
+    glow: '#72D5CA',
+  },
+  {
+    key: 'SIMILAR',
+    title: '유사 기록 보기',
+    surface: 'bg-guide-similar',
+    art: 'similar',
+    glow: '#7F928B',
+  },
 ];
+
+/** 카드 가운데 블롭. 배경색 위에 얹히고 글자 아래에 깔린다. */
+function CardGlow({ color }: { color: string | undefined }) {
+  if (!color) return null;
+  return (
+    <span
+      aria-hidden="true"
+      className="pointer-events-none absolute left-1/2 top-1/2 h-[70%] w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl"
+      style={{ background: color }}
+    />
+  );
+}
 
 /**
  * 3-4. 오늘의 관리 가이드.
@@ -203,14 +238,19 @@ function Deck({
           style={{ top: index * CARD_PITCH, height: CARD_HEIGHT, zIndex: index }}
           className={clsx(
             // 버튼은 내용을 세로 가운데로 두는 게 기본이라 명시적으로 위로 붙인다.
-            'absolute inset-x-0 flex flex-col items-start justify-start rounded-card px-6 pt-6 text-left',
+            'absolute inset-x-0 flex flex-col items-start justify-start overflow-hidden rounded-card pl-7 pr-6 pt-[25px] text-left',
             card.surface,
             card.onDark ? 'text-white' : 'text-fg',
           )}
         >
-          <span className="block text-2xl font-bold">{card.title}</span>
+          <CardGlow color={card.glow} />
+          {/* 시안 기준 제목 16 / 설명 11 */}
+          <span className="relative block text-body-strong font-semibold">{card.title}</span>
           <span
-            className={clsx('mt-1 block text-xs', card.onDark ? 'text-white/80' : 'opacity-70')}
+            className={clsx(
+              'relative mt-1 block text-[11px]',
+              card.onDark ? 'text-white/80' : 'opacity-70',
+            )}
           >
             {captionOf(card.key)}
           </span>
@@ -237,11 +277,13 @@ function OpenCard({
     <section className="overflow-hidden rounded-card">
       <div
         className={clsx(
-          'relative px-6 pb-8 pt-6',
+          'relative overflow-hidden px-6 pb-8 pt-6',
           meta.surface,
           meta.onDark ? 'text-white' : 'text-fg',
         )}
       >
+        <CardGlow color={meta.glow} />
+
         {/* 요약 카드에만 있는 반짝임. 일러스트 위에 겹쳐 놓는다. */}
         {meta.key === 'SUMMARY' &&
           SUMMARY_SPARKLES.map((s, i) => (
