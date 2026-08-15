@@ -5,6 +5,7 @@ import { followUps, reports } from '@/api/endpoints';
 import { ApiError, toUserMessage } from '@/api/problem';
 import { queryClient, queryKeys } from '@/app/queryClient';
 import { ChoiceList } from '@/components/ChoiceList';
+import { SkinChangeTiles } from '@/components/SkinChangeTiles';
 import { Sentences } from '@/components/Sentences';
 import { PrimaryButton, StepLayout } from '@/components/StepLayout';
 import {
@@ -15,11 +16,6 @@ import {
 import { track } from '@/lib/analytics';
 import { formatDotDate } from '@/lib/date';
 import type { FollowUp, SaveFollowUpRequest, SkinChange } from '@/api/schemas';
-
-const SKIN_CHANGE_CHOICES = (Object.keys(SKIN_CHANGE_LABEL) as SkinChange[]).map((value) => ({
-  value,
-  label: SKIN_CHANGE_LABEL[value],
-}));
 
 const ACTION_CHOICES = Object.entries(ACTION_COMPLETION_LABEL).map(([value, label]) => ({
   value,
@@ -32,10 +28,11 @@ const CLINICIAN_CHOICES = Object.entries(CLINICIAN_CHECK_LABEL).map(([value, lab
 }));
 
 /**
- * 다음 날 경과 확인 (Figma 15:4468 일반 관리 / 15:4586 의료진 확인).
+ * 다음 날 경과 확인 (확정 시안 22:15790 셀프케어 / 22:10770 의료진 확인).
  *
- * 두 질문을 한 화면에서 받는다. 첫 질문은 두 분기 공통(`skinChange`),
- * 둘째 질문만 보고서의 `resultType` 에 따라 갈린다.
+ * 두 질문을 한 화면에서 받는다. 둘째 질문(관리 실행 정도)은 두 분기 공통이고,
+ * 첫 질문만 보고서의 `resultType` 에 따라 갈린다 —
+ * 셀프케어는 표정 타일로 피부 변화를, 의료진 확인은 확인 여부를 묻는다.
  *
  * 저장은 입력 가능 시점부터 48시간 안에 **한 번만** 된다. 이미 저장된 경우
  * `GET` 이 값을 주므로 폼 대신 저장된 내용을 보여준다.
@@ -58,8 +55,17 @@ export function FollowUpPage() {
     retry: false,
   });
 
+  /*
+   * 시안에서 두 분기가 묻는 것이 다르다.
+   *  · 셀프케어(22:15790) — 피부 변화 타일 + 관리 실행 정도
+   *  · 의료진 확인(22:10770) — 의료진 확인 여부 + 관리 실행 정도
+   * 즉 의료진 분기는 피부 변화를 아예 묻지 않는다. (submit 주석 참고)
+   */
   const [skinChange, setSkinChange] = useState<string | null>(null);
-  const [secondAnswer, setSecondAnswer] = useState<string | null>(null);
+  const [clinicianCheck, setClinicianCheck] = useState<string | null>(null);
+  /** 의료진 확인 분기의 첫 화면(피부변화확인)을 지났는지 */
+  const [changeConfirmed, setChangeConfirmed] = useState(false);
+  const [actionCompletion, setActionCompletion] = useState<string | null>(null);
 
   const save = useMutation({
     mutationFn: (body: SaveFollowUpRequest) => followUps.save(reportId, body),
@@ -92,34 +98,71 @@ export function FollowUpPage() {
     );
   }
 
-  const secondQuestion = isClinician
-    ? '기록 이후 의무실 또는\n의료진에게 확인했나요?'
-    : '안내받은 관리를\n어떻게 실행했나요?';
-
   const submit = () => {
-    if (!skinChange || !secondAnswer) return;
+    if (!ready) return;
 
     save.mutate(
       isClinician
         ? {
             kind: 'CLINICIAN_CHECK',
             skinChange: skinChange as SkinChange,
-            clinicianCheckStatus: secondAnswer as 'CHECKED' | 'NOT_YET' | 'PREFER_NOT_TO_RECORD',
+            clinicianCheckStatus: clinicianCheck as 'CHECKED' | 'NOT_YET' | 'PREFER_NOT_TO_RECORD',
+            /*
+             * 시안의 의료진 확인 화면도 `관리 실행 정도`를 묻지만
+             * 계약의 ClinicianFollowUpRequest 에는 담을 자리가 없어 버려진다.
+             * (docs/backend-요청.md 9번)
+             */
           }
         : {
             kind: 'SELF_CARE',
             skinChange: skinChange as SkinChange,
-            actionCompletion: secondAnswer as 'MOSTLY_DONE' | 'PARTLY_DONE' | 'NOT_DONE',
+            actionCompletion: actionCompletion as 'MOSTLY_DONE' | 'PARTLY_DONE' | 'NOT_DONE',
           },
     );
   };
 
-  const ready = Boolean(skinChange && secondAnswer);
+  const ready = Boolean(skinChange && actionCompletion && (!isClinician || clinicianCheck));
+
+  /*
+   * 의료진 확인 분기는 두 화면이다. 시안의 `피부변화확인`(22:13923)이 먼저 오고
+   * 그 다음이 `의료-경과확인`(22:10770)이다.
+   *
+   * 이렇게 본 근거: 의료진 확인 화면에는 피부 변화를 묻는 자리가 없는데
+   * 계약의 ClinicianFollowUpRequest 는 skinChange 를 필수로 받는다.
+   * 피부변화확인이 그 값을 채워 주는 앞 화면이라고 보면 앞뒤가 맞는다.
+   * TODO(디자인): 이 순서가 맞는지 확인 필요. 아니라면 진입 경로를 알려줘야 한다.
+   */
+  if (isClinician && !changeConfirmed) {
+    return (
+      <StepLayout
+        title={'어제와 비교해\n피부 상태가 어떤가요?'}
+        subtitle="해당하는 항목을 선택해주세요."
+        onBack={() => navigate(-1)}
+        footer={
+          <PrimaryButton onClick={() => setChangeConfirmed(true)} disabled={!skinChange}>
+            다음
+          </PrimaryButton>
+        }
+      >
+        {/* 시안에서 이 화면의 표정만 검정이다. */}
+        <SkinChangeTiles
+          tone="ink"
+          value={skinChange}
+          onChange={setSkinChange}
+          className="mt-[85px]"
+        />
+      </StepLayout>
+    );
+  }
 
   return (
     <StepLayout
       title="오늘의 경과 확인"
-      subtitle="전 날과 피부 상태를 비교해서 선택해주세요."
+      subtitle={
+        isClinician
+          ? '기록 이후 의무실 또는 의료진에게 확인했나요?'
+          : '전 날과 피부 상태를 비교해서 선택해주세요.'
+      }
       onBack={() => navigate(-1)}
       footer={
         <>
@@ -134,21 +177,29 @@ export function FollowUpPage() {
         </>
       }
     >
-      <ChoiceList
-        mode="single"
-        choices={SKIN_CHANGE_CHOICES}
-        value={skinChange}
-        onChange={setSkinChange}
-      />
-
-      <div className="mt-10">
+      {/*
+       * 의료진 확인 결과는 첫 질문이 표정 타일이 아니라 라디오 목록이다.
+       * (시안 22:10770 — `확인했어요 / 아직 확인하지 못했어요 / 기록하지 않을게요`)
+       */}
+      {isClinician ? (
         <ChoiceList
           mode="single"
-          question={secondQuestion}
+          choices={CLINICIAN_CHOICES}
+          value={clinicianCheck}
+          onChange={setClinicianCheck}
+        />
+      ) : (
+        <SkinChangeTiles value={skinChange} onChange={setSkinChange} />
+      )}
+
+      <div className="mt-[45px]">
+        <ChoiceList
+          mode="single"
+          question={'안내받은 관리를\n어떻게 실행했나요?'}
           align="center"
-          choices={isClinician ? CLINICIAN_CHOICES : ACTION_CHOICES}
-          value={secondAnswer}
-          onChange={setSecondAnswer}
+          choices={ACTION_CHOICES}
+          value={actionCompletion}
+          onChange={setActionCompletion}
         />
       </div>
     </StepLayout>
