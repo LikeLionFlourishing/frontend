@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ChoiceList } from '@/components/ChoiceList';
 import { BottomSheet } from '@/components/BottomSheet';
 import { Sentences } from '@/components/Sentences';
-import { InfoButton, PrimaryButton } from '@/components/StepLayout';
+import { PrimaryButton } from '@/components/StepLayout';
 import { labelOf, labelsOf } from '@/hooks/useReportOptions';
 import { clsx } from '@/lib/clsx';
 import { EXCLUSIVE_OPTION } from '@/api/schemas';
@@ -33,7 +33,6 @@ interface Props {
   values: ConfirmValues;
   onChange: (partial: Partial<ConfirmValues>) => void;
   onConfirm: () => void;
-  onRewrite: () => void;
   /** AI 구조화가 실패해 사용자가 직접 채워야 하는 경우 안내를 띄운다. */
   aiFailed?: boolean;
 }
@@ -59,7 +58,7 @@ const FIELDS: { key: FieldKey; label: string; required: boolean }[] = [
  * 이 서비스의 신뢰도가 결정되는 화면이다.
  * 사용자가 최종 확인한 값만 저장되고, 결과 유형 분기에도 이 값만 쓰인다. (F-03)
  */
-export function ConfirmStep({ options, values, onChange, onConfirm, onRewrite, aiFailed }: Props) {
+export function ConfirmStep({ options, values, onChange, onConfirm, aiFailed }: Props) {
   const [editing, setEditing] = useState<FieldKey | null>(null);
 
   const displayOf = (key: FieldKey): string => {
@@ -83,15 +82,15 @@ export function ConfirmStep({ options, values, onChange, onConfirm, onRewrite, a
   const allFilled = FIELDS.every((f) => !f.required || !isEmpty(f.key));
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col">
       {aiFailed && (
-        <p className="rounded-card bg-card-raised px-4 py-3 text-sm text-fg-muted">
+        <p className="mb-5 rounded-card bg-card-raised px-4 py-3 text-sm text-fg-muted">
           정리에 실패했어요. 아래 항목을 직접 선택해 주세요.
         </p>
       )}
 
-      {/* 시안(15:4686) 기준 행 75 · 간격 9 · 좌우 여백 22 */}
-      <div className="flex flex-col gap-[9px]">
+      {/* 시안(25:28859) 기준 행 369×75 · 간격 7 · 좌우 여백 22, 첫 행 상단 131 */}
+      <div className="mt-[3px] flex flex-col gap-[7px]">
         {FIELDS.map((field) => (
           <button
             key={field.key}
@@ -121,15 +120,18 @@ export function ConfirmStep({ options, values, onChange, onConfirm, onRewrite, a
         ))}
       </div>
 
-      <div className="flex flex-col gap-[9px] pt-6">
+      {/*
+       * 시안에는 `확인했어요` 하나뿐이다(상단 719). 예전에 있던 `다시 작성할래요` 는
+       * 2026-08-15 시안에서 빠졌다 — 다시 쓰려면 뒤로가기로 한 문장 화면까지 돌아간다.
+       */}
+      <div className="mt-[103px] pb-8">
         <PrimaryButton onClick={onConfirm} disabled={!allFilled}>
           확인했어요
         </PrimaryButton>
-        <InfoButton onClick={onRewrite}>다시 작성할래요</InfoButton>
       </div>
 
       {!allFilled && (
-        <p className="text-center text-sm text-fg-muted">비어 있는 항목을 채워주세요.</p>
+        <p className="-mt-4 pb-4 text-center text-sm text-fg-muted">비어 있는 항목을 채워주세요.</p>
       )}
 
       <EditSheet

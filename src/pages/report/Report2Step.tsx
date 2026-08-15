@@ -17,7 +17,7 @@ interface Props {
 }
 
 /**
- * 피부보고2 (시안 22:12586) — 상황, 관리 가능 여부, 지금 피부 상태.
+ * 피부보고2 (시안 25:30577) — 상황, 관리 가능 여부, 지금 피부 상태.
  *
  * 세 질문이 한 화면에 세로로 쌓여 있다. 상황만 복수 선택이고 나머지는 하나씩 고른다.
  */
@@ -47,8 +47,8 @@ export function Report2Step({ situations, care, skinStates, onChange, onNext }: 
 
   return (
     <div className="flex flex-col">
-      {/* 시안 기준 타일 120×110, 가로 간격 5, 세로 간격 7 */}
-      <div className="mt-[47px] grid grid-cols-3 gap-x-[5px] gap-y-[7px]">
+      {/* 시안 기준 타일 120×110, 가로 간격 5, 세로 간격 7. 격자 상단은 화면 기준 173 */}
+      <div className="mt-[9px] grid grid-cols-3 gap-x-[5px] gap-y-[7px]">
         {SITUATION_OPTIONS.map((option) => {
           const selected = situations.includes(option.value);
           return (
@@ -74,7 +74,7 @@ export function Report2Step({ situations, care, skinStates, onChange, onNext }: 
         onClick={() => toggleSituation(SITUATION_NONE.value)}
         aria-pressed={situations.includes(SITUATION_NONE.value)}
         className={clsx(
-          'mt-[7px] flex h-[70px] items-center justify-center rounded-card text-xs transition',
+          'mt-[9px] flex h-[70px] items-center justify-center rounded-card text-xs transition',
           situations.includes(SITUATION_NONE.value)
             ? 'bg-info font-semibold text-white'
             : 'bg-panel text-fg',
@@ -84,6 +84,7 @@ export function Report2Step({ situations, care, skinStates, onChange, onNext }: 
       </button>
 
       <Question
+        top={25}
         title={'지금 관리할 수 있는\n상태는 어떤가요?'}
         hint="현재 세안,관리 여부를 선택해주세요."
       />
@@ -94,6 +95,7 @@ export function Report2Step({ situations, care, skinStates, onChange, onNext }: 
       />
 
       <Question
+        top={42}
         title={'현재 피부 상태는\n어떤가요?'}
         hint="지금 피부에서 느껴지는 상태를 선택해주세요."
       />
@@ -103,7 +105,8 @@ export function Report2Step({ situations, care, skinStates, onChange, onNext }: 
         onSelect={toggleSkinState}
       />
 
-      <div className="mt-[51px] pb-[56px]">
+      {/* 시안의 프레임은 버튼 아래로 135px 를 더 두고 끝난다 */}
+      <div className="mt-[51px] pb-[135px]">
         <PrimaryButton onClick={onNext} disabled={!canSubmit}>
           다음
         </PrimaryButton>
@@ -112,11 +115,12 @@ export function Report2Step({ situations, care, skinStates, onChange, onNext }: 
   );
 }
 
-function Question({ title, hint }: { title: string; hint: string }) {
+/** `top` 은 앞 블록과의 간격. 시안에서 두 질문의 간격이 서로 다르다(25 / 42). */
+function Question({ top, title, hint }: { top: number; title: string; hint: string }) {
   return (
-    <div className="mt-[81px]">
+    <div style={{ marginTop: top }}>
       <h2 className="whitespace-pre-line text-[28px] font-bold leading-9 text-fg">{title}</h2>
-      <p className="mt-[4px] text-xs text-fg-muted">{hint}</p>
+      <p className="mt-[4px] text-xs leading-[14px] text-fg-muted">{hint}</p>
     </div>
   );
 }

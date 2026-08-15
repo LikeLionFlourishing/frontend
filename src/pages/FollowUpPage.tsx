@@ -28,7 +28,7 @@ const CLINICIAN_CHOICES = Object.entries(CLINICIAN_CHECK_LABEL).map(([value, lab
 }));
 
 /**
- * 다음 날 경과 확인 (확정 시안 22:15790 셀프케어 / 22:10770 의료진 확인).
+ * 다음 날 경과 확인 (확정 시안 25:35604 셀프케어 / 25:28735 의료진 확인).
  *
  * 두 질문을 한 화면에서 받는다. 둘째 질문(관리 실행 정도)은 두 분기 공통이고,
  * 첫 질문만 보고서의 `resultType` 에 따라 갈린다 —
@@ -57,8 +57,8 @@ export function FollowUpPage() {
 
   /*
    * 시안에서 두 분기가 묻는 것이 다르다.
-   *  · 셀프케어(22:15790) — 피부 변화 타일 + 관리 실행 정도
-   *  · 의료진 확인(22:10770) — 의료진 확인 여부 + 관리 실행 정도
+   *  · 셀프케어(25:35604) — 피부 변화 타일 + 관리 실행 정도
+   *  · 의료진 확인(25:28735) — 의료진 확인 여부 + 관리 실행 정도
    * 즉 의료진 분기는 피부 변화를 아예 묻지 않는다. (submit 주석 참고)
    */
   const [skinChange, setSkinChange] = useState<string | null>(null);
@@ -125,8 +125,8 @@ export function FollowUpPage() {
   const ready = Boolean(skinChange && actionCompletion && (!isClinician || clinicianCheck));
 
   /*
-   * 의료진 확인 분기는 두 화면이다. 시안의 `피부변화확인`(22:13923)이 먼저 오고
-   * 그 다음이 `의료-경과확인`(22:10770)이다.
+   * 의료진 확인 분기는 두 화면이다. 시안의 `피부변화확인`(25:31859)이 먼저 오고
+   * 그 다음이 `의료-경과확인`(25:28735)이다.
    *
    * 이렇게 본 근거: 의료진 확인 화면에는 피부 변화를 묻는 자리가 없는데
    * 계약의 ClinicianFollowUpRequest 는 skinChange 를 필수로 받는다.
@@ -180,7 +180,7 @@ export function FollowUpPage() {
     >
       {/*
        * 의료진 확인 결과는 첫 질문이 표정 타일이 아니라 라디오 목록이다.
-       * (시안 22:10770 — `확인했어요 / 아직 확인하지 못했어요 / 기록하지 않을게요`)
+       * (시안 25:28735 — `확인했어요 / 아직 확인하지 못했어요 / 기록하지 않을게요`)
        */}
       {isClinician ? (
         <ChoiceList

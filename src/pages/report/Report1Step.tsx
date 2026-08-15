@@ -23,7 +23,7 @@ interface Props {
 }
 
 /**
- * 피부보고1 (시안 22:13847) — 부위와 겉모습을 한 화면에서 받는다.
+ * 피부보고1 (시안 25:31783) — 부위와 겉모습을 한 화면에서 받는다.
  *
  * 얼굴 그림 위의 점과 아래 칩은 같은 값을 가리킨다. 어느 쪽을 눌러도 같이 선택된다.
  * 그림만으로는 정확히 못 짚는 사람을 위해 `직접 선택하기` 로 칩 목록을 펼친다.
@@ -35,7 +35,7 @@ export function Report1Step({ area, appearance, onChange, onNext }: Props) {
   return (
     <div className="flex flex-col">
       {/* 얼굴 그림 180×259. 점은 그림 좌상단 기준 비율로 얹는다. */}
-      <div className="relative mx-auto mt-[62px] h-[259px] w-[180px]">
+      <div className="relative mx-auto mt-[23px] h-[259px] w-[180px]">
         {/*
          * 시안은 180×259 상자를 이미지로 꽉 채운다(가로가 조금 잘린다).
          * 점 좌표가 이 상자 기준이라 `contain` 으로 두면 전부 어긋난다.
@@ -73,7 +73,7 @@ export function Report1Step({ area, appearance, onChange, onNext }: Props) {
         직접 선택하기
       </button>
 
-      <h2 className="mt-[24px] text-body-strong text-fg">주로 불편한 부위</h2>
+      <h2 className="mt-[27px] text-body-strong leading-[19px] text-fg">주로 불편한 부위</h2>
 
       {/* 시안 기준 칩 70×42, 가로 간격 4, 세로 간격 7 */}
       <div ref={chipsRef} className="mt-[9px] flex flex-wrap gap-x-1 gap-y-[7px]">
@@ -97,11 +97,13 @@ export function Report1Step({ area, appearance, onChange, onNext }: Props) {
         })}
       </div>
 
-      <h2 className="mt-[44px] text-[28px] font-bold leading-9 text-fg">겉모습은 어떤가요?</h2>
-      <p className="mt-[4px] text-xs text-fg-muted">가장 비슷한 모습을 선택해주세요</p>
+      <h2 className="mt-[39px] text-[28px] font-bold leading-9 text-fg">겉모습은 어떤가요?</h2>
+      <p className="mt-[4px] text-xs leading-[14px] text-fg-muted">
+        가장 비슷한 모습을 선택해주세요
+      </p>
 
-      {/* 시안 기준 타일 180×127, 간격 7 */}
-      <div className="mt-[16px] grid grid-cols-2 gap-[7px]">
+      {/* 시안 기준 타일 180×127, 가로 간격 9, 세로 간격 7 */}
+      <div className="mt-[16px] grid grid-cols-2 gap-x-[9px] gap-y-[7px]">
         {APPEARANCE_OPTIONS.map((option) => {
           const selected = appearance === option.value;
           return (

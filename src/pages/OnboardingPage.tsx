@@ -31,10 +31,11 @@ type Step = 'intro' | 'checkInTime';
 const ORDER: Step[] = ['intro', 'checkInTime'];
 
 /**
- * 최초 이용 (확정 시안 22:12300 / 22:12730 / 22:12708 / 22:12677).
+ * 최초 이용 (확정 시안 25:30294 온보딩 / 25:30666 온보딩2).
  *
- * 시안은 네 화면이지만 2026-08-15 기획 결정으로 **복무 정보와 자주 겪는 환경이
- * 범위에서 빠져** 두 화면만 남았다 — 이용범위 안내 → 기본 점호 시각.
+ * 2026-08-15 기획 결정으로 **복무 정보와 자주 겪는 환경이 범위에서 빠져**
+ * 두 화면만 남았다 — 이용범위 안내 → 기본 점호 시각.
+ * 같은 날 시안 재업로드에서 그 두 화면은 아예 사라졌다.
  * 동의는 이 흐름이 아니라 회원가입 안에서 받는다(시안의 `동의` 화면 버튼이 `가입하기`).
  *
  * `PUT /me/onboarding` 이 받는 값은 동의와 알림뿐이라 점호 시각은 로컬에 남는다.
@@ -48,18 +49,18 @@ export function OnboardingPage() {
   const consent = useSignupConsentStore();
 
   const finish = useMutation({
-    mutationFn: async () => {
-      /*
-       * 시안의 마지막 화면에는 `알림 없이 시작하기` 같은 갈래가 없다.
-       * 점호 시각을 직접 고른 사람은 알림을 받겠다는 뜻으로 보고 권한을 묻되,
-       * 거절하면 알림 수신은 끈 상태로 저장한다.
-       */
-      const permission = await requestPermission();
+    /**
+     * `wantsNotification` 이 거짓이면 시안의 `알림을 받지 않을게요` 를 누른 것이다.
+     * 이때는 브라우저 권한창을 아예 띄우지 않는다 — 안 받겠다고 한 사람에게
+     * 권한을 묻는 건 거절을 두 번 시키는 셈이다.
+     */
+    mutationFn: async (wantsNotification: boolean) => {
+      const permission = wantsNotification ? await requestPermission() : await currentPermission();
       await onboarding.complete({
         consentVersion: consent.version,
         // 계약이 `true` 리터럴만 받는다. 필수 동의 없이는 가입 자체가 안 되므로 늘 참이다.
         sensitiveDataConsent: true,
-        notificationEnabled: permission === 'GRANTED',
+        notificationEnabled: wantsNotification && permission === 'GRANTED',
         notificationPermission: permission,
       });
       // 온보딩 완료 여부는 세션의 signupcompleted 로 판단하므로 다시 받아온다.
@@ -86,7 +87,8 @@ export function OnboardingPage() {
         <CheckInTimeStep
           value={profile.checkInTime}
           onChange={(checkInTime) => profile.patch({ checkInTime })}
-          onFinish={() => finish.mutate()}
+          onFinish={() => finish.mutate(true)}
+          onSkipNotification={() => finish.mutate(false)}
           submitting={finish.isPending}
           errorMessage={finish.isError ? toUserMessage(finish.error) : null}
         />
@@ -98,8 +100,16 @@ export function OnboardingPage() {
 /** 알림 권한을 묻고 계약이 쓰는 값으로 옮긴다. */
 async function requestPermission(): Promise<ApiNotificationPermission> {
   if (typeof Notification === 'undefined') return 'UNSUPPORTED';
+  return toApiPermission(await Notification.requestPermission());
+}
 
-  const result = await Notification.requestPermission();
+/** 권한창을 띄우지 않고 지금 상태만 읽는다. (`알림을 받지 않을게요`) */
+async function currentPermission(): Promise<ApiNotificationPermission> {
+  if (typeof Notification === 'undefined') return 'UNSUPPORTED';
+  return toApiPermission(Notification.permission);
+}
+
+function toApiPermission(result: string): ApiNotificationPermission {
   if (result === 'granted') return 'GRANTED';
   if (result === 'denied') return 'DENIED';
   return 'DEFAULT';
@@ -107,7 +117,7 @@ async function requestPermission(): Promise<ApiNotificationPermission> {
 
 // --- 화면 1. 서비스 이용범위 ------------------------------------------------------
 
-/** 시안(22:12547)의 4분할 소개. 문구와 아이콘 모두 시안 그대로다. */
+/** 시안(25:30540)의 4분할 소개. 문구와 아이콘 모두 시안 그대로다. */
 const HIGHLIGHTS: { icon: IconName; title: string; caption: string }[] = [
   { icon: 'clock', title: '30초 기록', caption: '간단하게' },
   { icon: 'situation', title: '상황 기록', caption: '피부와 함께한 상황들' },
@@ -154,22 +164,20 @@ function IntroStep({ onStart }: { onStart: () => void }) {
       {/* 시안 기준 워드마크 상단 140 (상태바 44 제외 → 96), 설명은 그 아래 22px */}
       <header className="relative pt-[96px]">
         <Wordmark height={45} />
-        <p className="mt-[22px] text-xs leading-relaxed text-fg-muted">
+        {/* 시안의 설명 글상자는 두 줄에 28px — 줄높이가 글자 크기보다 조금 크다 */}
+        <p className="mt-[22px] text-xs leading-[14px] text-fg-muted">
           오늘의 피부 상태를 간단하게 기록하고,
           <br />
           지금 필요한 관리 방법을 확인해보세요.
         </p>
       </header>
 
-      {/* 마스코트 216×150. `?` 는 별도 텍스트라 겹쳐 놓는다. */}
-      <div className="relative mx-auto mt-[108px] w-[216px]">
+      {/*
+       * 마스코트 279×194. 시안에서 왼쪽 42 / 위 318 에 놓여 있어 가운데 정렬이 아니다.
+       * (좌우 여백이 42 대 81 로 다르다. 화면 좌우 안여백 16 을 빼고 26 만큼 민다)
+       */}
+      <div className="relative ml-[26px] mt-[83px] w-[279px]">
         <Mascot className="w-full" />
-        <span
-          aria-hidden="true"
-          className="absolute left-[103px] top-0 text-[96px] font-bold leading-[115px] text-fg"
-        >
-          ?
-        </span>
       </div>
 
       <div className="relative mt-auto grid grid-cols-4 pb-[25px] pt-6">
@@ -202,12 +210,14 @@ function CheckInTimeStep({
   value,
   onChange,
   onFinish,
+  onSkipNotification,
   submitting,
   errorMessage,
 }: {
   value: string;
   onChange: (value: string) => void;
   onFinish: () => void;
+  onSkipNotification: () => void;
   submitting?: boolean;
   errorMessage?: string | null;
 }) {
@@ -217,6 +227,21 @@ function CheckInTimeStep({
       footer={
         <>
           {errorMessage && <p className="mb-3 px-2 text-sm text-caution-500">{errorMessage}</p>}
+
+          {/*
+           * 시안 기준 79px 높이, 시작하기 버튼과 16px 띄어 놓는다.
+           * 점호 시각은 그대로 저장하되 알림만 끄고 넘어가는 갈래다 —
+           * 시각은 나중에 설정 > 알림 설정에서 켤 때 쓰인다.
+           */}
+          <button
+            type="button"
+            onClick={onSkipNotification}
+            disabled={submitting}
+            className="mb-4 flex h-[79px] w-full items-center justify-center rounded-pill bg-card text-xs text-fg-muted disabled:text-panel-label"
+          >
+            알림을 받지 않을게요
+          </button>
+
           <ArrowButton circle="light" onClick={onFinish} disabled={submitting}>
             {submitting ? '설정 중…' : '시작하기'}
           </ArrowButton>

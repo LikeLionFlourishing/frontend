@@ -1,7 +1,7 @@
 import type { Appearance, BodyArea, CareAvailability, Situation } from './schemas';
 
 /*
- * 확정 시안(피부보고1 22:13847 / 피부보고2 22:12586)의 선택지 어휘.
+ * 확정 시안(피부보고1 25:31783 / 피부보고2 25:30577)의 선택지 어휘.
  *
  * 원래 라벨은 서버(`/reference-data/skin-report-options`)가 주는 값을 썼지만,
  * 시안이 **얼굴 그림 위 좌표**와 **타일 그림**에 묶인 고정 목록으로 바뀌면서
@@ -104,7 +104,12 @@ export interface SituationOption extends DesignOption<Situation> {
  * 시안 12종 중 네 가지(야외 활동·식습관 변화·스트레스·피부접촉 환경)는
  * 계약에 대응 값이 없어 전부 `OTHER` 로 접힌다. 서버는 그 넷을 구분하지 못한다.
  *
- * 아이콘은 시안에 다섯 종뿐이고 세 개씩 돌려 쓰고 있다(placeholder 로 보인다).
+ * 반대로 계약의 `DELAYED_WASHING`(세안 지연)은 시안에 타일이 없다.
+ * 결과·이력 화면의 예시에는 `상황: 세안 지연` 이 나오므로, 그건 사용자가 고르는 게
+ * 아니라 AI 가 한 문장에서 뽑아 주는 값으로 본다. (docs/명세-대조.md 2-9)
+ *
+ * 아이콘은 열둘 중 열하나가 서로 다르다. `보호장비 착용`·`스트레스` 만
+ * 시안에서도 같은 그림(등짐 진 사람)을 함께 쓴다.
  */
 export const SITUATION_OPTIONS: SituationOption[] = [
   { value: 'SHAVING', label: '면도', api: 'SHAVING', icon: 'razor' },
@@ -123,29 +128,33 @@ export const SITUATION_OPTIONS: SituationOption[] = [
     api: 'PROTECTIVE_GEAR_OR_MASK',
     icon: 'protectiveGear',
   },
-  { value: 'NEW_PRODUCT', label: '새 제품 사용', api: 'NEW_PRODUCT', icon: 'sweat' },
-  { value: 'DELAYED_WASHING', label: '세안 지연', api: 'DELAYED_WASHING', icon: 'diet' },
+  { value: 'NEW_PRODUCT', label: '새 제품 사용', api: 'NEW_PRODUCT', icon: 'newProduct' },
+  // `피부 만짐` 과 같은 계약 값으로 접힌다. 서버는 둘을 구분하지 못한다.
+  { value: 'SQUEEZED', label: '여드름을 짬', api: 'TOUCHED_OR_SQUEEZED', icon: 'squeeze' },
   { value: 'STRESS', label: '스트레스', api: 'OTHER', icon: 'protectiveGear' },
   {
     value: 'SLEEP_DEPRIVATION',
     label: '수면 부족',
     api: 'SLEEP_DEPRIVATION',
-    icon: 'sweat',
+    icon: 'sleep',
   },
-  { value: 'SKIN_CONTACT', label: '피부접촉 환경', api: 'OTHER', icon: 'diet' },
-  { value: 'TOUCHED', label: '피부 만짐', api: 'TOUCHED_OR_SQUEEZED', icon: 'protectiveGear' },
+  { value: 'SKIN_CONTACT', label: '피부접촉 환경', api: 'OTHER', icon: 'skinContact' },
+  { value: 'TOUCHED', label: '피부 만짐', api: 'TOUCHED_OR_SQUEEZED', icon: 'touch' },
 ];
 
 export const SITUATION_NONE = { value: 'NONE_RECALLED', label: '특별히 떠오르는 상황 없음' };
 
 // --- 관리 가능 상태 (피부보고2) -----------------------------------------------
 
-/** 이 넷은 계약과 정확히 맞는다. */
+/*
+ * 시안(25:30587 / 25:30591)에는 타일이 **둘뿐**이다.
+ * 계약의 `CAN_CARE_BEFORE_SLEEP`·`ADDITIONAL_CARE_DIFFICULT` 를 고를 방법이 없어서
+ * `지금 관리할 수 없는 사람` 이 그 사실을 알릴 자리가 사라졌다.
+ * 관리 규칙표가 그 둘로 갈라지는 규칙을 갖고 있다면 못 쓴다. (docs/명세-대조.md 2-9)
+ */
 export const CARE_OPTIONS: DesignOption<CareAvailability>[] = [
   { value: 'BEFORE_WASH', label: '세안 전', api: 'BEFORE_WASH_CAN_WASH_LATER' },
   { value: 'ALREADY_WASHED', label: '세안 완료', api: 'ALREADY_WASHED' },
-  { value: 'BEFORE_SLEEP', label: '취침 전 관리 가능', api: 'CAN_CARE_BEFORE_SLEEP' },
-  { value: 'DIFFICULT', label: '관리 불가능', api: 'ADDITIONAL_CARE_DIFFICULT' },
 ];
 
 // --- 현재 피부 상태 (피부보고2) -----------------------------------------------

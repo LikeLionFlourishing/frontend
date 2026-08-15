@@ -31,48 +31,50 @@ export function RawTextStep({
   const canSubmit = value.trim().length > 0 && !tooLong && !submitting;
 
   return (
-    <div className="flex flex-col gap-5">
+    /* 시안 기준: 입력칸 상단 81 · 높이 407, 보조 버튼 502 · 81, 다음 713 (25:28832) */
+    <div className="-mt-[8px] flex flex-col">
       <div className="relative">
         <textarea
           value={value}
           onChange={(e) => onChange(e.target.value)}
           maxLength={MAX_LENGTH}
-          rows={11}
-          placeholder="예: 오늘 아침에 면도하고 야외훈련 뛰어서 턱이 빨갛고 따가워요."
+          placeholder="예: 오늘 아침에 면도하고 야외훈련 턱이 빨갛고 따가워요."
           aria-label="오늘 피부 상태"
           className={clsx(
-            'w-full resize-none rounded-card bg-panel px-4 py-4 text-base text-panel-text',
+            // `block` 이 없으면 inline 요소의 baseline 여백이 6px 붙어 아래가 전부 밀린다
+            'block h-[407px] w-full resize-none rounded-card bg-panel px-[27px] pb-12 pt-[30px]',
+            'text-base text-panel-text',
             'placeholder:text-panel-label focus:outline-none focus:ring-2 focus:ring-accent',
           )}
         />
-        <span className="pointer-events-none absolute bottom-4 right-4 text-xs text-panel-label">
+        <span className="pointer-events-none absolute bottom-[23px] right-5 text-xs text-panel-label">
           {value.length}/{MAX_LENGTH}
         </span>
       </div>
 
       {errorMessage && (
-        <p className="text-sm text-caution-500">
+        <p className="mt-3 text-sm text-caution-500">
           <Sentences text={errorMessage} />
         </p>
       )}
 
       {/*
        * 한 문장 작성이 어려운 사용자를 위한 선택형 보조 입력 (F-02).
-       * 시안(15:4652)은 글자를 가운데 두고 화살표만 오른쪽 끝에 붙인다.
+       * 시안은 글자를 가운데 두고 화살표만 오른쪽 끝에 붙인다.
        * 강조색은 주 CTA(다음)만 쓴다.
        */}
       <button
         type="button"
         onClick={onOpenAssist}
-        className="relative flex h-[67px] w-full items-center justify-center rounded-card bg-panel px-6 text-body-strong font-semibold text-panel-text"
+        className="relative mt-[14px] flex h-[81px] w-full items-center justify-center rounded-card bg-panel px-6 text-body-strong text-panel-text"
       >
-        입력하기 어려우신가요?
-        <span aria-hidden="true" className="absolute right-6 text-panel-label">
+        어떻게 써야할지 잘 모르겠어요.
+        <span aria-hidden="true" className="absolute right-9 text-xl text-panel-text">
           ›
         </span>
       </button>
 
-      <div className="pt-6">
+      <div className="mt-[130px] pb-[38px]">
         <PrimaryButton onClick={onNext} disabled={!canSubmit}>
           {submitting ? '정리하는 중…' : '다음'}
         </PrimaryButton>

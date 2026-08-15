@@ -33,7 +33,7 @@ export function TabLayout() {
                   clsx(
                     'flex h-[47px] items-center justify-center gap-2 transition',
                     /*
-                     * 확정 시안(22:10667)의 활성 탭은 검정이 아니라 중간 회색 pill + 흰 글자다.
+                     * 확정 시안(25:28596)의 활성 탭은 검정이 아니라 중간 회색 pill + 흰 글자다.
                      * (`text-base` 는 글자 크기 유틸리티라 색으로 못 쓴다 → text-white)
                      */
                     isActive

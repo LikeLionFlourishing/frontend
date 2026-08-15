@@ -22,15 +22,24 @@ export function StepLayout({ step, totalSteps, onBack, title, subtitle, children
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-base">
-      <header className="safe-top px-4 pt-4">
+      {/*
+       * 시안 실측: 진행 표시가 있는 화면은 표시 상단 15 · 제목 상단 50,
+       * 없는 화면(한 문장 피부보고)은 제목이 바로 11 에서 시작한다.
+       */}
+      <header className={clsx('safe-top px-4', showProgress ? 'pt-[15px]' : 'pt-[11px]')}>
         {showProgress && <StepIndicator step={step} totalSteps={totalSteps} />}
 
-        <div className="mt-5 flex items-start gap-2">
+        {/*
+         * 뒤로가기는 제목과 같은 줄에 있지만 흐름에서는 빼 둔다.
+         * 손가락용 44px 높이를 그대로 두면 제목이 한 줄인 화면에서 그 44 가
+         * 줄 높이를 밀어 올려 부제가 8px 내려앉는다.
+         */}
+        <div className={clsx('relative', showProgress && 'mt-[19px]')}>
           {onBack && (
             <button
               type="button"
               onClick={onBack}
-              className="-ml-1 shrink-0 text-2xl leading-none text-fg"
+              className="absolute -left-1 top-0 flex h-11 w-8 items-start text-2xl leading-none text-fg"
               aria-label="뒤로"
             >
               ‹
@@ -38,11 +47,20 @@ export function StepLayout({ step, totalSteps, onBack, title, subtitle, children
           )}
           {/* 시안 기준 제목 28px / 부제 12px (Figma 텍스트 박스 높이 36 / 14) */}
           {title && (
-            <h1 className="whitespace-pre-line text-[28px] font-bold leading-9 text-fg">{title}</h1>
+            <h1
+              className={clsx(
+                'whitespace-pre-line text-[28px] font-bold leading-9 text-fg',
+                // 시안에서 제목은 화면 왼쪽 43 — 뒤로가기 화살표를 지나 시작한다
+                onBack && 'pl-[27px]',
+              )}
+            >
+              {title}
+            </h1>
           )}
         </div>
 
-        {subtitle && <p className="mt-2 text-xs leading-relaxed text-fg-muted">{subtitle}</p>}
+        {/* 시안에서 부제 글상자는 제목 아래 4px, 높이 14 다(피부보고1·2 모두 같다) */}
+        {subtitle && <p className="mt-1 text-xs leading-[14px] text-fg-muted">{subtitle}</p>}
       </header>
 
       <main className="flex-1 px-4 py-6">{children}</main>
@@ -140,8 +158,8 @@ export function InfoButton({ children, onClick, disabled, type = 'button' }: But
 /**
  * 오른쪽에 화살표 원이 붙는 그린 버튼. 흐름을 시작·완료하는 자리에만 쓴다.
  *
- * 원의 색은 화면마다 다르다 — 온보딩 1화면(22:12542)은 어두운 원에 흰 화살표,
- * 기본 점호 시각(22:12699)은 흰 원에 검은 화살표다. 시안 그대로 두 벌을 둔다.
+ * 원의 색은 화면마다 다르다 — 온보딩 1화면(25:30294)은 어두운 원에 흰 화살표,
+ * 기본 점호 시각(25:30666)은 흰 원에 검은 화살표다. 시안 그대로 두 벌을 둔다.
  * 글자는 버튼 전체 폭 기준 가운데라 원을 absolute 로 띄운다.
  */
 export function ArrowButton({

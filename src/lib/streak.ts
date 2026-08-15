@@ -37,7 +37,7 @@ export function computeStreak(recordedDates: Iterable<string>, serverDate: strin
 
 /**
  * 막대 그래프용. 오늘까지 최근 `count` 일의 기록 여부를 과거 → 오늘 순으로 준다.
- * 시안(22:10691)의 막대는 다섯 개다.
+ * 시안(25:28596)의 막대는 다섯 개다.
  */
 export function recentDays(
   recordedDates: Iterable<string>,

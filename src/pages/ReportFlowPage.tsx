@@ -247,9 +247,10 @@ export function ReportFlowPage() {
     <StepLayout
       /*
        * 인디케이터는 점 4개다 — 한 문장(1) · 피부보고1(2) · 피부보고2(3) · 보고 내용 확인(4).
-       * 진입 화면(0)과 관리 전 확인(5)에는 시안에 인디케이터가 없다.
+       * 다만 **한 문장(1) 화면에는 시안에 인디케이터가 없다**(25:28832). 진입 화면(0)과
+       * 관리 전 확인(5)도 마찬가지다. 그래서 실제로 그리는 건 2~4 뿐이다.
        */
-      {...(step >= 1 && step <= 4 ? { step, totalSteps: TOTAL_STEPS } : {})}
+      {...(step >= 2 && step <= 4 ? { step, totalSteps: TOTAL_STEPS } : {})}
       onBack={goBack}
       title={header.title}
       subtitle={header.subtitle}
@@ -337,7 +338,6 @@ export function ReportFlowPage() {
             });
             setStep(5);
           }}
-          onRewrite={() => setStep(1)}
         />
       )}
 

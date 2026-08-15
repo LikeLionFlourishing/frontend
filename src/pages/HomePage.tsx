@@ -12,7 +12,7 @@ import { clsx } from '@/lib/clsx';
 import type { Home, SkinReportOptions } from '@/api/schemas';
 
 /**
- * 홈 (확정 시안 22:10631).
+ * 홈 (확정 시안 25:28596).
  *
  * 프로필 → 오늘 날짜 → TODAY'S CHECK → 아래 카드 세 장(최근 기록 / STREAK / 다음 점호).
  *
@@ -301,7 +301,7 @@ function RecentRecordCard({
   );
 }
 
-/** 시안(22:10691)의 막대. 높이는 고정이고 색만 그날 기록 여부를 따른다. */
+/** 시안(25:28596)의 막대. 높이는 고정이고 색만 그날 기록 여부를 따른다. */
 const STREAK_BAR_HEIGHTS = [11, 17, 22, 29, 37];
 
 function StreakCard({
