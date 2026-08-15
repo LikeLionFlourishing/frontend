@@ -13,3 +13,7 @@ dist-ssr
 
 # Vercel
 .vercel
+
+# 비밀이 들어가는 것만 가린다. `.env*` 로 묶으면 배포에 필요한
+# `.env.mock`(목 미리보기 빌드 설정)까지 업로드에서 빠진다.
+.env.*.local
