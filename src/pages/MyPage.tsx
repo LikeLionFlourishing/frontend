@@ -39,7 +39,7 @@ export function MyPage() {
   const user = useAuthStore((s) => s.user);
 
   return (
-    <div className="safe-top mx-auto w-full max-w-app px-4 pt-4">
+    <div className="mx-auto w-full max-w-app px-4 pt-[calc(var(--safe-top)+16px)]">
       {/* 시안(15:4748)은 탭 루트인데도 뒤로가기가 있다. */}
       <SettingsHeader title="설정" onBack={() => navigate(-1)} />
 

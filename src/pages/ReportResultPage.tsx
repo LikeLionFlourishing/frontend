@@ -169,7 +169,7 @@ export function ReportResultPage() {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-base">
-      <header className="safe-top px-4 pb-4 pt-5">
+      <header className="px-4 pb-4 pt-[calc(var(--safe-top)+20px)]">
         <div className="flex items-start gap-2">
           <button
             type="button"

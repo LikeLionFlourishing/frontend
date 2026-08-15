@@ -38,26 +38,28 @@ export function LoginPage() {
   const canSubmit = email.trim().length > 0 && password.length > 0 && !login.isPending;
 
   return (
-    <div className="safe-top relative mx-auto flex min-h-dvh w-full max-w-app flex-col overflow-hidden px-4 pt-[123px]">
+    // 시안 기준 워드마크 상단 110 (25:30023)
+    <div className="relative mx-auto flex min-h-dvh w-full max-w-app flex-col overflow-hidden px-4 pt-[calc(var(--safe-top)+110px)]">
       {/* 시안의 배경 픽셀 장식. 프레임 밖으로 걸치는 위치까지 그대로 따랐다. */}
       <PixelArt
         bitmap={LOGIN_DECO_TOP}
         cell={DECO_TOP_CELL}
         gap={DECO_TOP_GAP}
-        style={{ left: `${(206 / 402) * 100}%`, top: 118 }}
+        style={{ left: `${(206 / 402) * 100}%`, top: 'calc(var(--safe-top) + 118px)' }}
         className="pointer-events-none absolute"
       />
       <PixelArt
         bitmap={LOGIN_DECO_BOTTOM}
         cell={DECO_BOTTOM_CELL}
         gap={DECO_BOTTOM_GAP}
-        style={{ left: `${(-33 / 402) * 100}%`, top: 479 }}
+        style={{ left: `${(-33 / 402) * 100}%`, top: 'calc(var(--safe-top) + 479px)' }}
         className="pointer-events-none absolute"
       />
 
       <header className="relative">
         <Wordmark height={45} />
-        <p className="mt-[19px] text-xs leading-relaxed text-fg-muted">
+        {/* 시안의 설명 글상자는 두 줄에 28px (온보딩과 같다) */}
+        <p className="mt-[19px] text-xs leading-[14px] text-fg-muted">
           오늘의 피부 상태를 간단하게 기록하고,
           <br />
           지금 필요한 관리 방법을 확인해보세요.

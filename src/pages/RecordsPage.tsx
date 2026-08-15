@@ -33,7 +33,7 @@ export function RecordsPage() {
   const past = all.filter((r) => r.status !== 'FOLLOW_UP_PENDING');
 
   return (
-    <div className="safe-top flex flex-col gap-6 px-4 pt-5">
+    <div className="flex flex-col gap-6 px-4 pt-[calc(var(--safe-top)+20px)]">
       {/* 시안(15:8708)은 탭 루트인데도 제목 왼쪽에 뒤로가기가 있다. */}
       <header>
         <div className="flex items-center gap-2">

@@ -67,7 +67,8 @@ export function HomePage() {
   ];
 
   return (
-    <div className="safe-top flex flex-col px-[17px] pt-[7px]">
+    // 7 은 시안값, 앞의 --safe-top 이 상태바 자리를 메운다 (index.css 참고)
+    <div className="flex flex-col px-[17px] pt-[calc(var(--safe-top)+7px)]">
       <ProfileHeader />
       <TodayDate serverDate={data.serverDate} />
       <TodayCheckCard data={data} onNavigate={navigate} />
@@ -374,7 +375,8 @@ function MiniCard({
 
 function HomeSkeleton() {
   return (
-    <div className="safe-top flex flex-col gap-5 px-[17px] pt-[7px]">
+    // 위 여백은 본 화면과 같아야 한다. 다르면 로딩이 끝날 때 화면이 튄다
+    <div className="flex flex-col gap-5 px-[17px] pt-[calc(var(--safe-top)+7px)]">
       <div className="h-[54px] w-40 animate-pulse rounded-pill bg-card-raised" />
       <div className="h-24 w-52 animate-pulse rounded-card bg-card-raised" />
       <div className="h-[309px] animate-pulse rounded-card bg-card-hero" />

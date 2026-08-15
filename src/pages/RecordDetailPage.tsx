@@ -44,7 +44,7 @@ export function RecordDetailPage() {
 
   if (reportQuery.isPending) {
     return (
-      <div className="safe-top flex flex-col gap-4 px-5 pt-6">
+      <div className="flex flex-col gap-4 px-5 pt-[calc(var(--safe-top)+24px)]">
         <div className="h-9 w-52 animate-pulse rounded bg-card-raised" />
         <div className="h-24 animate-pulse rounded-card bg-card-raised" />
         <div className="h-48 animate-pulse rounded-card bg-card-raised" />
@@ -58,7 +58,7 @@ export function RecordDetailPage() {
   const followUp = report.followUp;
 
   return (
-    <div className="safe-top flex flex-col px-5 pt-4">
+    <div className="flex flex-col px-5 pt-[calc(var(--safe-top)+16px)]">
       <div className="flex items-start gap-2">
         <button
           type="button"

@@ -82,7 +82,7 @@ export function OnboardingPage() {
      * 시안의 온보딩2 화면에는 뒤로가기가 없다. 화면에 없는 것은 만들지 않는 원칙에
      * 따라 그대로 뒀다. (점호 시각은 설정 > 알림 설정에서 고칠 수 있다)
      */
-    <div className="safe-top mx-auto flex min-h-dvh w-full max-w-app flex-col px-4 pt-[47px]">
+    <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col px-4 pt-[calc(var(--safe-top)+47px)]">
       {step === 'checkInTime' && (
         <CheckInTimeStep
           value={profile.checkInTime}
@@ -141,7 +141,7 @@ function IntroStep({ onStart }: { onStart: () => void }) {
         gap={DECO_TOP_GAP}
         style={{
           left: `${(236 / 402) * 100}%`,
-          top: 165,
+          top: 'calc(var(--safe-top) + 165px)',
           filter: `blur(${DECO_BLUR}px)`,
           opacity: DECO_OPACITY,
         }}
@@ -154,7 +154,7 @@ function IntroStep({ onStart }: { onStart: () => void }) {
         tint="bg-[#81B690]"
         style={{
           left: `${(-96 / 402) * 100}%`,
-          top: 478,
+          top: 'calc(var(--safe-top) + 478px)',
           filter: `blur(${DECO_BLUR}px)`,
           opacity: DECO_OPACITY,
         }}

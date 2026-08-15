@@ -257,7 +257,7 @@ function SavedRow({ label, value }: { label: string; value: string }) {
 
 function FollowUpSkeleton() {
   return (
-    <div className="safe-top mx-auto flex w-full max-w-app flex-col gap-3 px-5 pt-10">
+    <div className="mx-auto flex w-full max-w-app flex-col gap-3 px-5 pt-[calc(var(--safe-top)+40px)]">
       <div className="h-9 w-48 animate-pulse rounded-pill bg-card-raised" />
       {Array.from({ length: 5 }, (_, i) => (
         <div key={i} className="h-[72px] animate-pulse rounded-pill bg-card-raised" />

@@ -12,7 +12,7 @@ export function SettingsLayout({ title, children }: { title: string; children: R
   const navigate = useNavigate();
 
   return (
-    <div className="safe-top mx-auto w-full max-w-app px-4 pt-4">
+    <div className="mx-auto w-full max-w-app px-4 pt-[calc(var(--safe-top)+16px)]">
       <SettingsHeader title={title} onBack={() => navigate(-1)} />
       {children}
     </div>

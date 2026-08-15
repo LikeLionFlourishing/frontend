@@ -26,7 +26,12 @@ export function StepLayout({ step, totalSteps, onBack, title, subtitle, children
        * 시안 실측: 진행 표시가 있는 화면은 표시 상단 15 · 제목 상단 50,
        * 없는 화면(한 문장 피부보고)은 제목이 바로 11 에서 시작한다.
        */}
-      <header className={clsx('safe-top px-4', showProgress ? 'pt-[15px]' : 'pt-[11px]')}>
+      <header
+        className={clsx(
+          'px-4',
+          showProgress ? 'pt-[calc(var(--safe-top)+15px)]' : 'pt-[calc(var(--safe-top)+11px)]',
+        )}
+      >
         {showProgress && <StepIndicator step={step} totalSteps={totalSteps} />}
 
         {/*
