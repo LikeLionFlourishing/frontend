@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Sentences } from '@/components/Sentences';
 import { clsx } from '@/lib/clsx';
 
 export type SectionKind = 'SUMMARY' | 'DO_TODAY' | 'AVOID_TODAY' | 'CHECK_NEXT' | 'CLINICIAN';
@@ -71,7 +72,7 @@ export function ResultSection({ kind, items, text, children }: Props) {
 export function MedicalDisclaimer() {
   return (
     <p className="px-2 py-3 text-center text-xs leading-4 text-fg-faint">
-      이 안내는 진단이 아닙니다. 검토된 관리 규칙에 따른 일반적인 셀프케어 안내입니다.
+      <Sentences text="이 안내는 진단이 아닙니다. 검토된 관리 규칙에 따른 일반적인 셀프케어 안내입니다." />
     </p>
   );
 }

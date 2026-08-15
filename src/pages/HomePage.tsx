@@ -5,6 +5,7 @@ import { home as homeApi, notifications } from '@/api/endpoints';
 import { toUserMessage } from '@/api/problem';
 import { queryKeys } from '@/app/queryClient';
 import { Icon, type IconName } from '@/components/Icon';
+import { Sentences } from '@/components/Sentences';
 import { labelOf, labelsOf, useReportOptions } from '@/hooks/useReportOptions';
 import { formatShortDate } from '@/lib/date';
 import { clsx } from '@/lib/clsx';
@@ -31,7 +32,9 @@ export function HomePage() {
   if (homeQuery.isError) {
     return (
       <div className="flex flex-col items-center gap-4 px-5 py-20 text-center">
-        <p className="text-sm text-fg-muted">{toUserMessage(homeQuery.error)}</p>
+        <p className="text-sm text-fg-muted">
+          <Sentences text={toUserMessage(homeQuery.error)} />
+        </p>
         <button
           type="button"
           onClick={() => homeQuery.refetch()}

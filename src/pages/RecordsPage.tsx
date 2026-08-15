@@ -4,6 +4,7 @@ import { reports } from '@/api/endpoints';
 import { toUserMessage } from '@/api/problem';
 import { labelOf, labelsOf, useReportOptions } from '@/hooks/useReportOptions';
 import { formatListDate, formatDotDate } from '@/lib/date';
+import { Sentences } from '@/components/Sentences';
 import { progressBadge, SKIN_CHANGE_LABEL } from '@/lib/enumLabels';
 import { clsx } from '@/lib/clsx';
 import type { SkinReportOptions, SkinReportSummary } from '@/api/schemas';
@@ -56,7 +57,9 @@ export function RecordsPage() {
 
       {listQuery.isError && (
         <div className="flex flex-col items-center gap-4 py-10 text-center">
-          <p className="text-sm text-fg-muted">{toUserMessage(listQuery.error)}</p>
+          <p className="text-sm text-fg-muted">
+            <Sentences text={toUserMessage(listQuery.error)} />
+          </p>
           <button
             type="button"
             onClick={() => listQuery.refetch()}

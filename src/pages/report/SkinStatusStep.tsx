@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Icon } from '@/components/Icon';
+import { Sentences } from '@/components/Sentences';
 import { PrimaryButton } from '@/components/StepLayout';
 import { clsx } from '@/lib/clsx';
 
@@ -43,7 +44,11 @@ export function SkinStatusStep({ onFine, onDiscomfort, savingFine, errorMessage 
         />
       </div>
 
-      {errorMessage && <p className="text-sm text-caution-500">{errorMessage}</p>}
+      {errorMessage && (
+        <p className="text-sm text-caution-500">
+          <Sentences text={errorMessage} />
+        </p>
+      )}
 
       <div className="pt-6">
         <PrimaryButton

@@ -83,7 +83,9 @@ export function FollowUpPage() {
   if (reportQuery.isError) {
     return (
       <StepLayout title="오늘의 경과 확인" onBack={() => navigate(-1)}>
-        <p className="text-sm text-fg-muted">{toUserMessage(reportQuery.error)}</p>
+        <p className="text-sm text-fg-muted">
+          <Sentences text={toUserMessage(reportQuery.error)} />
+        </p>
       </StepLayout>
     );
   }

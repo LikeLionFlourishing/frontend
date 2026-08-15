@@ -164,7 +164,7 @@ export function ReportResultPage() {
     return (
       <StepLayout title="기록을 찾을 수 없어요" onBack={() => navigate('/')}>
         <p className="text-sm text-fg-muted">
-          {toUserMessage(reportQuery.error ?? optionsQuery.error)}
+          <Sentences text={toUserMessage(reportQuery.error ?? optionsQuery.error)} />
         </p>
       </StepLayout>
     );
@@ -230,7 +230,9 @@ export function ReportResultPage() {
               {retry.isPending ? '다시 만드는 중…' : '다시 만들기'}
             </button>
             {retry.isError && (
-              <p className="mt-2 text-sm text-caution-500">{toUserMessage(retry.error)}</p>
+              <p className="mt-2 text-sm text-caution-500">
+                <Sentences text={toUserMessage(retry.error)} />
+              </p>
             )}
           </div>
         )}

@@ -1,4 +1,5 @@
 import { ChoiceList } from '@/components/ChoiceList';
+import { Sentences } from '@/components/Sentences';
 import { PrimaryButton } from '@/components/StepLayout';
 import { EXCLUSIVE_OPTION, resolveResultType } from '@/api/schemas';
 import type { PreCareCheckSelection, SkinReportOptions } from '@/api/schemas';
@@ -40,7 +41,11 @@ export function PreCareStep({
         onChange={(v) => onChange(v as PreCareCheckSelection)}
       />
 
-      {errorMessage && <p className="text-sm text-accent">{errorMessage}</p>}
+      {errorMessage && (
+        <p className="text-sm text-accent">
+          <Sentences text={errorMessage} />
+        </p>
+      )}
 
       <div className="pt-6">
         <PrimaryButton onClick={onSubmit} disabled={!canSubmit}>

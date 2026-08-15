@@ -13,6 +13,7 @@ import {
   SKIN_CHANGE_LABEL,
 } from '@/lib/enumLabels';
 import { clsx } from '@/lib/clsx';
+import { Sentences } from '@/components/Sentences';
 import type { FollowUp, SkinReportDetail, SkinReportOptions } from '@/api/schemas';
 
 /**
@@ -37,7 +38,9 @@ export function RecordDetailPage() {
   if (reportQuery.isError) {
     return (
       <StepLayout title="기록을 찾을 수 없어요" onBack={() => navigate('/records')}>
-        <p className="text-sm text-fg-muted">{toUserMessage(reportQuery.error)}</p>
+        <p className="text-sm text-fg-muted">
+          <Sentences text={toUserMessage(reportQuery.error)} />
+        </p>
       </StepLayout>
     );
   }

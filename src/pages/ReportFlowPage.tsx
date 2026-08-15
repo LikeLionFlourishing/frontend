@@ -11,6 +11,7 @@ import { track } from '@/lib/analytics';
 import { useReportDraftStore } from '@/stores/reportDraftStore';
 import { ConfirmStep, type ConfirmValues } from './report/ConfirmStep';
 import { PreCareStep } from './report/PreCareStep';
+import { Sentences } from '@/components/Sentences';
 import { RawTextStep } from './report/RawTextStep';
 import { SkinStatusStep } from './report/SkinStatusStep';
 import { Report1Step } from './report/Report1Step';
@@ -214,7 +215,7 @@ export function ReportFlowPage() {
     return (
       <StepLayout title="문제가 생겼어요" onBack={() => navigate('/')}>
         <p className="text-sm text-fg-muted">
-          {toUserMessage(optionsQuery.error ?? homeQuery.error)}
+          <Sentences text={toUserMessage(optionsQuery.error ?? homeQuery.error)} />
         </p>
       </StepLayout>
     );

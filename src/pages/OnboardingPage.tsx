@@ -22,6 +22,7 @@ import {
 } from '@/components/deco';
 import { track } from '@/lib/analytics';
 import { clsx } from '@/lib/clsx';
+import { Sentences } from '@/components/Sentences';
 import { useServiceProfileStore } from '@/stores/serviceProfileStore';
 import { useSignupConsentStore } from '@/stores/signupConsentStore';
 import type { NotificationPermission as ApiNotificationPermission } from '@/api/schemas';
@@ -231,7 +232,11 @@ function CheckInTimeStep({
       title={'기본 피부점호\n시간을 설정해주세요'}
       footer={
         <>
-          {errorMessage && <p className="mb-3 px-2 text-sm text-caution-500">{errorMessage}</p>}
+          {errorMessage && (
+            <p className="mb-3 px-2 text-sm text-caution-500">
+              <Sentences text={errorMessage} />
+            </p>
+          )}
 
           {/*
            * 시안 기준 79px 높이, 시작하기 버튼과 16px 띄어 놓는다.

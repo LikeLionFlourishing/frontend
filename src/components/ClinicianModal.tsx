@@ -44,8 +44,14 @@ export function ClinicianModal({ message, onClose }: { message: string; onClose:
         className="absolute inset-0 bg-black/5"
       />
 
-      <div className="relative mx-auto w-full max-w-app pl-6">
-        <div className="relative mt-[148px] w-[346px] overflow-hidden rounded-card bg-[#3A75FC] px-[22px] pb-[26px] pt-[23px] text-white">
+      {/*
+       * 시안(402 기준)은 카드가 x 24 · 폭 346 이라 오른쪽에 32 가 남는다.
+       * 폭을 고정하면 402 보다 좁은 화면에서 그만큼 오른쪽이 잘려 나가므로,
+       * 좌우 여백을 먼저 두고 카드는 346 을 **최대값**으로만 쓴다.
+       * 402 에서는 24 / 346 / 32 로 시안과 같아지고, 좁아지면 카드가 함께 줄어든다.
+       */}
+      <div className="relative mx-auto w-full max-w-app px-6">
+        <div className="relative mt-[148px] w-full max-w-[346px] overflow-hidden rounded-card bg-[#3A75FC] px-[22px] pb-[26px] pt-[23px] text-white">
           {/* 카드 중앙 위쪽의 밝은 번짐. 시안의 타원(176×99)을 그라데이션으로 옮겼다 */}
           <span
             aria-hidden="true"
@@ -61,7 +67,11 @@ export function ClinicianModal({ message, onClose }: { message: string; onClose:
             type="button"
             onClick={onClose}
             aria-label="닫기"
-            className="absolute right-[18px] top-[18px] grid size-8 place-items-center text-white"
+            /*
+             * `z-10` 이 없으면 눌리지 않는다. 아래 `잠깐,` 제목의 상자가 이 버튼 자리까지
+             * 걸치는데, 제목도 positioned 인 데다 DOM 상 뒤에 있어 위에 깔리기 때문이다.
+             */
+            className="absolute right-[18px] top-[18px] z-10 grid size-8 place-items-center text-white"
           >
             <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor">
               <path d="M6 6l12 12M18 6L6 18" strokeWidth="2" strokeLinecap="round" />

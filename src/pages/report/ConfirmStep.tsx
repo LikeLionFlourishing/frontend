@@ -85,7 +85,7 @@ export function ConfirmStep({ options, values, onChange, onConfirm, aiFailed }: 
     <div className="flex flex-col">
       {aiFailed && (
         <p className="mb-5 rounded-card bg-card-raised px-4 py-3 text-sm text-fg-muted">
-          정리에 실패했어요. 아래 항목을 직접 선택해 주세요.
+          <Sentences text="정리에 실패했어요. 아래 항목을 직접 선택해 주세요." />
         </p>
       )}
 
