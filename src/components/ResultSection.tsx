@@ -70,7 +70,7 @@ export function ResultSection({ kind, items, text, children }: Props) {
 /** 결과 화면 하단 고정 문구. 진단 서비스가 아님을 매번 명시한다. */
 export function MedicalDisclaimer() {
   return (
-    <p className="px-2 py-5 text-center text-xs leading-4 text-fg-faint">
+    <p className="px-2 py-3 text-center text-xs leading-4 text-fg-faint">
       이 안내는 진단이 아닙니다. 검토된 관리 규칙에 따른 일반적인 셀프케어 안내입니다.
     </p>
   );

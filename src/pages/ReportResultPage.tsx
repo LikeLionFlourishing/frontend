@@ -169,7 +169,7 @@ export function ReportResultPage() {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-base">
-      <header className="px-4 pb-4 pt-[calc(var(--safe-top)+20px)]">
+      <header className="px-4 pb-2 pt-[calc(var(--safe-top)+20px)]">
         <div className="flex items-start gap-2">
           <button
             type="button"
@@ -186,7 +186,8 @@ export function ReportResultPage() {
         </p>
       </header>
 
-      <main className="flex-1 px-4 pb-6">
+      {/* 아래 여백은 sticky 푸터가 대신한다. 여기 두면 그만큼 화면이 넘친다 */}
+      <main className="flex-1 px-4">
         {isClinician && (
           <div className="mb-4 rounded-card bg-caution/20 px-5 py-4">
             <p className="text-sm font-semibold text-fg">오늘은 셀프케어보다 확인이 먼저예요.</p>
@@ -228,7 +229,11 @@ export function ReportResultPage() {
         <MedicalDisclaimer />
       </main>
 
-      <footer className="safe-bottom sticky bottom-0 bg-base px-4 pb-4 pt-3">
+      {/*
+       * 카드 덱이 z-index 0~4 를 쓰므로 푸터가 그보다 위여야 한다.
+       * 없으면 마지막 카드가 버튼을 덮는다.
+       */}
+      <footer className="safe-bottom sticky bottom-0 z-30 bg-base px-4 pb-4 pt-3">
         <PrimaryButton onClick={() => navigate('/', { replace: true })}>
           내일 상태 다시 확인하기
         </PrimaryButton>
@@ -240,7 +245,8 @@ export function ReportResultPage() {
 // --- 덱 ----------------------------------------------------------------------
 
 /** 접힌 카드끼리 겹치는 양(px). 시안에서 다음 카드가 앞 카드 아래쪽을 덮는다. */
-const OVERLAP = 24;
+/** 앞 카드가 뒤 카드를 덮는 깊이. 시안(30)보다 깊게 잡아 덱 전체 길이를 줄였다. */
+const OVERLAP = 30;
 
 function Deck({
   deck,
@@ -276,7 +282,7 @@ function Deck({
               onClick={() => onToggle(card.key)}
               aria-expanded={isOpen}
               // 시안 기준 좌 여백 24, 위 여백 20, 접힌 카드는 아래로 42 더 내려간다
-              className="relative flex w-full flex-col items-start px-6 pb-[42px] pt-5 text-left"
+              className="relative flex w-full flex-col items-start px-6 pb-[32px] pt-5 text-left"
             >
               <span
                 className={clsx(
@@ -287,7 +293,7 @@ function Deck({
                 <span>{card.index}</span>
                 <span>{card.eyebrow}</span>
               </span>
-              <span className="mt-3 block text-[22px] font-bold leading-tight">{card.title}</span>
+              <span className="mt-3 block text-[22px] font-bold leading-[23px]">{card.title}</span>
               <span
                 className={clsx(
                   'mt-1.5 block text-[11px]',
