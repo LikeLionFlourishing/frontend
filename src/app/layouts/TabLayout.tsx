@@ -3,10 +3,11 @@ import { clsx } from '@/lib/clsx';
 import { Icon, type IconName } from '@/components/Icon';
 
 // 피부점호는 탭이 아니다. 홈 또는 알림에서만 진입한다. (NEW 유저플로우 3장)
-const TABS: { to: string; label: string; icon: IconName; end: boolean }[] = [
-  { to: '/', label: 'Home', icon: 'home', end: true },
-  { to: '/records', label: '기록', icon: 'clock', end: false },
-  { to: '/my', label: '설정', icon: 'gear', end: false },
+const TABS: { to: string; label: string; name: string; icon: IconName; end: boolean }[] = [
+  // 활성 탭에 붙는 글자는 시안 기준 영문이다 (Home / record / setting).
+  { to: '/', label: 'Home', name: '홈', icon: 'home', end: true },
+  { to: '/records', label: 'record', name: '기록', icon: 'clock', end: false },
+  { to: '/my', label: 'setting', name: '설정', icon: 'gear', end: false },
 ];
 
 export function TabLayout() {
@@ -45,7 +46,7 @@ export function TabLayout() {
                   <>
                     <Icon name={tab.icon} className="size-5" />
                     {isActive && <span className="text-sm">{tab.label}</span>}
-                    {!isActive && <span className="sr-only">{tab.label}</span>}
+                    {!isActive && <span className="sr-only">{tab.name}</span>}
                   </>
                 )}
               </NavLink>
