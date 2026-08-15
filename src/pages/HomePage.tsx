@@ -1,21 +1,23 @@
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { home as homeApi, notifications } from '@/api/endpoints';
+import { home as homeApi, notifications, reports } from '@/api/endpoints';
 import { toUserMessage } from '@/api/problem';
 import { queryKeys } from '@/app/queryClient';
 import { Icon, type IconName } from '@/components/Icon';
 import { labelOf, labelsOf, useReportOptions } from '@/hooks/useReportOptions';
-import { daysBetween, formatShortDate } from '@/lib/date';
+import { formatShortDate } from '@/lib/date';
+import { computeStreak, recentDays, STREAK_WINDOW } from '@/lib/streak';
 import { clsx } from '@/lib/clsx';
-import { BRANCH_OPTIONS, useServiceProfileStore } from '@/stores/serviceProfileStore';
 import type { Home, SkinReportOptions } from '@/api/schemas';
 
 /**
- * 홈.
+ * 홈 (확정 시안 22:10631).
  *
- * 시안 대비 두 블록(D-Day 위젯, BRIEFING)은 현재 API 계약에 대응 엔드포인트가 없다.
- * `PLACEHOLDER` 주석이 그 자리이며, 값이 정해지면 그대로 교체하면 된다.
+ * 프로필 → 오늘 날짜 → TODAY'S CHECK → 아래 카드 세 장(최근 기록 / STREAK / 다음 점호).
+ *
+ * 개편 전에 있던 D-Day 위젯과 BRIEFING 카드는 시안에서 사라져 함께 지웠다.
+ * 그 자리에 큰 날짜와 STREAK 이 들어왔다.
  */
 export function HomePage() {
   const navigate = useNavigate();
@@ -25,6 +27,15 @@ export function HomePage() {
   const notificationQuery = useQuery({
     queryKey: queryKeys.notificationSettings,
     queryFn: notifications.getSettings,
+  });
+
+  /*
+   * STREAK 은 계약에 필드가 없어서 최근 기록 목록으로 직접 센다.
+   * 홈만으로는 알 수 없어 목록을 한 번 더 부른다. (lib/streak.ts 의 한계 설명 참고)
+   */
+  const streakQuery = useQuery({
+    queryKey: [...queryKeys.reports, { limit: STREAK_WINDOW }],
+    queryFn: () => reports.list({ limit: STREAK_WINDOW }),
   });
 
   if (homeQuery.isError) {
@@ -46,22 +57,31 @@ export function HomePage() {
 
   const data = homeQuery.data;
 
+  /*
+   * 오늘 `괜찮아요` 만 누른 날은 피부보고가 없어 목록에 안 나온다.
+   * 홈이 주는 오늘치(`today`)로 그날 하루만 보정한다.
+   */
+  const recordedDates = [
+    ...(streakQuery.data?.data.map((r) => r.reportDate) ?? []),
+    ...(data.today ? [data.today.date] : []),
+  ];
+
   return (
-    <div className="safe-top flex flex-col gap-5 px-5 pt-4">
+    <div className="safe-top flex flex-col px-[17px] pt-[7px]">
       <ProfileHeader />
-      <DischargeWidget serverDate={data.serverDate} />
+      <TodayDate serverDate={data.serverDate} />
       <TodayCheckCard data={data} onNavigate={navigate} />
 
-      {/* 시안 기준 좌우 6px, 위아래 8px 간격이다. (15:8672 / 15:8681 / 15:8688) */}
-      <div className="grid grid-cols-2 gap-[6px]">
-        <BriefingCard />
+      {/* 시안 기준 카드 사이 7px, 오른쪽 열 안에서는 6px */}
+      <div className="mt-[14px] grid grid-cols-2 gap-[7px]">
+        <RecentRecordCard
+          data={data}
+          options={optionsQuery.data}
+          onOpen={(id) => navigate(`/records/${id}`)}
+        />
 
-        <div className="flex flex-col gap-2">
-          <RecentRecordCard
-            data={data}
-            options={optionsQuery.data}
-            onOpen={(id) => navigate(`/records/${id}`)}
-          />
+        <div className="flex flex-col gap-[6px]">
+          <StreakCard recordedDates={recordedDates} serverDate={data.serverDate} />
           <NextCheckCard time={notificationQuery.data?.time ?? '17:30'} />
         </div>
       </div>
@@ -72,54 +92,56 @@ export function HomePage() {
 // --- 상단 --------------------------------------------------------------------
 
 function ProfileHeader() {
-  const branch = useServiceProfileStore((s) => s.branch);
-  const label = BRANCH_OPTIONS.find((b) => b.value === branch)?.label;
-
   return (
-    <header className="flex items-center gap-3">
-      <div className="size-11 shrink-0 rounded-full bg-card-raised" aria-hidden="true" />
-      <div className="flex-1">
-        {/* PLACEHOLDER: 이름과 계급을 담을 필드가 계약에 없다. */}
-        <p className="text-xs text-fg-muted">김멋사님</p>
-        <p className="text-body-strong font-semibold text-fg">{label ?? '복무 정보 미입력'}</p>
+    <header className="flex items-start gap-[9px]">
+      {/* PLACEHOLDER: 프로필 사진 필드가 계약에 없다. 시안도 빈 원이다. */}
+      <div className="size-[54px] shrink-0 rounded-full bg-card-raised" aria-hidden="true" />
+
+      <div className="flex-1 pt-[11px]">
+        <p className="text-xs text-fg-faint">오늘도 관리해요</p>
+        {/* PLACEHOLDER: 이름 필드가 계약에 없다. */}
+        <p className="mt-0.5 text-body-strong text-fg">김멋사</p>
       </div>
-      <button type="button" className="text-info" aria-label="알림">
-        <Icon name="bell" className="size-6" />
+
+      <button type="button" className="mt-0.5 text-info" aria-label="알림">
+        <Icon name="bell" className="h-[26px] w-[21px]" />
       </button>
     </header>
   );
 }
 
-/**
- * 전역까지 남은 일수.
- *
- * 전역예정일은 설정 > 프로필 관리에서 받는다. 온보딩 필수 단계가 아니므로
- * 비어 있는 상태가 정상이고, 그때는 숫자를 지어내지 않고 입력 경로를 안내한다.
- */
-function DischargeWidget({ serverDate }: { serverDate: string }) {
-  const dischargeOn = useServiceProfileStore((s) => s.dischargeOn);
-
-  if (!dischargeOn) {
-    return (
-      <section aria-label="전역까지 남은 기간" className="-mt-1">
-        <p className="text-body-strong font-semibold text-fg">전역까지</p>
-        <Link to="/my/profile" className="mt-1 block text-sm text-info">
-          전역예정일을 입력하면 D-Day를 보여드려요 ›
-        </Link>
-      </section>
-    );
-  }
-
-  const remaining = daysBetween(serverDate, dischargeOn);
+/** 시안에서 D-Day 자리를 대신하는 오늘 날짜. 큰 파란 숫자 + 영문 요일. */
+function TodayDate({ serverDate }: { serverDate: string }) {
+  const [, month = '', day = ''] = serverDate.slice(0, 10).split('-');
 
   return (
-    <section aria-label="전역까지 남은 기간" className="-mt-1">
-      <p className="text-body-strong font-semibold text-fg">전역까지</p>
-      <p className="text-[64px] font-bold leading-none tracking-tight text-info">
-        {remaining > 0 ? `D-${remaining}` : remaining === 0 ? 'D-DAY' : `D+${-remaining}`}
+    <section aria-label="오늘 날짜" className="mt-[-6px]">
+      <p className="text-[72px] font-bold leading-[86px] tracking-tight text-info">
+        {month}.{day}
+      </p>
+      {/* 시안에서 요일 상자가 날짜 상자와 12px 겹친다 */}
+      <p className="-mt-3 pl-[7px] text-[28px] font-semibold leading-9 text-fg">
+        {weekdayName(serverDate)}
       </p>
     </section>
   );
+}
+
+const WEEKDAY_EN = [
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+] as const;
+
+/** 시안의 요일 표기는 영문 전체 이름이다. 타임존 보정을 피해 UTC 로 읽는다. */
+function weekdayName(isoDate: string): string {
+  const [y, m, d] = isoDate.slice(0, 10).split('-').map(Number);
+  if (!y || !m || !d) return '';
+  return WEEKDAY_EN[new Date(Date.UTC(y, m - 1, d)).getUTCDay()] ?? '';
 }
 
 // --- TODAY'S CHECK -----------------------------------------------------------
@@ -127,95 +149,59 @@ function DischargeWidget({ serverDate }: { serverDate: string }) {
 /**
  * 홈의 주 카드.
  *
- * 무엇을 먼저 보여줄지는 서버가 `priority` 로 정해 준다(유저플로우 2. 홈 진입).
- * 미완료 경과가 있으면 그게 최우선이고, 오늘 점호는 그 다음이다.
+ * 시안은 상태와 무관하게 타일 두 장을 늘 나란히 두고, 강조색은 `피부 점호 시작`
+ * 쪽에 고정돼 있다. 서버가 주는 `priority` 는 왼쪽 타일의 문구와 활성 여부에만 쓴다.
  */
 function TodayCheckCard({ data, onNavigate }: { data: Home; onNavigate: (to: string) => void }) {
   const pending = data.pendingFollowUp;
-  // `priority` 가 FOLLOW_UP 이어도 대상 기록이 없으면 보낼 곳이 없다.
-  const followUpFirst = data.priority === 'FOLLOW_UP' && pending !== null;
   const answeredToday = data.today !== null;
 
   return (
-    <section className="rounded-card bg-card px-5 py-6">
-      <p className="text-[11px] font-semibold tracking-[0.2em] text-fg-faint">TODAY&apos;S CHECK</p>
+    // 시안 기준 368×309, 안쪽 여백 좌 24 / 위 19
+    <section className="mt-[23px] rounded-card bg-card-hero px-[24px] pb-[27px] pt-[19px]">
+      <p className="text-[11px] font-semibold tracking-[0.14em] text-fg-faint">
+        TODAY&apos;S CHECK
+      </p>
 
-      {followUpFirst ? (
-        <>
-          <h2 className="mt-3 text-2xl font-bold leading-snug text-fg">
-            어제 기록한 피부 불편은
-            <br />
-            오늘 어떤가요?
-          </h2>
-          <p className="mt-2 text-sm text-fg-muted">
-            {formatShortDate(pending.reportDate)} 기록의 경과를 남겨주세요.
-          </p>
-
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <ActionTile
-              icon="note"
-              title="경과 확인하기"
-              caption="어제 기록의 변화 남기기"
-              tone="accent"
-              onClick={() => onNavigate(`/follow-up/${pending.reportId}`)}
-            />
-            <ActionTile
-              icon="face"
-              title="피부 점호 시작"
-              caption="오늘 상태 기록하기"
-              onClick={() => onNavigate('/report')}
-            />
-          </div>
-        </>
-      ) : answeredToday ? (
-        <>
-          <h2 className="mt-3 text-2xl font-bold leading-snug text-fg">
+      <h2 className="mt-[7px] text-[28px] font-bold leading-[38px] text-fg">
+        {answeredToday ? (
+          <>
             오늘 점호를
             <br />
             마쳤어요
-          </h2>
-          <p className="mt-2 text-sm text-fg-muted">
-            {data.today?.state === 'NO_DISCOMFORT'
-              ? '특별한 불편이 없다고 기록했어요.'
-              : '오늘의 관리 방법을 다시 확인할 수 있어요.'}
-          </p>
-
-          {data.today?.reportId && (
-            <button
-              type="button"
-              onClick={() => onNavigate(`/report/result/${data.today!.reportId}`)}
-              className="mt-5 w-full rounded-pill bg-accent px-5 py-4 text-body-strong font-semibold text-panel-text"
-            >
-              오늘의 안내 다시 보기
-            </button>
-          )}
-        </>
-      ) : (
-        <>
-          <h2 className="mt-3 text-2xl font-bold leading-snug text-fg">
-            금일 피부 상태,
+          </>
+        ) : (
+          <>
+            오늘 피부 상태는
             <br />
-            이상 있나요?
-          </h2>
+            어떤가요?
+          </>
+        )}
+      </h2>
 
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <ActionTile
-              icon="note"
-              title="경과 확인하기"
-              caption="확인할 기록이 없어요"
-              disabled
-              onClick={() => {}}
-            />
-            <ActionTile
-              icon="face"
-              title="피부 점호 시작"
-              caption="상태를 기록하고 관리받기"
-              tone="accent"
-              onClick={() => onNavigate('/report')}
-            />
-          </div>
-        </>
-      )}
+      {/* 시안 기준 타일 163×140, 간격 7 */}
+      <div className="mt-[21px] grid grid-cols-2 gap-[7px]">
+        <ActionTile
+          icon="note"
+          title="경과 확인하기"
+          caption={pending ? '어제 기록을 남겨주세요' : '확인할 기록이 없어요'}
+          disabled={!pending}
+          onClick={() => pending && onNavigate(`/follow-up/${pending.reportId}`)}
+        />
+        <ActionTile
+          icon="face"
+          title="피부 점호 시작"
+          caption={answeredToday ? '오늘의 안내 다시 보기' : '상태를 기록하고 관리받기'}
+          tone="accent"
+          onClick={() =>
+            onNavigate(
+              answeredToday && data.today?.reportId
+                ? `/report/result/${data.today.reportId}`
+                : '/report',
+            )
+          }
+        />
+      </div>
     </section>
   );
 }
@@ -242,14 +228,14 @@ function ActionTile({
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        'flex flex-col items-center gap-2 rounded-card px-3 py-5 text-center transition',
+        'flex h-[140px] flex-col items-center rounded-card px-3 pt-[25px] text-center transition',
         isAccent ? 'bg-accent text-panel-text' : 'bg-card-raised text-fg',
         disabled && 'opacity-40',
       )}
     >
       <Icon name={icon} className="size-8" />
-      <span className="text-body-strong font-semibold">{title}</span>
-      <span className={clsx('text-xs', isAccent ? 'text-panel-label' : 'text-fg-muted')}>
+      <span className="mt-[15px] text-body-strong">{title}</span>
+      <span className={clsx('mt-[5px] text-xs', isAccent ? 'text-panel-label' : 'text-fg-faint')}>
         {caption}
       </span>
     </button>
@@ -257,31 +243,6 @@ function ActionTile({
 }
 
 // --- 하단 카드 ---------------------------------------------------------------
-
-function BriefingCard() {
-  // PLACEHOLDER: 기상 API 가 계약에 없다. 값이 정해지면 교체한다.
-  return (
-    <MiniCard label="BRIEFING">
-      <p className="text-body-strong font-semibold text-fg">기상</p>
-      <p className="mt-0.5 text-sm text-fg-muted">32° / 25°</p>
-
-      <p className="mt-4 text-body-strong font-semibold text-fg">예상 환경</p>
-      <p className="mt-0.5 text-sm text-fg-muted">야외활동 훈련</p>
-
-      <hr className="my-4 border-panel" />
-
-      <div className="flex items-end justify-between gap-2">
-        <p className="text-xs leading-relaxed text-fg-muted">
-          · 자외선 차단
-          <br />· 수분보충
-        </p>
-        <span aria-hidden="true" className="text-fg-muted">
-          ›
-        </span>
-      </div>
-    </MiniCard>
-  );
-}
 
 function RecentRecordCard({
   data,
@@ -296,18 +257,11 @@ function RecentRecordCard({
 
   if (!recent) {
     return (
-      <MiniCard label="RECENT RECORD">
-        <p className="text-sm text-fg-muted">아직 기록이 없어요</p>
+      <MiniCard label="RECENT RECORD" className="h-[192px]">
+        <p className="mt-[13px] text-sm text-fg-faint">아직 기록이 없어요</p>
       </MiniCard>
     );
   }
-
-  // 정보구조도상 `최근 피부 기록` 아래에 `전체 기록 보기`가 붙는다.
-  const seeAll = (
-    <Link to="/records" className="mt-3 block text-xs font-semibold text-info">
-      전체 기록 보기 ›
-    </Link>
-  );
 
   const summary = [
     labelOf(options?.areas, recent.primaryArea),
@@ -317,50 +271,102 @@ function RecentRecordCard({
     .join(' · ');
 
   return (
-    <MiniCard label="RECENT RECORD">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-body-strong font-semibold text-fg">
-            {formatShortDate(recent.reportDate)}
+    <MiniCard label="RECENT RECORD" className="h-[192px]">
+      <p className="mt-[13px] text-body-strong text-fg">{formatShortDate(recent.reportDate)}</p>
+      <p className="mt-[4px] truncate text-xs text-fg-muted">{summary}</p>
+
+      {/* 시안 기준 52px 원이 카드 오른쪽 아래에 걸친다 */}
+      <button
+        type="button"
+        onClick={() => onOpen(recent.id)}
+        aria-label="기록 자세히 보기"
+        className="mt-[9px] grid size-[52px] shrink-0 -translate-x-[2px] place-items-center self-end rounded-full bg-gradient-to-br from-[#CFFFE0] to-[#8CFFB6] text-panel-text"
+      >
+        <span aria-hidden="true" className="text-lg">
+          ↗
+        </span>
+      </button>
+
+      <hr className="mt-auto border-panel" />
+      <Link
+        to={`/records/${recent.id}`}
+        className="flex items-center justify-between pt-[10px] text-xs text-fg"
+      >
+        기록 자세히 보기
+        <span aria-hidden="true" className="text-fg-faint">
+          ›
+        </span>
+      </Link>
+    </MiniCard>
+  );
+}
+
+/** 시안(22:10691)의 막대. 높이는 고정이고 색만 그날 기록 여부를 따른다. */
+const STREAK_BAR_HEIGHTS = [11, 17, 22, 29, 37];
+
+function StreakCard({
+  recordedDates,
+  serverDate,
+}: {
+  recordedDates: string[];
+  serverDate: string;
+}) {
+  const streak = computeStreak(recordedDates, serverDate);
+  const days = recentDays(recordedDates, serverDate, STREAK_BAR_HEIGHTS.length);
+
+  return (
+    <MiniCard label="STREAK" className="h-[93px]">
+      <div className="flex flex-1 items-end justify-between">
+        <div>
+          <p className="text-[30px] font-bold leading-none text-info">{streak}</p>
+          <p className="mt-[9px] text-xs text-fg-muted">
+            {streak > 0 ? '일 연속 기록 중!' : '오늘부터 시작해요'}
           </p>
-          <p className="mt-0.5 truncate text-sm text-fg-muted">{summary}</p>
         </div>
-        <button
-          type="button"
-          onClick={() => onOpen(recent.id)}
-          aria-label="기록 자세히 보기"
-          className="grid size-[46px] shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#CFFFE0] to-[#8CFFB6] text-panel-text"
-        >
-          <span aria-hidden="true">↗</span>
-        </button>
+
+        <div aria-hidden="true" className="flex items-end gap-[7px] pb-[7px]">
+          {STREAK_BAR_HEIGHTS.map((height, index) => (
+            <span
+              key={height}
+              style={{ height }}
+              className={clsx('w-[5px] rounded-full', days[index] ? 'bg-info' : 'bg-[#939598]')}
+            />
+          ))}
+        </div>
       </div>
-      {seeAll}
     </MiniCard>
   );
 }
 
 function NextCheckCard({ time }: { time: string }) {
   return (
-    <MiniCard label="NEXT CHECK">
-      <div className="flex w-full items-center justify-between gap-2">
+    <MiniCard label="NEXT CHECK" className="h-[93px]">
+      <div className="flex flex-1 items-end justify-between gap-2">
         <div className="text-left">
-          <p className="text-sm text-fg-muted">내일 경과 확인</p>
-          <p className="text-body-strong font-semibold text-info">{time}</p>
+          <p className="text-xs text-fg-muted">내일 경과 확인</p>
+          <p className="mt-[2px] text-xs font-semibold text-info">{time}</p>
         </div>
-        <span className="grid size-9 shrink-0 place-items-center rounded-full border border-dashed border-info text-info">
-          <Icon name="bell" className="size-4" />
+        <span className="grid size-[46px] shrink-0 place-items-center rounded-full border border-dashed border-info text-info">
+          <Icon name="bell" className="size-5" />
         </span>
       </div>
     </MiniCard>
   );
 }
 
-function MiniCard({ label, children }: { label: string; children: ReactNode }) {
+function MiniCard({
+  label,
+  className,
+  children,
+}: {
+  label: string;
+  className?: string;
+  children: ReactNode;
+}) {
   return (
-    // 시안에서 하단 카드 세 장은 TODAY'S CHECK 과 같은 #FBFBFB 다.
-    // (카드 안의 타일만 한 단계 진한 #F1F1F1 을 쓴다)
-    <section className="flex flex-1 flex-col rounded-card bg-card px-4 py-4">
-      <p className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-fg-faint">{label}</p>
+    // 시안 기준 안쪽 여백 좌 17 / 위 11
+    <section className={clsx('flex flex-col rounded-card bg-card px-[17px] py-[11px]', className)}>
+      <p className="text-[10px] font-semibold tracking-[0.14em] text-fg-faint">{label}</p>
       {children}
     </section>
   );
@@ -368,11 +374,11 @@ function MiniCard({ label, children }: { label: string; children: ReactNode }) {
 
 function HomeSkeleton() {
   return (
-    <div className="safe-top flex flex-col gap-5 px-5 pt-4">
-      <div className="h-11 w-40 animate-pulse rounded-pill bg-card-raised" />
-      <div className="h-20 w-52 animate-pulse rounded-card bg-card-raised" />
-      <div className="h-64 animate-pulse rounded-card bg-card" />
-      <div className="h-40 animate-pulse rounded-card bg-card-raised" />
+    <div className="safe-top flex flex-col gap-5 px-[17px] pt-[7px]">
+      <div className="h-[54px] w-40 animate-pulse rounded-pill bg-card-raised" />
+      <div className="h-24 w-52 animate-pulse rounded-card bg-card-raised" />
+      <div className="h-[309px] animate-pulse rounded-card bg-card-hero" />
+      <div className="h-[192px] animate-pulse rounded-card bg-card" />
     </div>
   );
 }

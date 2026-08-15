@@ -22,7 +22,7 @@ export function TabLayout() {
        * 비활성 탭도 47px 원 배경을 가진다 — 아이콘만 놓으면 시안과 다르다.
        */}
       <nav className="safe-bottom fixed bottom-0 left-1/2 z-20 -translate-x-1/2 pb-4">
-        <ul className="flex h-[72px] items-center gap-[9px] rounded-pill bg-[#F8F8F8] px-[19px]">
+        <ul className="flex h-[72px] items-center gap-[9px] rounded-pill bg-[#E9E9E9] px-[19px]">
           {TABS.map((tab) => (
             <li key={tab.to}>
               <NavLink
@@ -31,11 +31,13 @@ export function TabLayout() {
                 className={({ isActive }) =>
                   clsx(
                     'flex h-[47px] items-center justify-center gap-2 transition',
-                    // 라이트 테마에서는 활성 탭이 검정 pill + 흰 글자다.
-                    // (`text-base` 는 글자 크기 유틸리티라 색으로 못 쓴다 → text-white)
+                    /*
+                     * 확정 시안(22:10667)의 활성 탭은 검정이 아니라 중간 회색 pill + 흰 글자다.
+                     * (`text-base` 는 글자 크기 유틸리티라 색으로 못 쓴다 → text-white)
+                     */
                     isActive
-                      ? 'w-[113px] rounded-pill bg-fg font-semibold text-white'
-                      : 'w-[47px] rounded-full bg-[#F3F3F3] text-fg',
+                      ? 'w-[113px] rounded-pill bg-[#BEBEBE] font-semibold text-white'
+                      : 'w-[47px] rounded-full bg-[#EEEEEE] text-fg',
                   )
                 }
               >

@@ -26,10 +26,14 @@ export default {
         // 카드·필드가 이 위에 미세한 명도차로 떠 보이는 구조.
         // (`bg` 라는 이름은 `bg-bg` 로 충돌하므로 `base` 를 쓴다)
         base: '#F1F1F1',
-        // 홈의 카드 계열. raised 가 카드 안의 보조 타일이다.
+        /*
+         * 카드 계열. 배경(#F1F1F1)보다 살짝 어두워서 눌린 것처럼 보이는 구조다.
+         * hero 는 홈의 TODAY'S CHECK 한 장, raised 는 카드 안의 보조 타일.
+         */
         card: {
-          DEFAULT: '#FBFBFB',
-          raised: '#F1F1F1',
+          DEFAULT: '#ECECEC',
+          hero: '#EEEEEE',
+          raised: '#E6E6E6',
         },
         // 입력창·선택지·설정 카드에 쓰이는 회색 패널
         panel: {
