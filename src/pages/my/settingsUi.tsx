@@ -17,22 +17,24 @@ export function SettingsHeader({ title, onBack }: { title: string; onBack?: () =
           type="button"
           onClick={onBack}
           aria-label="뒤로"
-          className="absolute left-0 grid size-10 place-items-center rounded-full bg-panel text-panel-text"
+          className="absolute left-[3px] grid size-[39px] place-items-center rounded-full bg-panel text-fg-muted"
         >
           <Icon name="arrowLeft" className="size-4" />
         </button>
       )}
-      <h1 className="text-body-strong font-semibold text-fg">{title}</h1>
+      {/* 시안 31:44822 — SemiBold 16 / `검`, 가운데 */}
+      <h1 className="text-body-strong text-fg-muted">{title}</h1>
     </header>
   );
 }
 
 /** 밝은 회색 패널 카드. 설정 화면의 기본 단위다. */
 export function SettingsCard({ children }: { children: ReactNode }) {
-  return <div className="overflow-hidden rounded-card bg-panel">{children}</div>;
+  // 시안 31:44816 — 370×153, 모서리 17
+  return <div className="overflow-hidden rounded-[17px] bg-panel">{children}</div>;
 }
 
 /** 카드 안에서 행을 나누는 얇은 구분선. 시안은 좌우 15px 씩 들여쓴다. */
 export function SettingsDivider() {
-  return <div aria-hidden="true" className="mx-4 h-px bg-panel-label/25" />;
+  return <div aria-hidden="true" className="mx-[15px] h-px bg-panel-label/25" />;
 }

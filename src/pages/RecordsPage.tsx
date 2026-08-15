@@ -46,7 +46,7 @@ export function RecordsPage() {
           >
             ‹
           </button>
-          <h1 className="text-[28px] font-bold text-fg">기록조회</h1>
+          <h1 className="text-[30px] font-bold text-fg-muted">기록조회</h1>
         </div>
         <p className="mt-1 pl-6 text-xs text-fg-muted">
           이전에 기록한 피부 상태와 변화를 확인해보세요
@@ -84,10 +84,12 @@ export function RecordsPage() {
       )}
 
       {pending.length > 0 && (
-        <section className="overflow-hidden rounded-card bg-white">
-          <div className="flex items-baseline justify-between px-5 py-4">
-            <h2 className="text-body-strong font-semibold text-fg">이어서 확인할 기록</h2>
-            <span className="text-sm text-fg-muted">{pending.length}건</span>
+        // 시안 31:46118 — 368×252, 모서리 17, 바탕 #ECECEC (흰색이 아니다)
+        <section className="overflow-hidden rounded-[17px] bg-card">
+          <div className="flex items-baseline justify-between px-[14px] pb-[10px] pt-[18px]">
+            {/* 시안 31:46200 · 31:46201 — 둘 다 SemiBold 16 / `검` */}
+            <h2 className="text-body-strong text-fg-muted">이어서 확인할 기록</h2>
+            <span className="text-body-strong text-fg-muted">{pending.length}건</span>
           </div>
 
           {pending.map((report) => (
@@ -141,8 +143,9 @@ function PendingCard({
     .join(' · ');
 
   return (
-    <article className="rounded-card bg-guide-summary px-5 py-5">
-      <h3 className="text-body-strong font-semibold text-fg">{title}</h3>
+    // 시안 31:46119 — 바깥 카드 아래를 덮는 판이라 **아래 모서리만** 둥글다
+    <article className="rounded-b-[17px] bg-[#8CFDB7]/90 px-[18px] pb-[26px] pt-[25px]">
+      <h3 className="text-body-strong text-fg-muted">{title}</h3>
 
       {/*
         시안은 여기에 직전 경과(`● 나아졌어요`)와 `최근 변화-` 문구가 있다.
@@ -163,7 +166,8 @@ function PendingCard({
       <button
         type="button"
         onClick={onCheck}
-        className="mt-5 w-full rounded-pill bg-card-raised px-5 py-3 text-body-strong font-semibold text-fg"
+        // 시안 31:46204 — 256×50, 모서리 30, 바탕 #ECECEC, 가운데
+        className="mx-auto mt-[36px] flex h-[50px] w-[256px] items-center justify-center rounded-[30px] bg-card text-body-strong text-fg-muted"
       >
         상태 확인하기
       </button>
@@ -184,11 +188,16 @@ const CARD_HEIGHT = 257;
 const CARD_PITCH = 158;
 
 const SURFACES = [
-  { bg: 'bg-guide-summary', onDark: false },
-  { bg: 'bg-guide-do', onDark: false },
-  { bg: 'bg-guide-avoid', onDark: false },
-  { bg: 'bg-guide-next', onDark: true },
-  { bg: 'bg-card-raised', onDark: false },
+  { bg: 'bg-[#8CFDB7]', onDark: false },
+  { bg: 'bg-[#B7E6C3]', onDark: false },
+  { bg: 'bg-[#91C2C8]', onDark: false },
+  // 시안은 이 파란 카드에서도 글자가 흰색이 아니라 `검`(#434343)이다.
+  { bg: 'bg-[#3570FE]', onDark: false },
+  /*
+   * 시안 31:46182 는 이 어두운 카드에도 #434343 글자를 얹어 두었는데
+   * 그대로 두면 글자가 배경에 묻혀 읽히지 않는다. 여기만 흰 글자로 둔다.
+   */
+  { bg: 'bg-[#3C6582]', onDark: true },
 ];
 
 function PastDeck({
@@ -216,7 +225,8 @@ function PastDeck({
               style={{ top: index * CARD_PITCH, height: CARD_HEIGHT, zIndex: index }}
               className={clsx(
                 // 버튼은 내용을 세로 가운데로 두는 게 기본이라 명시적으로 위로 붙인다.
-                'absolute inset-x-0 flex flex-col items-stretch justify-start rounded-card px-5 pt-6 text-left',
+                // 시안 31:46142 — 371×257, 모서리 30
+                'absolute inset-x-0 flex flex-col items-stretch justify-start rounded-[30px] px-[23px] pt-[35px] text-left',
                 surface.bg,
                 surface.onDark ? 'text-white' : 'text-fg',
               )}
