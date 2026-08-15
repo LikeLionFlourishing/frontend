@@ -40,10 +40,12 @@ export function Report1Step({ area, appearance, onChange, onNext }: Props) {
       {/* 얼굴 그림 180×259. 점은 그림 좌상단 기준 비율로 얹는다. */}
       <div className="relative mx-auto mt-[23px] h-[259px] w-[180px]">
         {/*
-         * 시안은 180×259 상자를 이미지로 꽉 채운다(가로가 조금 잘린다).
-         * 점 좌표가 이 상자 기준이라 `contain` 으로 두면 전부 어긋난다.
+         * 상자(180×259)보다 그림이 가로로 넓어서 `cover` 로 두면 **귀가 잘린다.**
+         * 시안은 자르지 않고 폭에 맞춰 넣는다 — 렌더에서 얼굴이 177×234 로
+         * 에셋 비율(0.754)을 그대로 유지하고 위아래로만 여백이 남는다.
+         * 점 좌표는 이 상자 기준 비율이라 `contain` 이어도 그대로 맞는다.
          */}
-        <img src={faceFront} alt="" className="h-full w-full object-cover" />
+        <img src={faceFront} alt="" className="h-full w-full object-contain" />
 
         {AREA_OPTIONS.filter(hasDot).map((option) => {
           const selected = area === option.value;
