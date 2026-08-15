@@ -25,7 +25,17 @@ interface ReportDraft {
   manualPrimaryArea: BodyArea | null;
   manualAppearances: AppearanceSelection;
 
-  // 3-2 에서 사용자가 확정해 가는 값
+  /*
+   * 피부보고1·2 에서 사용자가 고른 **시안 어휘** 값.
+   * 계약 enum 과 1:1 이 아니라 제출 직전에 designOptions 로 옮긴다.
+   */
+  area: string | null;
+  appearance: string | null;
+  designSituations: string[];
+  care: string | null;
+  skinStates: string[];
+
+  // 위 값을 계약 모양으로 옮긴 결과. `보고 내용 확인` 화면이 이걸 보여준다.
   primaryArea: BodyArea | null;
   otherAreasNote: string | null;
   appearances: AppearanceSelection;
@@ -54,6 +64,11 @@ const EMPTY: ReportDraft = {
   rawText: '',
   manualPrimaryArea: null,
   manualAppearances: [],
+  area: null,
+  appearance: null,
+  designSituations: [],
+  care: null,
+  skinStates: [],
   primaryArea: null,
   otherAreasNote: null,
   appearances: [],

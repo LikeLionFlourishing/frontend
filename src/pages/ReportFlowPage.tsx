@@ -14,13 +14,27 @@ import { PreCareStep } from './report/PreCareStep';
 import { RawTextStep } from './report/RawTextStep';
 import { AppearanceAssistStep } from './report/AppearanceAssistStep';
 import { SkinStatusStep } from './report/SkinStatusStep';
+import { Report1Step } from './report/Report1Step';
+import { Report2Step } from './report/Report2Step';
+import {
+  APPEARANCE_OPTIONS,
+  AREA_OPTIONS,
+  CARE_OPTIONS,
+  areaFromApi,
+  areaNote,
+  toSensations,
+  toSituations,
+} from '@/api/designOptions';
 import { seedPreCareChecks } from '@/api/schemas';
 import type { ReportInterpretation } from '@/api/schemas';
 
-/** 0 은 `오늘 피부 상태`(유저플로우 3-2). 인디케이터에는 포함되지 않는다. */
-type Step = 0 | 1 | 2 | 3;
+/**
+ * 0 은 `오늘 피부 상태`(유저플로우 3-2). 인디케이터에는 포함되지 않는다.
+ * 1~4 가 시안의 인디케이터 4칸이다 — 한 문장 → 피부보고1 → 피부보고2 → 보고 내용 확인.
+ */
+type Step = 0 | 1 | 2 | 3 | 4 | 5;
 
-const TOTAL_STEPS = 4; // 시안의 인디케이터는 결과까지 포함해 4단계다.
+const TOTAL_STEPS = 4;
 
 const STEP_HEADER: Record<Step, { title: string; subtitle: string }> = {
   0: { title: '오늘 피부는 어땠나요?', subtitle: '오늘 하루 피부 상태를 알려주세요.' },
@@ -28,8 +42,10 @@ const STEP_HEADER: Record<Step, { title: string; subtitle: string }> = {
     title: '오늘 피부 어땠나요?',
     subtitle: '무슨 일이 있었는지, 어디가 어떻게 불편한지 편하게 작성해 주세요.',
   },
-  2: { title: '이렇게 정리했어요', subtitle: '잘못된 내용은 수정해주세요' },
-  3: { title: '다음 중 지금 해당하는\n변화가 있나요?', subtitle: '해당하는 항목을 선택해주세요.' },
+  2: { title: '어느 부위가 불편한가요?', subtitle: '해당 부위를 선택해주세요' },
+  3: { title: '오늘 있었던\n상황이 있나요?', subtitle: '해당하는 항목을 모두 선택해주세요.' },
+  4: { title: '이렇게 정리했어요', subtitle: '잘못된 내용은 수정해주세요' },
+  5: { title: '다음 중 지금 해당하는\n변화가 있나요?', subtitle: '해당하는 항목을 선택해주세요.' },
 };
 
 export function ReportFlowPage() {
@@ -125,6 +141,35 @@ export function ReportFlowPage() {
       sensations: proposed.sensations,
       situations: proposed.situations,
       careAvailability: proposed.careAvailability,
+
+      /*
+       * 피부보고1·2 는 AI 가 뽑아 준 값에서 출발한다.
+       * 시안 어휘로 옮길 수 있는 것만 미리 채우고, 나머지는 사용자가 고른다.
+       */
+      area: draft.area ?? areaFromApi(draft.manualPrimaryArea ?? proposed.primaryArea),
+      appearance:
+        draft.appearance ??
+        APPEARANCE_OPTIONS.find((o) => proposed.appearances.includes(o.api))?.value ??
+        null,
+      care: draft.care ?? CARE_OPTIONS.find((o) => o.api === proposed.careAvailability)?.value,
+    });
+  }
+
+  /** 피부보고1·2 에서 고른 시안 어휘를 계약 모양으로 옮긴다. */
+  function applyDesignSelections() {
+    const areaOption = AREA_OPTIONS.find((o) => o.value === draft.area);
+    const appearanceOption = APPEARANCE_OPTIONS.find((o) => o.value === draft.appearance);
+
+    draft.patch({
+      ...(areaOption ? { primaryArea: areaOption.api } : {}),
+      // 계약에 없는 부위(턱·눈가·관자놀이)는 OTHER 로 가므로 메모에 라벨을 남긴다.
+      otherAreasNote: areaNote(draft.area) ?? draft.otherAreasNote,
+      ...(appearanceOption ? { appearances: [appearanceOption.api] } : {}),
+      situations: toSituations(draft.designSituations),
+      sensations: toSensations(draft.skinStates),
+      ...(draft.care
+        ? { careAvailability: CARE_OPTIONS.find((o) => o.value === draft.care)?.api }
+        : {}),
     });
   }
 
@@ -196,15 +241,10 @@ export function ReportFlowPage() {
   return (
     <StepLayout
       /*
-       * 개편 시안에서 진행 인디케이터는 `한 문장 피부보고`(1단계) 에만 그려져 있다.
-       * 나머지 단계 프레임에는 인디케이터 그룹 자체가 없어 그대로 따랐다.
-       * TODO(디자인): 흐름 중간에 진행 표시가 사라지는 게 의도인지 확인 필요.
+       * 인디케이터는 점 4개다 — 한 문장(1) · 피부보고1(2) · 피부보고2(3) · 보고 내용 확인(4).
+       * 진입 화면(0)과 관리 전 확인(5)에는 시안에 인디케이터가 없다.
        */
-      {...(assisting
-        ? { step: 2, totalSteps: TOTAL_STEPS }
-        : step === 1
-          ? { step, totalSteps: TOTAL_STEPS }
-          : {})}
+      {...(step >= 1 && step <= 4 ? { step, totalSteps: TOTAL_STEPS } : {})}
       onBack={goBack}
       title={header.title}
       subtitle={header.subtitle}
@@ -250,7 +290,36 @@ export function ReportFlowPage() {
         />
       )}
 
-      {step === 2 && (
+      {step === 2 && !assisting && (
+        <Report1Step
+          area={draft.area}
+          appearance={draft.appearance}
+          onChange={(partial) => draft.patch(partial)}
+          onNext={() => setStep(3)}
+        />
+      )}
+
+      {step === 3 && (
+        <Report2Step
+          situations={draft.designSituations}
+          care={draft.care}
+          skinStates={draft.skinStates}
+          // 시안 어휘의 `situations` 는 계약의 같은 이름과 값 집합이 달라 따로 담는다.
+          onChange={({ situations, care, skinStates }) =>
+            draft.patch({
+              ...(situations ? { designSituations: situations } : {}),
+              ...(care ? { care } : {}),
+              ...(skinStates ? { skinStates } : {}),
+            })
+          }
+          onNext={() => {
+            applyDesignSelections();
+            setStep(4);
+          }}
+        />
+      )}
+
+      {step === 4 && (
         <ConfirmStep
           options={optionsQuery.data}
           values={confirmValues}
@@ -261,13 +330,13 @@ export function ReportFlowPage() {
             draft.patch({
               preCareChecks: seedPreCareChecks(draft.appearances, draft.preCareChecks),
             });
-            setStep(3);
+            setStep(5);
           }}
           onRewrite={() => setStep(1)}
         />
       )}
 
-      {step === 3 && (
+      {step === 5 && (
         <PreCareStep
           options={optionsQuery.data}
           value={draft.preCareChecks}

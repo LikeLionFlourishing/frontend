@@ -22,7 +22,7 @@ export function StepLayout({ step, totalSteps, onBack, title, subtitle, children
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-base">
-      <header className="safe-top px-5 pt-4">
+      <header className="safe-top px-4 pt-4">
         {showProgress && <StepIndicator step={step} totalSteps={totalSteps} />}
 
         <div className="mt-5 flex items-start gap-2">
@@ -37,16 +37,18 @@ export function StepLayout({ step, totalSteps, onBack, title, subtitle, children
             </button>
           )}
           {/* 시안 기준 제목 28px / 부제 12px (Figma 텍스트 박스 높이 36 / 14) */}
-          {title && <h1 className="text-[28px] font-bold leading-snug text-fg">{title}</h1>}
+          {title && (
+            <h1 className="whitespace-pre-line text-[28px] font-bold leading-9 text-fg">{title}</h1>
+          )}
         </div>
 
         {subtitle && <p className="mt-2 text-xs leading-relaxed text-fg-muted">{subtitle}</p>}
       </header>
 
-      <main className="flex-1 px-5 py-6">{children}</main>
+      <main className="flex-1 px-4 py-6">{children}</main>
 
       {footer && (
-        <footer className="safe-bottom sticky bottom-0 bg-base px-5 pb-4 pt-3">{footer}</footer>
+        <footer className="safe-bottom sticky bottom-0 bg-base px-4 pb-4 pt-3">{footer}</footer>
       )}
     </div>
   );
@@ -74,7 +76,8 @@ function StepIndicator({ step, totalSteps }: { step: number; totalSteps: number 
               <span
                 className={clsx(
                   'h-1.5 flex-1 rounded-full',
-                  index <= step ? 'bg-info' : 'bg-panel',
+                  // 시안에서 파랑은 `지나온` 칸만 채운다. 2단계면 첫 칸 하나만 파랗다.
+                  index < step ? 'bg-info' : 'bg-panel',
                 )}
               />
             )}
