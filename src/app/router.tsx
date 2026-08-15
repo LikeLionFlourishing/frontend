@@ -12,7 +12,6 @@ import { FollowUpPage } from '@/pages/FollowUpPage';
 import { RecordsPage } from '@/pages/RecordsPage';
 import { RecordDetailPage } from '@/pages/RecordDetailPage';
 import { MyPage } from '@/pages/MyPage';
-import { ProfilePage } from '@/pages/my/ProfilePage';
 import { AccountPage } from '@/pages/my/AccountPage';
 import { NotificationsPage } from '@/pages/my/NotificationsPage';
 
@@ -37,7 +36,6 @@ export const router = createBrowserRouter([
           { path: '/records', element: <RecordsPage /> },
           { path: '/records/:reportId', element: <RecordDetailPage /> },
           { path: '/my', element: <MyPage /> },
-          { path: '/my/profile', element: <ProfilePage /> },
           { path: '/my/account', element: <AccountPage /> },
           { path: '/my/notifications', element: <NotificationsPage /> },
         ],

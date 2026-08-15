@@ -4,10 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { auth, onboarding } from '@/api/endpoints';
 import { toUserMessage } from '@/api/problem';
 import { useAuthStore } from '@/stores/authStore';
-import { ArrowButton, PrimaryButton } from '@/components/StepLayout';
-import { ChoiceList } from '@/components/ChoiceList';
+import { ArrowButton } from '@/components/StepLayout';
 import { TimeWheel } from '@/components/TimeWheel';
-import { SelectField, DateField } from '@/components/TextField';
 import { Icon, type IconName } from '@/components/Icon';
 import { Wordmark } from '@/components/Wordmark';
 import { Mascot } from '@/components/Mascot';
@@ -23,31 +21,23 @@ import {
 } from '@/components/deco';
 import { track } from '@/lib/analytics';
 import { clsx } from '@/lib/clsx';
-import {
-  applyServiceChange,
-  BRANCH_OPTIONS,
-  ENVIRONMENT_OPTIONS,
-  RANK_OPTIONS,
-  useServiceProfileStore,
-  type MilitaryBranch,
-  type MilitaryRank,
-  type ServiceProfile,
-} from '@/stores/serviceProfileStore';
+import { useServiceProfileStore } from '@/stores/serviceProfileStore';
 import { useSignupConsentStore } from '@/stores/signupConsentStore';
 import type { NotificationPermission as ApiNotificationPermission } from '@/api/schemas';
 
-type Step = 'intro' | 'service' | 'environments' | 'checkInTime';
+type Step = 'intro' | 'checkInTime';
 
-const ORDER: Step[] = ['intro', 'service', 'environments', 'checkInTime'];
+const ORDER: Step[] = ['intro', 'checkInTime'];
 
 /**
  * 최초 이용 (확정 시안 22:12300 / 22:12730 / 22:12708 / 22:12677).
  *
- * 네 화면이다 — 이용범위 안내 → 복무 정보 → 자주 겪는 환경 → 기본 점호 시각.
+ * 시안은 네 화면이지만 2026-08-15 기획 결정으로 **복무 정보와 자주 겪는 환경이
+ * 범위에서 빠져** 두 화면만 남았다 — 이용범위 안내 → 기본 점호 시각.
  * 동의는 이 흐름이 아니라 회원가입 안에서 받는다(시안의 `동의` 화면 버튼이 `가입하기`).
  *
- * `PUT /me/onboarding` 이 받는 값은 동의와 알림뿐이라, 여기서 받은 복무 정보·환경·
- * 점호 시각은 로컬 스토어에 남는다. (serviceProfileStore 의 TODO 참고)
+ * `PUT /me/onboarding` 이 받는 값은 동의와 알림뿐이라 점호 시각은 로컬에 남는다.
+ * (serviceProfileStore 의 TODO 참고)
  */
 export function OnboardingPage() {
   const navigate = useNavigate();
@@ -87,30 +77,10 @@ export function OnboardingPage() {
 
   return (
     /*
-     * 시안의 온보딩2 세 화면에는 뒤로가기가 없다. 화면에 없는 것은 만들지 않는 원칙에
-     * 따라 그대로 뒀다. (입력을 고치려면 설정 > 프로필 관리로 가야 한다)
-     * TODO(디자인): 4단계 흐름에 되돌아갈 길이 없어도 되는지 확인 필요.
+     * 시안의 온보딩2 화면에는 뒤로가기가 없다. 화면에 없는 것은 만들지 않는 원칙에
+     * 따라 그대로 뒀다. (점호 시각은 설정 > 알림 설정에서 고칠 수 있다)
      */
     <div className="safe-top mx-auto flex min-h-dvh w-full max-w-app flex-col px-4 pt-[47px]">
-      {step === 'service' && (
-        <ServiceStep
-          branch={profile.branch}
-          enlistedOn={profile.enlistedOn}
-          dischargeOn={profile.dischargeOn}
-          rank={profile.rank}
-          onChange={(partial) => profile.patch(partial)}
-          onNext={goNext}
-        />
-      )}
-
-      {step === 'environments' && (
-        <EnvironmentStep
-          value={profile.environments}
-          onChange={(environments) => profile.patch({ environments })}
-          onNext={goNext}
-        />
-      )}
-
       {step === 'checkInTime' && (
         <CheckInTimeStep
           value={profile.checkInTime}
@@ -212,97 +182,7 @@ function IntroStep({ onStart }: { onStart: () => void }) {
   );
 }
 
-// --- 화면 2. 복무 정보 ------------------------------------------------------------
-
-function ServiceStep({
-  branch,
-  enlistedOn,
-  dischargeOn,
-  rank,
-  onChange,
-  onNext,
-}: {
-  branch: MilitaryBranch | null;
-  enlistedOn: string | null;
-  dischargeOn: string | null;
-  rank: MilitaryRank | null;
-  onChange: (partial: Partial<ServiceProfile>) => void;
-  onNext: () => void;
-}) {
-  return (
-    <StepBody
-      title={'복무 정보를\n입력해주세요.'}
-      footer={
-        <PrimaryButton onClick={onNext} disabled={!branch || !enlistedOn || !rank}>
-          다음
-        </PrimaryButton>
-      }
-    >
-      {/* 시안 기준 라벨 위 여백 9px, 필드 사이 피치 101px */}
-      <div className="flex flex-col gap-[9px]">
-        <SelectField
-          label="군종 선택"
-          value={branch}
-          options={BRANCH_OPTIONS}
-          onChange={(value) =>
-            onChange(
-              applyServiceChange({ branch, enlistedOn }, { branch: value as MilitaryBranch }),
-            )
-          }
-        />
-        <DateField
-          label="입대일"
-          value={enlistedOn}
-          onChange={(value) =>
-            onChange(applyServiceChange({ branch, enlistedOn }, { enlistedOn: value }))
-          }
-        />
-        {/* 전역예정일은 군종 + 입대일로 계산된다. 시안에도 아이콘 없이 값만 있다. */}
-        <DateField label="전역예정일" value={dischargeOn} onChange={() => {}} readOnly />
-        <SelectField
-          label="현재 직급"
-          value={rank}
-          options={RANK_OPTIONS}
-          onChange={(value) => onChange({ rank: value as MilitaryRank })}
-        />
-      </div>
-    </StepBody>
-  );
-}
-
-// --- 화면 3. 자주 겪는 환경 --------------------------------------------------------
-
-function EnvironmentStep({
-  value,
-  onChange,
-  onNext,
-}: {
-  value: string[];
-  onChange: (value: string[]) => void;
-  onNext: () => void;
-}) {
-  return (
-    <StepBody
-      title={'자주 겪는 군 생활 환경을\n선택해주세요.'}
-      footer={
-        <PrimaryButton onClick={onNext} disabled={value.length === 0}>
-          다음
-        </PrimaryButton>
-      }
-    >
-      <ChoiceList
-        mode="multi"
-        size="compact"
-        choices={[...ENVIRONMENT_OPTIONS]}
-        value={value}
-        onChange={onChange}
-        exclusiveValue="NONE"
-      />
-    </StepBody>
-  );
-}
-
-// --- 화면 4. 기본 점호 시각 --------------------------------------------------------
+// --- 화면 2. 기본 점호 시각 --------------------------------------------------------
 
 function CheckInTimeStep({
   value,

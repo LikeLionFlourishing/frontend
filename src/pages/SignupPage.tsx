@@ -39,7 +39,7 @@ export function SignupPage() {
   const emailError = touched && !email.includes('@') ? '이메일 형식을 확인해 주세요.' : null;
   const passwordError =
     touched && password.length > 0 && !isValidPassword(password)
-      ? '영문, 숫자, 특수문자를 포함해 8자 이상으로 입력해 주세요.'
+      ? '영문, 숫자, 특수문자를 포함해 12자 이상으로 입력해 주세요.'
       : null;
   const confirmError =
     touched && passwordConfirm.length > 0 && password !== passwordConfirm
@@ -88,7 +88,7 @@ export function SignupPage() {
           label="비밀번호"
           type="password"
           autoComplete="new-password"
-          placeholder="영문, 숫자, 특수문자 포함 8자 이상"
+          placeholder="영문, 숫자, 특수문자 포함 12자 이상"
           value={password}
           onChange={setPassword}
           error={passwordError}
@@ -250,25 +250,24 @@ function ConsentStep({
 }
 
 /**
- * 비밀번호 규칙. 시안(22:12764) 문구 그대로 영문·숫자·특수문자 포함 8자 이상이다.
+ * 비밀번호 규칙. 계약(`RegisterRequest.password.minLength: 12`)을 따른다.
  *
- * 주의: OpenAPI 의 `RegisterRequest.password` 는 아직 minLength 12 라
- * 8~11자는 서버에서 422 로 막힌다. 백엔드에서 8 로 내려야 맞는다.
- * (docs/backend-요청.md 참고)
+ * 시안(22:12764)의 문구는 `8자 이상` 이지만 서버가 12자를 요구하므로
+ * 8자로 두면 사용자가 이유를 모른 채 막힌다. 문구를 12자로 바꿔 맞췄다.
+ * (docs/backend-요청.md 1번 — 시안 문구 수정 요청)
  */
 function isValidPassword(value: string): boolean {
   return (
-    value.length >= 8 && /[A-Za-z]/.test(value) && /[0-9]/.test(value) && /[^A-Za-z0-9]/.test(value)
+    value.length >= 12 &&
+    /[A-Za-z]/.test(value) &&
+    /[0-9]/.test(value) &&
+    /[^A-Za-z0-9]/.test(value)
   );
 }
 
 function registerError(error: unknown): string {
   if (error instanceof ApiError && error.status === 409) {
     return '이미 가입된 이메일이에요. 로그인해 주세요.';
-  }
-  // 계약이 아직 12자 이상을 요구한다. 규칙이 맞춰지기 전까지 이 안내가 나갈 수 있다.
-  if (error instanceof ApiError && error.status === 422) {
-    return '비밀번호를 12자 이상으로 입력해 주세요. 서버 규칙이 아직 12자예요.';
   }
   return toUserMessage(error);
 }

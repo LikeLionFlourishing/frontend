@@ -12,12 +12,13 @@ interface MenuItem {
 
 /*
  * 시안(Figma `설정` 5:728)의 3개 묶음을 그대로 따른다.
- * 현재 열려 있는 건 프로필·계정·알림·기록 네 개다.
+ * 현재 열려 있는 건 계정·알림·기록 세 개다.
  * 나머지는 코드가 아니라 내용(약관 문구, 고객지원 채널)이 없어서 막혀 있다.
+ * `프로필 관리` 는 복무 정보가 범위에서 빠지면서 보여 줄 내용이 없어졌다.
  */
 const GROUPS: MenuItem[][] = [
   [
-    { icon: 'person', label: '프로필 관리', to: '/my/profile' },
+    { icon: 'person', label: '프로필 관리' },
     { icon: 'lock', label: '계정관리', to: '/my/account' },
     { icon: 'bell', label: '알림 설정', to: '/my/notifications' },
   ],
