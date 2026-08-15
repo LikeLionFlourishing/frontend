@@ -26,7 +26,7 @@ export const SKIN_CHANGE_LABEL: Record<SkinChange, string> = {
 };
 
 export const ACTION_COMPLETION_LABEL = {
-  MOSTLY_DONE: '대부분 실행함',
+  MOSTLY_DONE: '전부 실행함',
   PARTLY_DONE: '일부만 실행함',
   NOT_DONE: '실행하지 못함',
 } as const;

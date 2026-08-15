@@ -8,7 +8,7 @@ import { queryKeys } from '@/app/queryClient';
 import { AiLoading } from '@/components/AiLoading';
 import { ClinicianModal } from '@/components/ClinicianModal';
 import { MedicalDisclaimer } from '@/components/ResultSection';
-import { PrimaryButton, StepLayout } from '@/components/StepLayout';
+import { StepLayout } from '@/components/StepLayout';
 import { Sentences, splitSentences } from '@/components/Sentences';
 import { labelOf, labelsOf, useReportOptions } from '@/hooks/useReportOptions';
 import { track } from '@/lib/analytics';
@@ -185,7 +185,7 @@ export function ReportResultPage() {
     : CARDS;
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-base">
+    <div className="flex flex-col">
       <header className="px-4 pb-2 pt-[calc(var(--safe-top)+20px)]">
         <div className="flex items-start gap-2">
           <button
@@ -203,8 +203,7 @@ export function ReportResultPage() {
         </p>
       </header>
 
-      {/* 아래 여백은 sticky 푸터가 대신한다. 여기 두면 그만큼 화면이 넘친다 */}
-      <main className="flex-1 px-4">
+      <main className="px-4">
         <Deck
           deck={deck}
           opened={opened}
@@ -238,16 +237,6 @@ export function ReportResultPage() {
 
         <MedicalDisclaimer />
       </main>
-
-      {/*
-       * 카드 덱이 z-index 0~4 를 쓰므로 푸터가 그보다 위여야 한다.
-       * 없으면 마지막 카드가 버튼을 덮는다.
-       */}
-      <footer className="safe-bottom sticky bottom-0 z-30 bg-base px-4 pb-4 pt-3">
-        <PrimaryButton onClick={() => navigate('/', { replace: true })}>
-          내일 상태 다시 확인하기
-        </PrimaryButton>
-      </footer>
 
       {/* 시안(25:28667)은 결과 위에 모달로 먼저 띄운다. 배너로 두면 스크롤 밖에서 안 읽힌다 */}
       {isClinician && showClinician && (

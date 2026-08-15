@@ -108,10 +108,14 @@ export function FollowUpPage() {
             skinChange: skinChange as SkinChange,
             clinicianCheckStatus: clinicianCheck as 'CHECKED' | 'NOT_YET' | 'PREFER_NOT_TO_RECORD',
             /*
-             * 시안의 의료진 확인 화면도 `관리 실행 정도`를 묻지만 계약에는 담을 자리가 없다.
-             * 명세 F-05 가 `일반 관리 안내를 받지 않은 사용자에게 행동 실행 여부를
-             * 묻지 않습니다` 라고 못박고 있어 **계약 쪽이 맞다.**
-             * TODO(디자인): 시안에서 이 질문을 빼야 한다. (docs/명세-대조.md 2-4)
+             * 2026-08-16 결정: 의료진 확인 분기에서도 **행동 실행을 함께 묻는다.**
+             * 예전에는 명세 F-05 를 근거로 계약이 맞다고 봤지만 기획이 뒤집었다.
+             *
+             * 화면에서는 이미 받고 있는데 계약의 `ClinicianFollowUpRequest` 에
+             * `actionCompletion` 이 없어 **아직 서버로 못 보낸다.**
+             * 필드가 열리면 아래 한 줄만 살리면 된다. (docs/명세-대조.md 2-12)
+             *
+             * actionCompletion: actionCompletion as ActionCompletion,
              */
           }
         : {

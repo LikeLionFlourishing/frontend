@@ -1,23 +1,22 @@
 import type { ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { home as homeApi, notifications, reports } from '@/api/endpoints';
+import { home as homeApi, notifications } from '@/api/endpoints';
 import { toUserMessage } from '@/api/problem';
 import { queryKeys } from '@/app/queryClient';
 import { Icon, type IconName } from '@/components/Icon';
 import { labelOf, labelsOf, useReportOptions } from '@/hooks/useReportOptions';
 import { formatShortDate } from '@/lib/date';
-import { computeStreak, recentDays, STREAK_WINDOW } from '@/lib/streak';
 import { clsx } from '@/lib/clsx';
 import type { Home, SkinReportOptions } from '@/api/schemas';
 
 /**
- * 홈 (확정 시안 25:28596).
+ * 홈 (확정 시안 30:37549).
  *
- * 프로필 → 오늘 날짜 → TODAY'S CHECK → 아래 카드 세 장(최근 기록 / STREAK / 다음 점호).
+ * 프로필 → 오늘 날짜 → TODAY'S CHECK → 아래 카드 두 장(최근 기록 / 다음 점호).
  *
- * 개편 전에 있던 D-Day 위젯과 BRIEFING 카드는 시안에서 사라져 함께 지웠다.
- * 그 자리에 큰 날짜와 STREAK 이 들어왔다.
+ * 2026-08-16 결정으로 **STREAK 이 빠졌다.** 명세에 없는 값이었고 5.3 제외 범위의
+ * `피부 점수와 랭킹` 과 성격이 닿아 있었다. 아래 카드는 이제 같은 크기 두 장이다.
  */
 export function HomePage() {
   const navigate = useNavigate();
@@ -27,15 +26,6 @@ export function HomePage() {
   const notificationQuery = useQuery({
     queryKey: queryKeys.notificationSettings,
     queryFn: notifications.getSettings,
-  });
-
-  /*
-   * STREAK 은 계약에 필드가 없어서 최근 기록 목록으로 직접 센다.
-   * 홈만으로는 알 수 없어 목록을 한 번 더 부른다. (lib/streak.ts 의 한계 설명 참고)
-   */
-  const streakQuery = useQuery({
-    queryKey: [...queryKeys.reports, { limit: STREAK_WINDOW }],
-    queryFn: () => reports.list({ limit: STREAK_WINDOW }),
   });
 
   if (homeQuery.isError) {
@@ -57,15 +47,6 @@ export function HomePage() {
 
   const data = homeQuery.data;
 
-  /*
-   * 오늘 `괜찮아요` 만 누른 날은 피부보고가 없어 목록에 안 나온다.
-   * 홈이 주는 오늘치(`today`)로 그날 하루만 보정한다.
-   */
-  const recordedDates = [
-    ...(streakQuery.data?.data.map((r) => r.reportDate) ?? []),
-    ...(data.today ? [data.today.date] : []),
-  ];
-
   return (
     // 7 은 시안값, 앞의 --safe-top 이 상태바 자리를 메운다 (index.css 참고)
     <div className="flex flex-col px-[17px] pt-[calc(var(--safe-top)+7px)]">
@@ -73,21 +54,14 @@ export function HomePage() {
       <TodayDate serverDate={data.serverDate} />
       <TodayCheckCard data={data} onNavigate={navigate} />
 
-      {/*
-       * 시안 기준 카드 사이 7px, 오른쪽 열 안에서는 6px.
-       * 위 간격은 시안(14)보다 5 줄였다 — 홈은 스크롤이 없어야 하는 화면이다.
-       */}
+      {/* 시안 기준 카드 180×192 두 장, 사이 7px */}
       <div className="mt-[9px] grid grid-cols-2 gap-[7px]">
         <RecentRecordCard
           data={data}
           options={optionsQuery.data}
           onOpen={(id) => navigate(`/records/${id}`)}
         />
-
-        <div className="flex flex-col gap-[6px]">
-          <StreakCard recordedDates={recordedDates} serverDate={data.serverDate} />
-          <NextCheckCard time={notificationQuery.data?.time ?? '17:30'} />
-        </div>
+        <NextCheckCard time={notificationQuery.data?.time ?? '17:30'} />
       </div>
     </div>
   );
@@ -308,53 +282,32 @@ function RecentRecordCard({
   );
 }
 
-/** 시안(25:28596)의 막대. 높이는 고정이고 색만 그날 기록 여부를 따른다. */
-const STREAK_BAR_HEIGHTS = [11, 17, 22, 29, 37];
-
-function StreakCard({
-  recordedDates,
-  serverDate,
-}: {
-  recordedDates: string[];
-  serverDate: string;
-}) {
-  const streak = computeStreak(recordedDates, serverDate);
-  const days = recentDays(recordedDates, serverDate, STREAK_BAR_HEIGHTS.length);
-
-  return (
-    <MiniCard label="STREAK" className="h-[93px]">
-      <div className="flex flex-1 items-end justify-between">
-        <div>
-          <p className="text-[30px] font-bold leading-none text-info">{streak}</p>
-          <p className="mt-[9px] text-xs text-fg-muted">
-            {streak > 0 ? '일 연속 기록 중!' : '오늘부터 시작해요'}
-          </p>
-        </div>
-
-        <div aria-hidden="true" className="flex items-end gap-[7px] pb-[7px]">
-          {STREAK_BAR_HEIGHTS.map((height, index) => (
-            <span
-              key={height}
-              style={{ height }}
-              className={clsx('w-[5px] rounded-full', days[index] ? 'bg-info' : 'bg-[#939598]')}
-            />
-          ))}
-        </div>
-      </div>
-    </MiniCard>
-  );
-}
-
 function NextCheckCard({ time }: { time: string }) {
   return (
-    <MiniCard label="NEXT CHECK" className="h-[93px]">
-      <div className="flex flex-1 items-end justify-between gap-2">
+    // 시안에서 이제 RECENT RECORD 와 같은 180×192 다
+    <MiniCard label="NEXT CHECK" className="h-[192px]">
+      <div className="mt-[13px] flex items-start justify-between gap-2">
         <div className="text-left">
           <p className="text-xs text-fg-muted">내일 경과 확인</p>
-          <p className="mt-[2px] text-xs font-semibold text-info">{time}</p>
+          <p className="mt-[1px] text-body-strong font-semibold text-info">{time}</p>
         </div>
         <span className="grid size-[46px] shrink-0 place-items-center rounded-full border border-dashed border-info text-info">
           <Icon name="bell" className="size-5" />
+        </span>
+      </div>
+
+      <hr className="mt-auto border-panel" />
+      {/*
+       * 시안(30:37549)에 새로 생긴 줄. 갈 화면이 아직 시안에 없어서 눌리지 않는다.
+       * 설정의 `알림 설정` 행과 같은 상태다. (docs/명세-대조.md 2-10)
+       */}
+      <div
+        aria-disabled="true"
+        className="flex items-center justify-between pt-[10px] text-xs text-fg opacity-60"
+      >
+        알람 설정하기
+        <span aria-hidden="true" className="text-fg-faint">
+          ›
         </span>
       </div>
     </MiniCard>

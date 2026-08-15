@@ -10,17 +10,13 @@ export const CONSENT_VERSION = '2026-08-15';
  * 계정은 `가입하기` 에서 만들어지지만, 동의 값을 보낼 곳은 `PUT /me/onboarding` 뿐이라
  * 온보딩 마지막까지 들고 가야 한다. 중간에 앱이 닫혀도 잃지 않도록 저장해 둔다.
  *
- * TODO(백엔드): 계약의 `sensitiveDataConsent` 하나로는 세 항목을 구분해 남길 수 없다.
- * 특히 `marketing` 은 선택 항목이라 별도 필드가 필요하다.
+ * 2026-08-16 결정으로 동의가 한 건이 되면서 계약의 `sensitiveDataConsent` 와
+ * 정확히 맞아떨어졌다. 예전에 적어 둔 `항목별 저장 필드가 필요하다` 는 요청은 없어졌다.
  */
 interface SignupConsentState {
   version: string;
   /** (필수) 개인정보 수집 이용동의 */
   privacy: boolean;
-  /** (필수) 서비스 이용약관 동의 */
-  terms: boolean;
-  /** (선택) 마케팅 정보 수신 동의 */
-  marketing: boolean;
   patch: (partial: Partial<Omit<SignupConsentState, 'patch' | 'reset'>>) => void;
   reset: () => void;
 }
@@ -28,8 +24,6 @@ interface SignupConsentState {
 const EMPTY = {
   version: CONSENT_VERSION,
   privacy: false,
-  terms: false,
-  marketing: false,
 };
 
 export const useSignupConsentStore = create<SignupConsentState>()(
