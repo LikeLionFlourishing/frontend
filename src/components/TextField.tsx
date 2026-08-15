@@ -59,6 +59,63 @@ export function TextField({
   );
 }
 
+/*
+ * 온보딩2(복무 정보) 계열 필드.
+ *
+ * 로그인·회원가입과 달리 라벨이 필드 **밖 위쪽**에 붙는다.
+ * 시안(22:12730) 기준 라벨 12px 회색 → 2px 간격 → 필드 370×71,
+ * 값 16px 이 세로 가운데, 오른쪽 24px 지점에 아이콘.
+ */
+function FieldShell({
+  id,
+  label,
+  icon,
+  error,
+  children,
+}: {
+  id: string;
+  label: string;
+  icon?: React.ReactNode;
+  error?: string | null;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="block px-px text-xs text-fg-faint">
+        {label}
+      </label>
+      <div
+        className={clsx(
+          'relative mt-0.5 flex h-[71px] items-center rounded-card bg-panel-soft pl-[22px] pr-12',
+          error && 'ring-2 ring-caution-500',
+        )}
+      >
+        {children}
+        {icon && (
+          <span aria-hidden="true" className="absolute right-6 text-panel-text">
+            {icon}
+          </span>
+        )}
+      </div>
+      {error && <p className="mt-1 px-px text-sm text-caution-500">{error}</p>}
+    </div>
+  );
+}
+
+const CHEVRON = (
+  <svg viewBox="0 0 15 8" className="w-[15px]" fill="none" stroke="currentColor">
+    <path d="M1 1l6.5 6L14 1" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const CALENDAR = (
+  <svg viewBox="0 0 21 23" className="w-[21px]" fill="none" stroke="currentColor">
+    <rect x="1" y="3" width="19" height="19" rx="4" strokeWidth="1.6" />
+    <path d="M1 9h19M6 1v4M15 1v4" strokeWidth="1.6" strokeLinecap="round" />
+    <path d="M6 14h2M10 14h2M14 14h2M6 18h2M10 18h2" strokeWidth="1.6" strokeLinecap="round" />
+  </svg>
+);
+
 interface SelectFieldProps {
   label: string;
   value: string | null;
@@ -77,26 +134,26 @@ export function SelectField({
   const id = useId();
 
   return (
-    <div className="rounded-card bg-card-raised px-5 py-3.5">
-      <label htmlFor={id} className="block text-xs font-semibold text-fg-muted">
-        {label}
-      </label>
+    <FieldShell id={id} label={label} icon={CHEVRON}>
       <select
         id={id}
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full appearance-none bg-transparent text-base text-fg outline-none"
+        className={clsx(
+          'w-full appearance-none bg-transparent text-body-strong outline-none',
+          value ? 'text-panel-text' : 'text-panel-label',
+        )}
       >
         <option value="" disabled>
           {placeholder}
         </option>
         {options.map((option) => (
-          <option key={option.value} value={option.value} className="bg-card text-fg">
+          <option key={option.value} value={option.value} className="bg-base text-fg">
             {option.label}
           </option>
         ))}
       </select>
-    </div>
+    </FieldShell>
   );
 }
 
@@ -104,23 +161,26 @@ interface DateFieldProps {
   label: string;
   value: string | null;
   onChange: (value: string) => void;
+  /** 계산으로 채워지는 값(전역예정일). 시안에서 아이콘 없이 읽기 전용이다. */
+  readOnly?: boolean;
 }
 
-export function DateField({ label, value, onChange }: DateFieldProps) {
+export function DateField({ label, value, onChange, readOnly }: DateFieldProps) {
   const id = useId();
 
   return (
-    <div className="rounded-card bg-card-raised px-5 py-3.5">
-      <label htmlFor={id} className="block text-xs font-semibold text-fg-muted">
-        {label}
-      </label>
+    <FieldShell id={id} label={label} {...(readOnly ? {} : { icon: CALENDAR })}>
       <input
         id={id}
         type="date"
         value={value ?? ''}
+        readOnly={readOnly}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full bg-transparent text-base text-fg outline-none"
+        className={clsx(
+          'w-full bg-transparent text-body-strong outline-none [&::-webkit-calendar-picker-indicator]:opacity-0',
+          readOnly ? 'text-panel-label' : 'text-panel-text',
+        )}
       />
-    </div>
+    </FieldShell>
   );
 }

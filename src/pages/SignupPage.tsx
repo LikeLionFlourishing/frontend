@@ -3,20 +3,25 @@ import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { auth } from '@/api/endpoints';
 import { ApiError, toUserMessage } from '@/api/problem';
+import { BottomSheet } from '@/components/BottomSheet';
 import { PrimaryButton } from '@/components/StepLayout';
 import { TextField } from '@/components/TextField';
+import { clsx } from '@/lib/clsx';
 import { useAuthStore } from '@/stores/authStore';
+import { useSignupConsentStore } from '@/stores/signupConsentStore';
 
 /**
- * 계정 만들기.
+ * 회원가입. 확정 시안에서 두 화면이다 —
+ * `계정 만들기`(22:12764, 버튼 `다음`) → `동의`(22:10802, 버튼 `가입하기`).
  *
- * 동의는 여기가 아니라 온보딩에서 받는다 — 문서(유저플로우 1)의 `최초 이용`이
- * 이용범위 → 동의 → 알림 순이고, `PUT /me/onboarding` 이 그 세 값을 함께 받는다.
+ * 계정은 동의까지 받은 뒤에 만들어진다. 동의 값 자체는 보낼 곳이 온보딩 API 뿐이라
+ * 스토어에 담아 두고 온보딩 마지막에 함께 보낸다.
  */
 export function SignupPage() {
   const navigate = useNavigate();
   const setSession = useAuthStore((s) => s.setSession);
 
+  const [step, setStep] = useState<'account' | 'consent'>('account');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
@@ -44,19 +49,30 @@ export function SignupPage() {
 
   const valid = email.includes('@') && password.length >= 12 && password === passwordConfirm;
 
+  if (step === 'consent') {
+    return (
+      <ConsentStep
+        onSubmit={() => register.mutate()}
+        submitting={register.isPending}
+        errorMessage={register.isError ? registerError(register.error) : null}
+      />
+    );
+  }
+
   return (
-    <div className="safe-top mx-auto flex min-h-dvh w-full max-w-app flex-col px-5 pt-16">
-      <header>
-        <h1 className="text-[28px] font-bold text-fg">계정 만들기</h1>
-        <p className="mt-2 text-xs text-fg-muted">이메일로 간단하게 시작하세요.</p>
+    <div className="safe-top mx-auto flex min-h-dvh w-full max-w-app flex-col px-4">
+      {/* 시안 기준 제목 상단 170 (상태바 44 제외 → 126) */}
+      <header className="pt-[126px]">
+        <h1 className="text-[36px] font-bold leading-none text-fg">계정 만들기</h1>
+        <p className="mt-[16px] text-xs text-fg-muted">이메일로 간단하게 시작하세요.</p>
       </header>
 
       <form
-        className="mt-12 flex flex-col gap-3"
+        className="mt-[99px] flex flex-col gap-[7px]"
         onSubmit={(e) => {
           e.preventDefault();
           setTouched(true);
-          if (valid) register.mutate();
+          if (valid) setStep('consent');
         }}
       >
         <TextField
@@ -73,6 +89,7 @@ export function SignupPage() {
           label="비밀번호"
           type="password"
           autoComplete="new-password"
+          // 시안 문구는 `8자 이상`이지만 API 명세가 12자 이상이라 명세를 따랐다.
           placeholder="영문, 숫자, 특수문자 포함 12자 이상"
           value={password}
           onChange={setPassword}
@@ -82,29 +99,154 @@ export function SignupPage() {
           label="비밀번호 확인"
           type="password"
           autoComplete="new-password"
-          placeholder="비밀번호를 다시 입력하세요"
+          placeholder="비밀번호를 다시 입력하세요."
           value={passwordConfirm}
           onChange={setPasswordConfirm}
           error={confirmError}
         />
 
-        {register.isError && (
-          <p className="px-2 text-sm text-caution-500">{registerError(register.error)}</p>
-        )}
-
-        <div className="pt-8">
-          <PrimaryButton type="submit" disabled={(touched && !valid) || register.isPending}>
-            {register.isPending ? '가입 중…' : '다음'}
+        <div className="mt-auto pt-[131px]">
+          <PrimaryButton type="submit" disabled={touched && !valid}>
+            다음
           </PrimaryButton>
         </div>
       </form>
 
-      <p className="mt-5 text-center text-sm text-fg-muted">
+      <p className="safe-bottom mt-[18px] pb-8 text-center text-xs text-fg-muted">
         이미 계정이 있으신가요?{' '}
-        <Link to="/login" className="font-semibold text-info">
+        <Link to="/login" className="text-body-strong text-info underline underline-offset-2">
           로그인
         </Link>
       </p>
+    </div>
+  );
+}
+
+// --- 2단계. 동의 ------------------------------------------------------------------
+
+const CONSENTS = [
+  {
+    key: 'privacy',
+    label: '(필수) 개인정보 수집 이용동의',
+    required: true,
+    detail: '계정 정보와 피부 기록을 서비스 제공 목적으로 처리해요.',
+  },
+  {
+    key: 'terms',
+    label: '(필수) 서비스 이용약관 동의',
+    required: true,
+    detail: '피부 상태 기록은 민감정보에 해당해요. 진단·처방 목적으로 쓰지 않아요.',
+  },
+  {
+    key: 'marketing',
+    label: '(선택) 마케팅 정보 수신 동의',
+    required: false,
+    detail:
+      '새 기능과 안내를 알림으로 받아볼 수 있어요. 동의하지 않아도 서비스를 이용할 수 있어요.',
+  },
+] as const;
+
+/*
+ * 시안의 `동의` 화면에는 뒤로가기가 없다. 화면에 없는 것은 만들지 않는 원칙에 따라
+ * 그대로 뒀다.
+ * TODO(디자인): 이메일을 잘못 적었을 때 계정 만들기로 돌아갈 길이 필요한지 확인.
+ */
+function ConsentStep({
+  onSubmit,
+  submitting,
+  errorMessage,
+}: {
+  onSubmit: () => void;
+  submitting?: boolean;
+  errorMessage?: string | null;
+}) {
+  const consent = useSignupConsentStore();
+  const [detail, setDetail] = useState<(typeof CONSENTS)[number] | null>(null);
+
+  const requiredAgreed = CONSENTS.filter((c) => c.required).every((c) => consent[c.key]);
+
+  return (
+    <div className="safe-top mx-auto flex min-h-dvh w-full max-w-app flex-col px-4">
+      {/* 시안 기준 제목 상단 130 (상태바 44 제외 → 86) */}
+      <header className="pt-[86px]">
+        <h1 className="text-[28px] font-bold leading-9 text-fg">
+          서비스 이용을 위해
+          <br />
+          동의가 필요해요
+        </h1>
+        <p className="mt-[10px] text-xs text-fg-muted">
+          모든 항목에 동의해야 서비스를 이용할 수 있어요.
+        </p>
+      </header>
+
+      {/* 시안 기준 행 369×83, 간격 8, 원 26px 이 좌측 25px 지점 */}
+      <div className="mt-[98px] flex flex-col gap-2">
+        {CONSENTS.map((item) => {
+          const checked = consent[item.key];
+          return (
+            <div
+              key={item.key}
+              className="flex h-[83px] items-center rounded-card bg-panel pl-[25px] pr-9"
+            >
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={checked}
+                onClick={() => consent.patch({ [item.key]: !checked })}
+                className="flex flex-1 items-center gap-[15px] text-left"
+              >
+                {/* 선택해도 원을 통째로 칠하지 않는다. 흰 원 안에 더 작은 파란 원이 들어간다. */}
+                <span
+                  aria-hidden="true"
+                  className={clsx(
+                    'grid size-[26px] shrink-0 place-items-center rounded-full border-2 bg-base transition',
+                    checked ? 'border-info' : 'border-fg',
+                  )}
+                >
+                  {checked && <span className="size-3.5 rounded-full bg-info" />}
+                </span>
+                <span className="text-body-strong text-panel-text">{item.label}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setDetail(item)}
+                className="shrink-0 text-xs text-panel-label"
+              >
+                자세히
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="safe-bottom mt-auto pb-[29px] pt-6">
+        {errorMessage && <p className="mb-3 px-2 text-sm text-caution-500">{errorMessage}</p>}
+        <PrimaryButton onClick={onSubmit} disabled={!requiredAgreed || submitting}>
+          {submitting ? '가입 중…' : '가입하기'}
+        </PrimaryButton>
+        <p className="mt-[14px] text-center text-xs text-fg-muted">
+          이미 계정이 있으신가요?{' '}
+          <Link to="/login" className="text-body-strong text-info underline underline-offset-2">
+            로그인
+          </Link>
+        </p>
+      </div>
+
+      <BottomSheet
+        open={detail !== null}
+        onClose={() => setDetail(null)}
+        title={detail?.label ?? ''}
+        footer={<PrimaryButton onClick={() => setDetail(null)}>닫기</PrimaryButton>}
+      >
+        <p className="whitespace-pre-line text-sm leading-relaxed text-fg-muted">
+          {detail?.detail}
+        </p>
+        {/* TODO(기획·법무): 확정된 약관 전문으로 교체. 지금은 처리 범위만 사실대로 적어 둔다. */}
+        <p className="mt-4 text-xs leading-relaxed text-fg-faint">
+          약관 전문은 준비 중이에요. 확정되면 이 화면에서 전체 내용을 볼 수 있어요.
+        </p>
+      </BottomSheet>
     </div>
   );
 }

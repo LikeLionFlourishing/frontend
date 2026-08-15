@@ -7,7 +7,7 @@
     -webkit-text-size-adjust: 100%;
     /* 라이트 디자인이라 브라우저 UI 도 라이트로 맞춘다 */
     color-scheme: light;
-    background-color: #ffffff;
+    background-color: #f1f1f1;
   }
 
   body {

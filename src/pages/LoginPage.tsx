@@ -14,7 +14,7 @@ import {
   DECO_TOP_GAP,
   LOGIN_DECO_BOTTOM,
   LOGIN_DECO_TOP,
-} from '@/components/loginDeco';
+} from '@/components/deco';
 import { useAuthStore } from '@/stores/authStore';
 
 export function LoginPage() {
@@ -38,7 +38,7 @@ export function LoginPage() {
   const canSubmit = email.trim().length > 0 && password.length > 0 && !login.isPending;
 
   return (
-    <div className="safe-top relative mx-auto flex min-h-dvh w-full max-w-app flex-col overflow-hidden px-4 pt-[73px]">
+    <div className="safe-top relative mx-auto flex min-h-dvh w-full max-w-app flex-col overflow-hidden px-4 pt-[123px]">
       {/* 시안의 배경 픽셀 장식. 프레임 밖으로 걸치는 위치까지 그대로 따랐다. */}
       <PixelArt
         bitmap={LOGIN_DECO_TOP}
@@ -51,13 +51,13 @@ export function LoginPage() {
         bitmap={LOGIN_DECO_BOTTOM}
         cell={DECO_BOTTOM_CELL}
         gap={DECO_BOTTOM_GAP}
-        style={{ left: `${(-33 / 402) * 100}%`, top: 466 }}
+        style={{ left: `${(-33 / 402) * 100}%`, top: 479 }}
         className="pointer-events-none absolute"
       />
 
       <header className="relative">
-        <Wordmark height={38} />
-        <p className="mt-[9px] text-xs leading-relaxed text-fg-muted">
+        <Wordmark height={45} />
+        <p className="mt-[19px] text-xs leading-relaxed text-fg-muted">
           오늘의 피부 상태를 간단하게 기록하고,
           <br />
           지금 필요한 관리 방법을 확인해보세요.
@@ -65,7 +65,7 @@ export function LoginPage() {
       </header>
 
       <form
-        className="relative mt-[106px] flex flex-col gap-[9px]"
+        className="relative mt-[110px] flex flex-col gap-[9px]"
         onSubmit={(e) => {
           e.preventDefault();
           if (canSubmit) login.mutate();
@@ -95,16 +95,17 @@ export function LoginPage() {
           <p className="px-2 text-sm text-caution-500">{loginError(login.error)}</p>
         )}
 
-        <div className="pt-[58px]">
+        {/* 시안 기준 두 번째 필드 아래 186px 지점에 로그인 버튼 */}
+        <div className="pt-[186px]">
           <PrimaryButton type="submit" disabled={!canSubmit}>
             {login.isPending ? '로그인 중…' : '로그인'}
           </PrimaryButton>
         </div>
       </form>
 
-      <p className="relative mt-[6px] text-center text-sm text-fg-muted">
+      <p className="safe-bottom relative mt-[14px] pb-[53px] text-center text-xs text-fg-muted">
         계정이 없으신가요?{' '}
-        <Link to="/signup" className="font-semibold text-info">
+        <Link to="/signup" className="text-body-strong text-info underline underline-offset-2">
           회원가입
         </Link>
       </p>

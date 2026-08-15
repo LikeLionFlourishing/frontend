@@ -2,17 +2,17 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 /**
- * 설정 > 프로필 관리에서 받지만 **아직 저장할 API 가 없는** 값들.
+ * 온보딩·설정에서 받지만 **아직 저장할 API 가 없는** 값들.
  *
- * 문서의 온보딩은 이용범위·동의·알림 세 화면뿐이라 여기 값들은 필수가 아니다.
- * 화면은 비어 있는 상태를 정상으로 다뤄야 한다(홈 D-Day 참고).
+ * 확정 시안(2026-08-15)의 온보딩은 이용범위 → 복무 정보 → 자주 겪는 환경 →
+ * 기본 점호 시각 네 화면이다. 그런데 OpenAPI 의 `PUT /me/onboarding` 은
+ * 동의와 알림 수신 여부만 받으므로, 나머지는 여기 로컬에 두고 화면을 완성한다.
  *
- * OpenAPI 의 `PUT /me/onboarding` 은 동의와 알림 수신 여부만 받는다.
- * 복무 정보·자주 겪는 환경·기상 권역·기본 점호 시각은 계약에 없어서
- * 우선 로컬에 두고 화면을 완성해 둔다.
+ * 값이 비어 있는 상태를 화면이 정상으로 다뤄야 한다(홈 D-Day 참고).
  *
  * TODO(백엔드): 아래 값을 저장할 필드가 생기면 이 스토어를 지우고 API 로 옮긴다.
- *  - 군종 / 입대일 / 전역예정일 (홈 D-Day 위젯, 계급 산출)
+ *  - 군종 / 입대일 / 전역예정일 (홈 D-Day 위젯)
+ *  - 현재 직급 (시안에서 새로 생긴 입력 항목)
  *  - 자주 겪는 군 생활 환경 (피부점호 예상 환경 기본값)
  *  - 기상 권역 (홈 BRIEFING)
  *  - 기본 피부점호 시각 (현재 API 는 '17:30' 고정)
@@ -28,15 +28,29 @@ export const BRANCH_OPTIONS: { value: MilitaryBranch; label: string }[] = [
   { value: 'OTHER', label: '기타' },
 ];
 
+/** 라벨은 확정 시안(22:12708)의 문구 그대로다. */
 export const ENVIRONMENT_OPTIONS = [
   { value: 'REPEATED_SHAVING', label: '반복 면도' },
-  { value: 'OUTDOOR_TRAINING', label: '야외활동·훈련' },
+  { value: 'OUTDOOR_TRAINING', label: '야외활동, 훈련' },
   { value: 'HOT_HUMID', label: '덥고 습한 환경' },
-  { value: 'DUST_SOIL', label: '먼지·흙 노출' },
+  { value: 'DUST_SOIL', label: '먼지 흙 노출' },
   { value: 'PROTECTIVE_GEAR', label: '보호장비 장시간 착용' },
-  { value: 'NIGHT_SHIFT', label: '야간·교대 일정' },
+  { value: 'NIGHT_SHIFT', label: '야간 교대 일정' },
   { value: 'NONE', label: '특별히 없음' },
 ] as const;
+
+/**
+ * 현재 직급. 확정 시안(22:12730)에서 온보딩 입력 항목으로 새로 들어왔다.
+ * 입대일로도 추정할 수 있지만 진급이 늦어지는 경우가 있어 직접 받는다.
+ */
+export type MilitaryRank = 'PRIVATE' | 'PFC' | 'CORPORAL' | 'SERGEANT';
+
+export const RANK_OPTIONS: { value: MilitaryRank; label: string }[] = [
+  { value: 'PRIVATE', label: '이병' },
+  { value: 'PFC', label: '일병' },
+  { value: 'CORPORAL', label: '상병' },
+  { value: 'SERGEANT', label: '병장' },
+];
 
 export const REGION_OPTIONS = [
   { value: 'CAPITAL', label: '수도권' },
@@ -52,6 +66,7 @@ export interface ServiceProfile {
   branch: MilitaryBranch | null;
   enlistedOn: string | null;
   dischargeOn: string | null;
+  rank: MilitaryRank | null;
   environments: string[];
   region: string | null;
   /** `HH:mm` */
@@ -67,6 +82,7 @@ const EMPTY: ServiceProfile = {
   branch: null,
   enlistedOn: null,
   dischargeOn: null,
+  rank: null,
   environments: [],
   region: null,
   checkInTime: '17:30',

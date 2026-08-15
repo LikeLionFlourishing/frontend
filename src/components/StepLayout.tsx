@@ -105,7 +105,7 @@ export function PrimaryButton({ children, onClick, disabled, type = 'button' }: 
       className={clsx(
         'flex h-[79px] w-full items-center justify-center rounded-pill px-5 text-body-strong transition',
         disabled
-          ? 'bg-card-raised text-fg-faint'
+          ? 'bg-panel text-panel-label'
           : 'bg-accent text-panel-text active:bg-accent-pressed',
       )}
     >
@@ -126,10 +126,56 @@ export function InfoButton({ children, onClick, disabled, type = 'button' }: But
       disabled={disabled}
       className={clsx(
         'flex h-[79px] w-full items-center justify-center rounded-pill px-5 text-body-strong transition',
-        disabled ? 'bg-card-raised text-fg-faint' : 'bg-info text-white',
+        disabled ? 'bg-panel text-panel-label' : 'bg-info text-white',
       )}
     >
       {children}
+    </button>
+  );
+}
+
+/**
+ * 오른쪽에 화살표 원이 붙는 그린 버튼. 흐름을 시작·완료하는 자리에만 쓴다.
+ *
+ * 원의 색은 화면마다 다르다 — 온보딩 1화면(22:12542)은 어두운 원에 흰 화살표,
+ * 기본 점호 시각(22:12699)은 흰 원에 검은 화살표다. 시안 그대로 두 벌을 둔다.
+ * 글자는 버튼 전체 폭 기준 가운데라 원을 absolute 로 띄운다.
+ */
+export function ArrowButton({
+  children,
+  onClick,
+  disabled,
+  type = 'button',
+  circle = 'dark',
+}: ButtonProps & { circle?: 'dark' | 'light' }) {
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={clsx(
+        'relative flex h-[79px] w-full items-center justify-center rounded-pill px-[92px] text-body-strong transition',
+        disabled ? 'bg-panel text-panel-label' : 'bg-accent text-panel-text',
+      )}
+    >
+      {children}
+      {/* 시안 기준 원 59px, 오른쪽 여백 26px */}
+      <span
+        aria-hidden="true"
+        className={clsx(
+          'absolute right-[26px] grid size-[59px] place-items-center rounded-full',
+          circle === 'dark' ? 'bg-[#232E27] text-base' : 'bg-base text-fg',
+        )}
+      >
+        <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor">
+          <path
+            d="M4 12h15m0 0-6-6m6 6-6 6"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
     </button>
   );
 }

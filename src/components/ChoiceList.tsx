@@ -15,6 +15,11 @@ interface BaseProps {
    * 경과 확인의 두 번째 질문(`안내받은 관리를 어떻게 실행했나요?`)이 시안에서 이 모양이다.
    */
   align?: 'start' | 'center';
+  /**
+   * `compact` 는 온보딩2 `자주 겪는 환경`(22:12708) 규격이다 — 높이 60 의 알약형.
+   * 피부점호 계열 화면은 기본값(높이 72, 카드 라운드)을 쓴다.
+   */
+  size?: 'default' | 'compact';
 }
 
 interface SingleProps extends BaseProps {
@@ -46,7 +51,7 @@ type Props = SingleProps | MultiProps;
  * 여러 화면이 같은 인스턴스를 쓰므로 여기서만 고치면 전부 따라온다.
  */
 export function ChoiceList(props: Props) {
-  const { question, hint, choices, disabled, align = 'start' } = props;
+  const { question, hint, choices, disabled, align = 'start', size = 'default' } = props;
 
   const isSelected = (value: string) =>
     props.mode === 'single' ? props.value === value : props.value.includes(value);
@@ -95,7 +100,8 @@ export function ChoiceList(props: Props) {
               aria-checked={selected}
               onClick={() => handleSelect(choice.value)}
               className={clsx(
-                'flex min-h-[72px] w-full items-center gap-[13px] rounded-card py-3 text-[11px] transition',
+                'flex w-full items-center gap-[13px] py-3 text-[11px] transition',
+                size === 'compact' ? 'min-h-[60px] rounded-pill' : 'min-h-[72px] rounded-card',
                 align === 'center' ? 'justify-center px-5 text-center' : 'pl-[25px] pr-4 text-left',
                 /*
                  * 개편 시안은 선택 상태를 일관되게 파랑으로 쓴다.

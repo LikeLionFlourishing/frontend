@@ -10,7 +10,13 @@ interface Props {
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const MINUTES = [0, 10, 20, 30, 40, 50];
 
-const ITEM_HEIGHT = 48;
+/*
+ * 시안(22:12677) 실측값.
+ * 밴드 185×65 두 개가 가운데(x=201)에서 맞닿고, 위아래로 한 칸씩 흐린 값이 보인다.
+ * 선택값 글자 상자 55px, 흐린 값 36px, 두 값의 중심 간격이 약 87px 이다.
+ */
+const BAND_HEIGHT = 65;
+const ITEM_HEIGHT = 87;
 
 /**
  * 기본 피부점호 시각 선택기.
@@ -27,16 +33,28 @@ export function TimeWheel({ value, onChange }: Props) {
   const setMinute = (m: number) => onChange(`${pad(hour)}:${pad(m)}`);
 
   return (
-    <div className="relative flex items-center justify-center gap-3">
-      {/* 선택 하이라이트 밴드 */}
+    <div className="relative w-full">
+      {/*
+       * 선택 밴드는 두 조각이다. 시안에서 시·분이 각각 별도 사각형이라
+       * 맞닿는 가운데에만 라운드가 겹쳐 보인다.
+       */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-1/2 h-12 -translate-y-1/2 rounded-card bg-panel"
-      />
+        className="pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 gap-px"
+        style={{ height: BAND_HEIGHT }}
+      >
+        <span className="flex-1 rounded-card bg-panel" />
+        <span className="flex-1 rounded-card bg-panel" />
+      </div>
 
-      <Column values={HOURS} selected={hour} onSelect={setHour} label="시" />
-      <span className="relative z-10 text-2xl font-bold text-panel-text">:</span>
-      <Column values={MINUTES} selected={minute} onSelect={setMinute} label="분" />
+      <div className="relative flex">
+        <Column values={HOURS} selected={hour} onSelect={setHour} label="시" />
+        {/* 콜론은 두 밴드가 맞닿는 지점 위에 뜬다 */}
+        <span className="pointer-events-none absolute inset-y-0 left-1/2 z-10 flex -translate-x-1/2 items-center text-[44px] font-medium leading-none text-fg">
+          :
+        </span>
+        <Column values={MINUTES} selected={minute} onSelect={setMinute} label="분" />
+      </div>
     </div>
   );
 }
@@ -74,8 +92,8 @@ function Column({
       ref={ref}
       role="listbox"
       aria-label={label}
-      className="relative z-10 h-36 w-24 snap-y snap-mandatory overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      style={{ paddingBlock: ITEM_HEIGHT }}
+      className="flex-1 snap-y snap-mandatory overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      style={{ height: ITEM_HEIGHT * 3, paddingBlock: ITEM_HEIGHT }}
     >
       {values.map((v) => {
         const isSelected = v === selected;
@@ -88,8 +106,8 @@ function Column({
             onClick={() => onSelect(v)}
             style={{ height: ITEM_HEIGHT }}
             className={clsx(
-              'flex w-full snap-center items-center justify-center text-2xl transition',
-              isSelected ? 'font-bold text-accent' : 'text-fg-muted',
+              'flex w-full snap-center items-center justify-center leading-none transition',
+              isSelected ? 'text-[44px] font-medium text-info' : 'text-[30px] text-panel',
             )}
           >
             {pad(v)}
