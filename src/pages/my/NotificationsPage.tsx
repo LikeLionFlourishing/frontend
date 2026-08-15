@@ -64,7 +64,7 @@ export function NotificationsPage() {
         </SettingsCard>
 
         {!pushReady && !enabled && (
-          <p className="mt-2 px-2 text-xs leading-relaxed text-fg-faint">
+          <p className="mt-2 px-2 text-xs leading-4 text-fg-faint">
             <Sentences
               text={
                 isPushSupported()
@@ -91,7 +91,7 @@ export function NotificationsPage() {
           />
         </div>
 
-        <p className="mt-3 px-2 text-xs leading-relaxed text-fg-faint">
+        <p className="mt-3 px-2 text-xs leading-4 text-fg-faint">
           부대마다 휴대전화를 쓸 수 있는 시간이 달라요.
           {/*
             서버는 발송 시각을 고정값으로 두고 있다(NotificationSettings.time 이 const).

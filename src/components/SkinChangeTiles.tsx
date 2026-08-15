@@ -70,7 +70,7 @@ export function SkinChangeTiles({ value, onChange, tone = 'info', className }: P
             <span className="mt-[22px] text-body-strong">{choice.label}</span>
             <span
               className={clsx(
-                'mt-[13px] whitespace-pre-line text-center text-[11px] leading-relaxed',
+                'mt-[13px] whitespace-pre-line text-center text-[11px] leading-[14px]',
                 selected ? 'text-white/80' : 'text-fg-muted',
               )}
             >

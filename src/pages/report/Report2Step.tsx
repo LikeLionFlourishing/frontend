@@ -147,7 +147,7 @@ function TileGrid({
             onClick={() => onSelect(option.value)}
             className={clsx(
               'flex h-[72px] items-center justify-center rounded-card text-xs transition',
-              selected ? 'bg-info font-semibold text-white' : 'bg-card text-fg',
+              selected ? 'bg-info font-semibold text-white' : 'bg-card text-fg shadow-neu',
             )}
           >
             {option.label}

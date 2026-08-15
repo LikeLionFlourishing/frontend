@@ -68,7 +68,7 @@ export function Report1Step({ area, appearance, onChange, onNext }: Props) {
       <button
         type="button"
         onClick={() => chipsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-        className="mx-auto mt-[14px] flex h-[39px] min-h-0 items-center rounded-pill bg-panel-tile px-[33px] text-xs text-fg"
+        className="mx-auto mt-[14px] flex h-[39px] min-h-0 items-center rounded-pill bg-panel-tile px-[33px] text-xs text-fg shadow-neu"
       >
         직접 선택하기
       </button>
@@ -88,7 +88,7 @@ export function Report1Step({ area, appearance, onChange, onNext }: Props) {
               className={clsx(
                 // 시안 기준 칩은 폭이 70 으로 고정이라 한 줄에 다섯 개가 들어간다
                 'flex h-[42px] w-[70px] min-h-0 items-center justify-center rounded-pill text-xs transition',
-                selected ? 'bg-info font-semibold text-white' : 'bg-panel-tile text-fg',
+                selected ? 'bg-info font-semibold text-white' : 'bg-panel-tile text-fg shadow-neu',
               )}
             >
               {option.label}
@@ -114,7 +114,7 @@ export function Report1Step({ area, appearance, onChange, onNext }: Props) {
               onClick={() => onChange({ appearance: option.value })}
               className={clsx(
                 'flex h-[127px] flex-col items-center justify-end rounded-card pb-[22px] transition',
-                selected ? 'bg-info' : 'bg-panel-tile',
+                selected ? 'bg-info' : 'bg-panel-tile shadow-neu',
               )}
             >
               <img

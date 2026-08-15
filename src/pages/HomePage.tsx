@@ -165,7 +165,7 @@ function TodayCheckCard({ data, onNavigate }: { data: Home; onNavigate: (to: str
      * 시안 기준 368×309, 안쪽 여백 좌 24 / 위 19.
      * 위 간격만 시안(23)보다 9 줄였다 — 홈은 스크롤이 없어야 하는 화면이다.
      */
-    <section className="mt-[14px] rounded-card bg-card-hero px-[24px] pb-[20px] pt-[19px]">
+    <section className="mt-[14px] rounded-card bg-card-hero px-[24px] pb-[20px] pt-[19px] shadow-neu">
       <p className="text-[11px] font-semibold tracking-[0.14em] text-fg-faint">
         TODAY&apos;S CHECK
       </p>
@@ -236,7 +236,7 @@ function ActionTile({
       disabled={disabled}
       className={clsx(
         'flex h-[132px] flex-col items-center rounded-card px-3 pt-[22px] text-center transition',
-        isAccent ? 'bg-accent text-panel-text' : 'bg-card-raised text-fg',
+        isAccent ? 'bg-accent text-panel-text' : 'bg-card-raised text-fg shadow-neu',
         disabled && 'opacity-40',
       )}
     >
@@ -372,7 +372,12 @@ function MiniCard({
 }) {
   return (
     // 시안 기준 안쪽 여백 좌 17 / 위 11
-    <section className={clsx('flex flex-col rounded-card bg-card px-[17px] py-[11px]', className)}>
+    <section
+      className={clsx(
+        'flex flex-col rounded-card bg-card shadow-neu px-[17px] py-[11px]',
+        className,
+      )}
+    >
       <p className="text-[10px] font-semibold tracking-[0.14em] text-fg-faint">{label}</p>
       {children}
     </section>

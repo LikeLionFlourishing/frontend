@@ -232,7 +232,7 @@ function EditSheet({
 function NoteField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
     <div className="flex flex-col gap-2">
-      <p className="px-1 text-xs leading-relaxed text-fg-muted">
+      <p className="px-1 text-xs leading-4 text-fg-muted">
         <Sentences text="대표 부위 말고 다른 곳도 불편하다면 적어주세요. 없으면 비워 두어도 괜찮아요." />
       </p>
 

@@ -68,7 +68,7 @@ export function RecordDetailPage() {
         >
           ‹
         </button>
-        <h1 className="text-[28px] font-bold leading-snug text-fg">
+        <h1 className="text-[28px] font-bold leading-9 text-fg">
           {formatDotDate(report.reportDate)} 기록
         </h1>
       </div>
@@ -76,13 +76,13 @@ export function RecordDetailPage() {
       <div className="mt-7 flex flex-col gap-6 pb-10">
         <Section title="내가 작성한 내용">
           <Panel>
-            <p className="text-xs leading-relaxed text-panel-text">{report.rawText}</p>
+            <p className="text-xs leading-4 text-panel-text">{report.rawText}</p>
           </Panel>
         </Section>
 
         <Section title="관리 전 확인 내용">
           <Panel>
-            <p className="text-xs leading-relaxed text-panel-text">
+            <p className="text-xs leading-4 text-panel-text">
               {report.preCareChecks.includes('NONE')
                 ? '해당되는 항목이 없어요.'
                 : labelsOf(options?.preCareChecks, report.preCareChecks)}
@@ -99,11 +99,11 @@ export function RecordDetailPage() {
         <Section title="당시 안내된 내용">
           <Panel>
             {report.resultType === 'CLINICIAN_CHECK' ? (
-              <p className="text-xs leading-relaxed text-panel-text">{care.clinicianMessage}</p>
+              <p className="text-xs leading-4 text-panel-text">{care.clinicianMessage}</p>
             ) : (
               <ul className="flex flex-col gap-2">
                 {[...care.doToday, ...care.avoidToday, ...care.checkNext].map((item) => (
-                  <li key={item} className="text-xs leading-relaxed text-panel-text">
+                  <li key={item} className="text-xs leading-4 text-panel-text">
                     {item}
                   </li>
                 ))}
@@ -123,12 +123,12 @@ export function RecordDetailPage() {
                 <p className="text-body-strong font-semibold text-panel-text">
                   {SKIN_CHANGE_LABEL[followUp.skinChange]}
                 </p>
-                <p className="mt-2 text-xs leading-relaxed text-panel-label">
+                <p className="mt-2 text-xs leading-4 text-panel-label">
                   {followUpDetail(followUp)}
                 </p>
               </>
             ) : (
-              <p className="text-xs leading-relaxed text-panel-text">
+              <p className="text-xs leading-4 text-panel-text">
                 {report.status === 'EXPIRED'
                   ? '입력 기간이 지나 경과가 기록되지 않았어요.'
                   : '아직 경과를 기록하지 않았어요.'}

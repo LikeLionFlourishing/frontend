@@ -190,7 +190,7 @@ export function ReportResultPage() {
         {isClinician && (
           <div className="mb-4 rounded-card bg-caution/20 px-5 py-4">
             <p className="text-sm font-semibold text-fg">오늘은 셀프케어보다 확인이 먼저예요.</p>
-            <p className="mt-2 text-sm leading-relaxed text-fg-muted">{care.clinicianMessage}</p>
+            <p className="mt-2 text-sm leading-[18px] text-fg-muted">{care.clinicianMessage}</p>
           </div>
         )}
 
@@ -413,7 +413,7 @@ function NumberedList({
               )}
             </p>
             {item.description && (
-              <p className="mt-1 text-[11px] leading-relaxed opacity-70">{item.description}</p>
+              <p className="mt-1 text-[11px] leading-[14px] opacity-70">{item.description}</p>
             )}
           </div>
         </li>

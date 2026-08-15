@@ -239,7 +239,7 @@ function SavedView({
         <SavedRow label={secondRow.label} value={secondRow.value} />
       </dl>
 
-      <p className="mt-6 px-2 text-xs leading-relaxed text-fg-faint">
+      <p className="mt-6 px-2 text-xs leading-4 text-fg-faint">
         경과는 기록당 한 번만 남길 수 있어요.
       </p>
     </StepLayout>

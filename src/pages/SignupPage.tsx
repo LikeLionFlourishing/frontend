@@ -237,11 +237,9 @@ function ConsentStep({
         title={detail?.label ?? ''}
         footer={<PrimaryButton onClick={() => setDetail(null)}>닫기</PrimaryButton>}
       >
-        <p className="whitespace-pre-line text-sm leading-relaxed text-fg-muted">
-          {detail?.detail}
-        </p>
+        <p className="whitespace-pre-line text-sm leading-[18px] text-fg-muted">{detail?.detail}</p>
         {/* TODO(기획·법무): 확정된 약관 전문으로 교체. 지금은 처리 범위만 사실대로 적어 둔다. */}
-        <p className="mt-4 text-xs leading-relaxed text-fg-faint">
+        <p className="mt-4 text-xs leading-4 text-fg-faint">
           약관 전문은 준비 중이에요. 확정되면 이 화면에서 전체 내용을 볼 수 있어요.
         </p>
       </BottomSheet>

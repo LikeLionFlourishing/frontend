@@ -64,7 +64,7 @@ export function AiLoading({ title, subtitle, stages }: Props) {
       <BootMark fill={progress / 100} />
 
       <div className="flex flex-col gap-5">
-        <h1 className="whitespace-pre-line text-2xl font-bold leading-snug text-fg">{title}</h1>
+        <h1 className="whitespace-pre-line text-[28px] font-bold leading-9 text-fg">{title}</h1>
 
         {/*
          * 시안(로딩1~5)은 고정 문구 한 줄이다. 진행은 마크가 차오르는 것으로 보여준다.

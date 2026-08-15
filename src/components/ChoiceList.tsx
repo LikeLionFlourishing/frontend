@@ -83,7 +83,7 @@ export function ChoiceList(props: Props) {
   return (
     <fieldset className="flex flex-col gap-4" disabled={disabled}>
       {question && (
-        <legend className="whitespace-pre-line text-[28px] font-bold leading-snug text-fg">
+        <legend className="whitespace-pre-line text-[28px] font-bold leading-9 text-fg">
           {question}
         </legend>
       )}

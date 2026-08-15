@@ -76,7 +76,7 @@ export function AccountPage() {
           </button>
         </SettingsCard>
 
-        <p className="mt-3 px-2 text-xs leading-relaxed text-fg-faint">
+        <p className="mt-3 px-2 text-xs leading-4 text-fg-faint">
           탈퇴하면 계정과 지금까지 남긴 피부 기록이 모두 삭제되고 되돌릴 수 없어요.
         </p>
       </SettingsSection>
@@ -104,7 +104,7 @@ export function AccountPage() {
           </div>
         }
       >
-        <ul className="flex flex-col gap-2 text-sm leading-relaxed text-fg-muted">
+        <ul className="flex flex-col gap-2 text-sm leading-[18px] text-fg-muted">
           <li>· 지금까지의 피부 보고와 관리 기록이 즉시 삭제돼요.</li>
           <li>· 삭제한 기록은 복구할 수 없어요.</li>
           <li>· 같은 이메일로 다시 가입할 수 있지만, 이전 기록은 돌아오지 않아요.</li>

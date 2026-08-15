@@ -192,7 +192,7 @@ function IntroStep({ onStart }: { onStart: () => void }) {
           >
             <Icon name={item.icon} className="size-8 text-fg" />
             <p className="text-[13px] font-semibold text-fg">{item.title}</p>
-            <p className="text-[11px] leading-tight text-fg-muted">{item.caption}</p>
+            <p className="text-[11px] leading-4 text-fg-muted">{item.caption}</p>
           </div>
         ))}
       </div>

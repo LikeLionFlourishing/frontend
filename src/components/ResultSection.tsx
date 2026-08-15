@@ -47,12 +47,12 @@ export function ResultSection({ kind, items, text, children }: Props) {
         {meta.caption}
       </p>
 
-      {text && <p className="mt-4 text-sm leading-relaxed">{text}</p>}
+      {text && <p className="mt-4 text-sm leading-[18px]">{text}</p>}
 
       {items && items.length > 0 && (
         <ul className="mt-4 flex flex-col gap-3">
           {items.map((item) => (
-            <li key={item} className="flex gap-2 text-sm leading-relaxed">
+            <li key={item} className="flex gap-2 text-sm leading-[18px]">
               <span aria-hidden="true" className={isClinician ? '' : 'text-accent'}>
                 •
               </span>
@@ -70,7 +70,7 @@ export function ResultSection({ kind, items, text, children }: Props) {
 /** 결과 화면 하단 고정 문구. 진단 서비스가 아님을 매번 명시한다. */
 export function MedicalDisclaimer() {
   return (
-    <p className="px-2 py-5 text-center text-xs leading-relaxed text-fg-faint">
+    <p className="px-2 py-5 text-center text-xs leading-4 text-fg-faint">
       이 안내는 진단이 아닙니다. 검토된 관리 규칙에 따른 일반적인 셀프케어 안내입니다.
     </p>
   );
