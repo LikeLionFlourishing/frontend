@@ -159,7 +159,7 @@ export function InfoButton({ children, onClick, disabled, type = 'button' }: But
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        'flex h-[79px] w-full items-center justify-center rounded-pill px-5 text-body-strong transition',
+        'flex h-[79px] w-full items-center justify-center rounded-[30px] px-5 text-body-strong transition',
         disabled ? 'bg-panel text-panel-label' : 'bg-info text-white',
       )}
     >
@@ -188,7 +188,7 @@ export function ArrowButton({
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        'relative flex h-[79px] w-full items-center justify-center rounded-pill px-[92px] text-body-strong transition',
+        'relative flex h-[79px] w-full items-center justify-center rounded-[30px] px-[92px] text-body-strong transition',
         disabled ? 'bg-panel text-panel-label' : 'bg-accent text-panel-text',
       )}
     >

@@ -33,12 +33,13 @@ export function TextField({
       {/* 시안(로그인 15:5969) 기준 369×83, 좌 여백 25, 라벨 20px 지점. */}
       <div
         className={clsx(
-          'h-[83px] rounded-card px-[25px] pt-5 transition',
+          // 시안 31:45921 — 369×83, 모서리 **26**, 왼쪽 여백 25, 라벨 위 20
+          'h-[83px] rounded-[26px] px-[25px] pt-5 transition',
           surface === 'soft' ? 'bg-panel-soft' : 'bg-panel',
           error && 'ring-2 ring-caution-500',
         )}
       >
-        <label htmlFor={id} className="block text-body-strong font-semibold text-panel-text">
+        <label htmlFor={id} className="block text-body-strong text-fg-muted">
           {label}
         </label>
         <input
@@ -50,7 +51,7 @@ export function TextField({
           autoComplete={autoComplete}
           inputMode={inputMode}
           aria-invalid={Boolean(error)}
-          className="mt-[9px] w-full bg-transparent text-xs text-panel-text outline-none placeholder:text-panel-label"
+          className="mt-[9px] w-full bg-transparent text-xs text-fg-muted outline-none placeholder:text-fg-muted"
         />
       </div>
 

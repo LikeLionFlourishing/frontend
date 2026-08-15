@@ -107,7 +107,10 @@ export function LoginPage() {
 
       <p className="safe-bottom relative mt-[14px] pb-[53px] text-center text-xs text-fg-muted">
         계정이 없으신가요?{' '}
-        <Link to="/signup" className="text-body-strong text-info underline underline-offset-2">
+        <Link
+          to="/signup" // 시안 31:45929 — 밑줄 없이 SemiBold 16 / #346EFF
+          className="text-body-strong text-info"
+        >
           회원가입
         </Link>
       </p>
