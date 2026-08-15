@@ -81,7 +81,7 @@ export function RecordsPage() {
       )}
 
       {pending.length > 0 && (
-        <section className="overflow-hidden rounded-card bg-card-raised">
+        <section className="overflow-hidden rounded-card bg-white">
           <div className="flex items-baseline justify-between px-5 py-4">
             <h2 className="text-body-strong font-semibold text-fg">이어서 확인할 기록</h2>
             <span className="text-sm text-fg-muted">{pending.length}건</span>

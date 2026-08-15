@@ -59,7 +59,7 @@ export function Report2Step({ situations, care, skinStates, onChange, onNext }: 
               onClick={() => toggleSituation(option.value)}
               className={clsx(
                 'flex h-[110px] flex-col items-center justify-center gap-[14px] rounded-card transition',
-                selected ? 'bg-info text-white' : 'bg-card-raised text-fg',
+                selected ? 'bg-info text-white' : 'bg-panel text-fg',
               )}
             >
               <Icon name={option.icon as IconName} className="h-[27px] w-auto" />
@@ -77,7 +77,7 @@ export function Report2Step({ situations, care, skinStates, onChange, onNext }: 
           'mt-[7px] flex h-[70px] items-center justify-center rounded-card text-xs transition',
           situations.includes(SITUATION_NONE.value)
             ? 'bg-info font-semibold text-white'
-            : 'bg-card-raised text-fg',
+            : 'bg-panel text-fg',
         )}
       >
         {SITUATION_NONE.label}
@@ -143,7 +143,7 @@ function TileGrid({
             onClick={() => onSelect(option.value)}
             className={clsx(
               'flex h-[72px] items-center justify-center rounded-card text-xs transition',
-              selected ? 'bg-info font-semibold text-white' : 'bg-card-raised text-fg',
+              selected ? 'bg-info font-semibold text-white' : 'bg-card text-fg',
             )}
           >
             {option.label}

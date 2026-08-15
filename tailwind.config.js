@@ -43,6 +43,8 @@ export default {
           soft: '#EBEBEB',
           // 캘린더 범례 시트. panel 보다 반 톤 밝다.
           sheet: '#D9D9D9',
+          // 피부보고1 의 부위 칩·겉모습 타일. card.raised 보다 세 톤 밝다.
+          tile: '#E9E9E9',
           text: '#010101',
           label: '#6B6B6B',
         },
