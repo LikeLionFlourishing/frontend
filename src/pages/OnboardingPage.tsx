@@ -282,7 +282,7 @@ function StepBody({
   return (
     <>
       {/* 시안 기준 제목 28px / 줄높이 36 */}
-      <h1 className="whitespace-pre-line text-[28px] font-bold leading-9 text-fg">{title}</h1>
+      <h1 className="whitespace-pre-line text-[30px] font-bold leading-9 text-fg-muted">{title}</h1>
       {subtitle && <p className="mt-2 text-xs text-fg-muted">{subtitle}</p>}
       <div className="mt-[67px] flex flex-1 flex-col">{children}</div>
       <div className="safe-bottom bg-base pb-[53px] pt-4">{footer}</div>

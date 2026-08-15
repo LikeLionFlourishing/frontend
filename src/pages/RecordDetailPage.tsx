@@ -71,7 +71,7 @@ export function RecordDetailPage() {
         >
           ‹
         </button>
-        <h1 className="text-[28px] font-bold leading-9 text-fg">
+        <h1 className="text-[30px] font-bold leading-9 text-fg-muted">
           {formatDotDate(report.reportDate)} 기록
         </h1>
       </div>

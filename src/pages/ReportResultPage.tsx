@@ -391,7 +391,7 @@ function CardBody({
       <ul className="flex flex-col gap-[33px] pt-6">
         {found.map((it) => (
           <li key={it.reportId}>
-            <p className="text-body-strong font-bold">{formatShortDate(it.reportDate)}</p>
+            <p className="text-body-strong">{formatShortDate(it.reportDate)}</p>
             <p className="mt-[3px] text-[11px] opacity-80">{it.displayText}</p>
           </li>
         ))}
