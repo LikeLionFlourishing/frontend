@@ -50,11 +50,16 @@ export function StepLayout({ step, totalSteps, onBack, title, subtitle, children
               ‹
             </button>
           )}
-          {/* 시안 기준 제목 28px / 부제 12px (Figma 텍스트 박스 높이 36 / 14) */}
+          {/*
+           * 시안 변수 `웹 소제목` = Pretendard Bold **30** / 색은 `검`(#434343).
+           * 28px 검정으로 두면 글자가 한 급 작고 한 톤 진하다.
+           * (피부보고1 두 제목만 #1F2937 로 찍혀 있는데 그건 시안 안에서의 예외라
+           *  변수값으로 통일한다.)
+           */}
           {title && (
             <h1
               className={clsx(
-                'whitespace-pre-line text-[28px] font-bold leading-9 text-fg',
+                'whitespace-pre-line text-[30px] font-bold leading-9 text-fg-muted',
                 // 시안에서 제목은 화면 왼쪽 43 — 뒤로가기 화살표를 지나 시작한다
                 onBack && 'pl-[27px]',
               )}

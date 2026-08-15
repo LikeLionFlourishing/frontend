@@ -53,8 +53,12 @@ export function Report2Step({ situations, care, skinStates, onChange, onNext }: 
 
   return (
     <div className="flex flex-col">
-      {/* 시안 기준 타일 120×110, 가로 간격 7, 세로 간격 10. 격자 상단은 화면 기준 173 */}
-      <div className="mt-[9px] grid grid-cols-3 gap-x-[7px] gap-y-[10px]">
+      {/*
+       * 시안 31:46026 — 타일 120×110, 모서리 17, 가로 간격 7.
+       * **세로 간격은 0 이다**(두 행의 y 가 217 / 327, 높이 109.71 → 이음새 1px).
+       * 렌더에서도 두 행이 붙어 한 덩어리로 보인다.
+       */}
+      <div className="mt-[9px] grid grid-cols-3 gap-x-[7px] gap-y-0">
         {SITUATION_OPTIONS.map((option) => {
           const selected = situations.includes(option.value);
           return (
@@ -64,12 +68,13 @@ export function Report2Step({ situations, care, skinStates, onChange, onNext }: 
               aria-pressed={selected}
               onClick={() => toggleSituation(option.value)}
               className={clsx(
-                'flex h-[110px] flex-col items-center justify-center gap-[14px] rounded-card transition',
-                selected ? 'bg-info text-white' : 'bg-panel text-fg',
+                // 시안: 아이콘 위 34, 글자 아래 22, 사이 15
+                'flex h-[110px] flex-col items-center gap-[15px] rounded-[17px] pb-[22px] pt-[34px] transition',
+                selected ? 'bg-info text-white' : 'bg-panel text-fg-muted',
               )}
             >
               <Icon name={option.icon as IconName} className="h-[24px] w-auto" />
-              <span className="text-[11px]">{option.label}</span>
+              <span className="text-xs">{option.label}</span>
             </button>
           );
         })}
@@ -110,8 +115,9 @@ export function Report2Step({ situations, care, skinStates, onChange, onNext }: 
 function Question({ top, title, hint }: { top: number; title: string; hint: string }) {
   return (
     <div style={{ marginTop: top }}>
-      <h2 className="whitespace-pre-line text-[28px] font-bold leading-9 text-fg">{title}</h2>
-      <p className="mt-[4px] text-xs leading-[14px] text-fg-muted">{hint}</p>
+      {/* 시안 변수 `웹 소제목` — Bold 30 / `검` */}
+      <h2 className="whitespace-pre-line text-[30px] font-bold leading-9 text-fg-muted">{title}</h2>
+      <p className="mt-[4px] text-xs leading-[14px] text-fg">{hint}</p>
     </div>
   );
 }
@@ -137,7 +143,8 @@ function TileGrid({
             aria-pressed={selected}
             onClick={() => onSelect(option.value)}
             className={clsx(
-              'flex h-[72px] items-center justify-center rounded-card text-xs transition',
+              // 시안 31:45994 — 182×72, 모서리 16
+              'flex h-[72px] items-center justify-center rounded-[16px] text-xs transition',
               selected ? 'bg-info font-semibold text-white' : 'bg-card text-fg shadow-neu',
             )}
           >

@@ -73,15 +73,20 @@ export function Report1Step({ area, appearance, onChange, onNext }: Props) {
       <button
         type="button"
         onClick={() => chipsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-        className="mx-auto mt-[14px] flex h-[39px] min-h-0 items-center rounded-pill bg-panel-tile px-[33px] text-xs text-fg shadow-neu"
+        // 시안 31:47618 — 132×39, 모서리 16, 바탕 #ECECEC
+        className="mx-auto mt-[14px] flex h-[39px] min-h-0 items-center rounded-[16px] bg-card px-[33px] text-xs text-fg shadow-neu"
       >
         직접 선택하기
       </button>
 
       <h2 className="mt-[27px] text-body-strong leading-[19px] text-fg">주로 불편한 부위</h2>
 
-      {/* 시안 기준 칩 70×42, 가로 간격 4, 세로 간격 7 */}
-      <div ref={chipsRef} className="mt-[9px] flex flex-wrap gap-x-1 gap-y-[7px]">
+      {/*
+       * 시안 31:47678 — 칩은 글자 길이와 무관하게 **한 줄에 다섯 개인 고정 격자**다.
+       * (x = 16 · 90 · 165 · 239 · 314, 폭 70~71, 높이 42, 모서리 19)
+       * 글자 폭에 맞춰 늘리면 `코` 는 작고 `오른 턱선` 은 커져서 줄이 어긋난다.
+       */}
+      <div ref={chipsRef} className="mt-[9px] grid grid-cols-5 gap-x-[4.5px] gap-y-[7px]">
         {AREA_OPTIONS.map((option) => {
           const selected = area === option.value;
           return (
@@ -91,12 +96,11 @@ export function Report1Step({ area, appearance, onChange, onNext }: Props) {
               aria-pressed={selected}
               onClick={() => onChange({ area: option.value })}
               className={clsx(
-                /*
-                 * 13종이 되면서 칩 폭이 글자에 따라 달라진다(`코` 와 `오른 턱선` 이 같이 있다).
-                 * 시안도 고정폭이 아니라 안쪽 여백 기준이다.
-                 */
-                'flex h-[42px] min-h-0 items-center justify-center rounded-pill px-[18px] text-xs transition',
-                selected ? 'bg-info font-semibold text-white' : 'bg-panel-tile text-fg shadow-neu',
+                // 고른 칩만 16px SemiBold 로 커진다(시안 I31:47691;64:794)
+                'flex h-[42px] min-h-0 items-center justify-center rounded-[19px] transition',
+                selected
+                  ? 'bg-info text-body-strong text-[#F1F1F1]'
+                  : 'bg-card text-xs text-fg shadow-neu',
               )}
             >
               {option.label}
@@ -105,13 +109,14 @@ export function Report1Step({ area, appearance, onChange, onNext }: Props) {
         })}
       </div>
 
-      <h2 className="mt-[39px] text-[28px] font-bold leading-9 text-fg">겉모습은 어떤가요?</h2>
-      <p className="mt-[4px] text-xs leading-[14px] text-fg-muted">
-        가장 비슷한 모습을 선택해주세요
-      </p>
+      {/* 시안 변수 `웹 소제목` — Bold 30 (StepLayout 의 제목과 같은 규격) */}
+      <h2 className="mt-[34px] text-[30px] font-bold leading-9 text-fg-muted">
+        겉모습은 어떤가요?
+      </h2>
+      <p className="mt-[4px] text-xs leading-[14px] text-fg">가장 비슷한 모습을 선택해주세요</p>
 
-      {/* 시안 기준 타일 180×127, 가로 간격 9, 세로 간격 7 */}
-      <div className="mt-[16px] grid grid-cols-2 gap-x-[9px] gap-y-[7px]">
+      {/* 시안 31:47639 — 타일 180×127, 모서리 11, 가로 간격 9, 세로 간격 7 */}
+      <div className="mt-[15px] grid grid-cols-2 gap-x-[9px] gap-y-[7px]">
         {APPEARANCE_OPTIONS.map((option) => {
           const selected = appearance === option.value;
           return (
@@ -121,7 +126,7 @@ export function Report1Step({ area, appearance, onChange, onNext }: Props) {
               aria-pressed={selected}
               onClick={() => onChange({ appearance: option.value })}
               className={clsx(
-                'flex h-[127px] flex-col items-center justify-end rounded-card pb-[22px] transition',
+                'flex h-[127px] flex-col items-center justify-end rounded-[11px] pb-[19px] transition',
                 selected ? 'bg-info' : 'bg-panel-tile shadow-neu',
               )}
             >
@@ -130,8 +135,9 @@ export function Report1Step({ area, appearance, onChange, onNext }: Props) {
                 alt=""
                 className="mb-auto mt-[27px] h-[57px] w-auto object-contain"
               />
+              {/* 고른 타일만 16px SemiBold 로 커진다(시안 31:47655 vs 31:47640) */}
               <span
-                className={clsx('text-[11px]', selected ? 'font-semibold text-white' : 'text-fg')}
+                className={clsx(selected ? 'text-body-strong text-white' : 'text-xs text-fg-muted')}
               >
                 {option.label}
               </span>
