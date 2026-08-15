@@ -8,55 +8,79 @@ import { queryKeys } from '@/app/queryClient';
 import { AiLoading } from '@/components/AiLoading';
 import { MedicalDisclaimer } from '@/components/ResultSection';
 import { PrimaryButton, StepLayout } from '@/components/StepLayout';
-import { Sentences } from '@/components/Sentences';
+import { Sentences, splitSentences } from '@/components/Sentences';
 import { labelOf, labelsOf, useReportOptions } from '@/hooks/useReportOptions';
 import { track } from '@/lib/analytics';
-import { formatDotDate } from '@/lib/date';
 import { clsx } from '@/lib/clsx';
-import { SUMMARY_SPARKLES } from '@/components/summarySparkles';
+import { RECOMMENDED_INGREDIENTS } from '@/data/ingredients';
 import type { SkinReportDetail, SkinReportOptions } from '@/api/schemas';
 
-type CardKey = 'SUMMARY' | 'DO_TODAY' | 'AVOID_TODAY' | 'CHECK_NEXT' | 'SIMILAR';
+type CardKey = 'SUMMARY' | 'DO_TODAY' | 'AVOID_TODAY' | 'CHECK_NEXT' | 'INGREDIENTS';
 
 interface CardMeta {
   key: CardKey;
+  /** 카드 좌상단의 `00 CURRENT LOG` 표기 */
+  index: string;
+  eyebrow: string;
   title: string;
+  caption: string;
   /** 카드 배경. 덱 순서대로 그린 → 남색으로 넘어간다. */
   surface: string;
-  /** 어두운 배경이라 제목·설명을 흰색으로 뒤집어야 하는지 */
+  /** 어두운 배경이라 글자를 흰색으로 뒤집어야 하는지 */
   onDark?: boolean;
-  /** `public/illustrations/{art}.png`. 없는 카드도 있다. */
-  art?: 'summary' | 'do' | 'avoid' | 'similar';
   /**
    * 카드 가운데에 번지는 빛 색. 시안의 카드는 단색이 아니라
-   * 배경색 위에 다른 색조의 블롭이 하나 얹혀 있다(요약 카드만 단색).
+   * 배경색 위에 다른 색조의 블롭이 하나 얹혀 있다.
    */
   glow?: string;
 }
 
 const CARDS: CardMeta[] = [
-  { key: 'SUMMARY', title: '현재 기록 요약', surface: 'bg-guide-summary', art: 'summary' },
-  { key: 'DO_TODAY', title: '오늘 할 일', surface: 'bg-guide-do', art: 'do', glow: '#8CE3B0' },
+  {
+    key: 'SUMMARY',
+    index: '00',
+    eyebrow: 'CURRENT LOG',
+    title: '현재 기록 요약',
+    caption: '오늘의 피부 상태를 한눈에 확인해요',
+    surface: 'bg-guide-summary',
+    glow: '#A2FF8C',
+  },
+  {
+    key: 'DO_TODAY',
+    index: '01',
+    eyebrow: 'TODAY',
+    title: '오늘 할 일',
+    caption: '오늘의 피부 상태에 맞춰 관리해요',
+    surface: 'bg-guide-do',
+    glow: '#8CE3B0',
+  },
   {
     key: 'AVOID_TODAY',
+    index: '02',
+    eyebrow: 'AVOID',
     title: '오늘 피할 일',
+    caption: '오늘의 피부 상태에 맞춰 관리해요',
     surface: 'bg-guide-avoid',
-    art: 'avoid',
     glow: '#A8A7E2',
   },
-  // 시안에서 이 카드만 일러스트가 비어 있다.
   {
     key: 'CHECK_NEXT',
+    index: '03',
+    eyebrow: 'WATCH',
     title: '다음에 확인 할 변화',
+    caption: '피부 상태가 어떻게 변했는지 확인해보세요.',
     surface: 'bg-guide-next',
     onDark: true,
     glow: '#72D5CA',
   },
   {
-    key: 'SIMILAR',
-    title: '유사 기록 보기',
+    key: 'INGREDIENTS',
+    index: '04',
+    eyebrow: 'INGREDIENT GUIDE',
+    title: '추천 성분 보기',
+    caption: '피부 상태가 이렇게 변했는지 확인해보세요.',
     surface: 'bg-guide-similar',
-    art: 'similar',
+    onDark: true,
     glow: '#7F928B',
   },
 ];
@@ -74,10 +98,10 @@ function CardGlow({ color }: { color: string | undefined }) {
 }
 
 /**
- * 3-4. 오늘의 관리 가이드.
+ * 3-4. 오늘의 관리 가이드 (확정 시안 22:12884 · 22:13054 · 22:13225 · 22:13396 · 22:13567).
  *
- * 시안(결과 6종)은 겹쳐 쌓인 카드 덱 하나와 각 카드를 펼친 화면 5개다.
- * 화면을 나누지 않고 한 페이지에서 덱 ↔ 펼침을 오간다.
+ * 카드 다섯 장이 겹쳐 쌓여 있고, 누른 카드만 그 자리에서 펼쳐진다.
+ * 펼쳐도 덱을 떠나지 않는다 — 위아래 카드가 접힌 띠로 계속 보인다.
  */
 export function ReportResultPage() {
   const { reportId } = useParams<{ reportId: string }>();
@@ -114,11 +138,7 @@ export function ReportResultPage() {
     );
   }
 
-  if (reportQuery.isPending) {
-    return <AiLoading title="불러오는 중" subtitle="잠시만 기다려 주세요." />;
-  }
-
-  if (optionsQuery.isPending) {
+  if (reportQuery.isPending || optionsQuery.isPending) {
     return <AiLoading title="불러오는 중" subtitle="잠시만 기다려 주세요." />;
   }
 
@@ -126,24 +146,10 @@ export function ReportResultPage() {
   const care = report.careResult;
   const isClinician = report.resultType === 'CLINICIAN_CHECK';
 
-  const captionOf = (key: CardKey): string => {
-    switch (key) {
-      case 'SUMMARY':
-        return '오늘의 피부 상태를 한눈에 확인해요';
-      case 'DO_TODAY':
-      case 'AVOID_TODAY':
-        return '오늘의 피부 상태에 맞춰 관리해요';
-      case 'CHECK_NEXT':
-        return '피부 상태가 어떻게 변했는지 확인해보세요.';
-      case 'SIMILAR':
-        return `${care.similarExperience ? 1 : 0}건의 결과가 있어요`;
-    }
-  };
-
   // 의료진 확인 결과는 계약상 doToday/avoidToday/checkNext 가 비어 있다.
   // 덱을 그대로 쓰면 빈 카드만 남으므로 안내를 먼저 세운다. (F-04)
   const deck = isClinician
-    ? CARDS.filter((c) => c.key === 'SUMMARY' || c.key === 'SIMILAR')
+    ? CARDS.filter((c) => c.key === 'SUMMARY' || c.key === 'INGREDIENTS')
     : CARDS;
 
   return (
@@ -158,7 +164,7 @@ export function ReportResultPage() {
           >
             ‹
           </button>
-          <h1 className="text-[28px] font-bold leading-snug text-fg">오늘의 관리 가이드</h1>
+          <h1 className="text-[28px] font-bold leading-9 text-fg">오늘의 관리 가이드</h1>
         </div>
         <p className="mt-2 text-xs text-fg-muted">
           현재 상태와 비슷한 이전 기록을 바탕으로 추천드려요.
@@ -166,33 +172,26 @@ export function ReportResultPage() {
       </header>
 
       <main className="flex-1 px-4 pb-6">
-        {isClinician && !opened && (
+        {isClinician && (
           <div className="mb-4 rounded-card bg-caution/20 px-5 py-4">
             <p className="text-sm font-semibold text-fg">오늘은 셀프케어보다 확인이 먼저예요.</p>
             <p className="mt-2 text-sm leading-relaxed text-fg-muted">{care.clinicianMessage}</p>
           </div>
         )}
 
-        {opened ? (
-          <OpenCard
-            meta={deck.find((c) => c.key === opened)!}
-            caption={captionOf(opened)}
-            report={report}
-            options={optionsQuery.data}
-          />
-        ) : (
-          <Deck
-            deck={deck}
-            captionOf={captionOf}
-            onOpen={(key) => {
-              if (key === 'SIMILAR') track('SIMILAR_EXPERIENCE_VIEWED');
-              setOpened(key);
-            }}
-          />
-        )}
+        <Deck
+          deck={deck}
+          opened={opened}
+          onToggle={(key) => {
+            if (key !== opened && key === 'INGREDIENTS') track('SIMILAR_EXPERIENCE_VIEWED');
+            setOpened(key === opened ? null : key);
+          }}
+          report={report}
+          options={optionsQuery.data}
+        />
 
         {/* AI 설명 생성에 실패하면 규칙의 기본 문구가 내려온다. 재생성은 딱 한 번만 허용된다. */}
-        {!opened && care.aiGenerationStatus === 'FALLBACK' && !care.retryUsed && (
+        {care.aiGenerationStatus === 'FALLBACK' && !care.retryUsed && (
           <div className="mt-4 rounded-card bg-card-raised px-5 py-4">
             <p className="text-sm text-fg-muted">
               <Sentences text="안내 문구를 다시 만들 수 있어요. 관리 내용 자체는 바뀌지 않습니다." />
@@ -211,151 +210,105 @@ export function ReportResultPage() {
           </div>
         )}
 
-        {!opened && <MedicalDisclaimer />}
+        <MedicalDisclaimer />
       </main>
 
-      {!opened && (
-        <footer className="safe-bottom sticky bottom-0 bg-base px-4 pb-4 pt-3">
-          <PrimaryButton onClick={() => navigate('/', { replace: true })}>
-            내일 상태 다시 확인하기
-          </PrimaryButton>
-        </footer>
-      )}
+      <footer className="safe-bottom sticky bottom-0 bg-base px-4 pb-4 pt-3">
+        <PrimaryButton onClick={() => navigate('/', { replace: true })}>
+          내일 상태 다시 확인하기
+        </PrimaryButton>
+      </footer>
     </div>
   );
 }
 
-// --- 접힌 덱 ------------------------------------------------------------------
+// --- 덱 ----------------------------------------------------------------------
 
-/**
- * 시안 기준 카드 높이 257, 다음 카드까지 간격 158 → 99px 씩 겹친다.
- * 뒤 카드가 위로 올라와야 해서 z-index 를 순서대로 준다.
- */
-const CARD_HEIGHT = 257;
-const CARD_PITCH = 158;
+/** 접힌 카드끼리 겹치는 양(px). 시안에서 다음 카드가 앞 카드 아래쪽을 덮는다. */
+const OVERLAP = 24;
 
 function Deck({
   deck,
-  captionOf,
-  onOpen,
-}: {
-  deck: CardMeta[];
-  captionOf: (key: CardKey) => string;
-  onOpen: (key: CardKey) => void;
-}) {
-  return (
-    <div className="relative" style={{ height: CARD_PITCH * (deck.length - 1) + CARD_HEIGHT }}>
-      {deck.map((card, index) => (
-        <button
-          key={card.key}
-          type="button"
-          onClick={() => onOpen(card.key)}
-          style={{ top: index * CARD_PITCH, height: CARD_HEIGHT, zIndex: index }}
-          className={clsx(
-            // 버튼은 내용을 세로 가운데로 두는 게 기본이라 명시적으로 위로 붙인다.
-            'absolute inset-x-0 flex flex-col items-start justify-start overflow-hidden rounded-card pl-7 pr-6 pt-[25px] text-left',
-            card.surface,
-            card.onDark ? 'text-white' : 'text-fg',
-          )}
-        >
-          <CardGlow color={card.glow} />
-          {/* 시안 기준 제목 16 / 설명 11 */}
-          <span className="relative block text-body-strong font-semibold">{card.title}</span>
-          <span
-            className={clsx(
-              'relative mt-1 block text-[11px]',
-              card.onDark ? 'text-white/80' : 'opacity-70',
-            )}
-          >
-            {captionOf(card.key)}
-          </span>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// --- 펼친 카드 ----------------------------------------------------------------
-
-function OpenCard({
-  meta,
-  caption,
+  opened,
+  onToggle,
   report,
   options,
 }: {
-  meta: CardMeta;
-  caption: string;
+  deck: CardMeta[];
+  opened: CardKey | null;
+  onToggle: (key: CardKey) => void;
   report: SkinReportDetail;
   options: SkinReportOptions;
 }) {
   return (
-    <section className="overflow-hidden rounded-card">
-      <div
-        className={clsx(
-          'relative overflow-hidden px-6 pb-8 pt-6',
-          meta.surface,
-          meta.onDark ? 'text-white' : 'text-fg',
-        )}
-      >
-        <CardGlow color={meta.glow} />
+    <div className="flex flex-col">
+      {deck.map((card, index) => {
+        const isOpen = card.key === opened;
+        return (
+          <section
+            key={card.key}
+            style={{ marginTop: index === 0 ? 0 : -OVERLAP, zIndex: index }}
+            className={clsx(
+              'relative overflow-hidden rounded-card shadow-[0_-4px_16px_rgba(0,0,0,0.06)]',
+              card.surface,
+              card.onDark ? 'text-white' : 'text-fg',
+            )}
+          >
+            <CardGlow color={card.glow} />
 
-        {/* 요약 카드에만 있는 반짝임. 일러스트 위에 겹쳐 놓는다. */}
-        {meta.key === 'SUMMARY' &&
-          SUMMARY_SPARKLES.map((s, i) => (
-            <svg
-              key={i}
-              viewBox={s.viewBox}
-              aria-hidden="true"
-              fill="currentColor"
-              className={clsx('absolute', s.blue ? 'text-info' : 'text-fg')}
-              style={{ left: `${s.left}%`, top: `${s.top}%`, width: `${s.width}%` }}
+            <button
+              type="button"
+              onClick={() => onToggle(card.key)}
+              aria-expanded={isOpen}
+              // 시안 기준 좌 여백 24, 위 여백 20, 접힌 카드는 아래로 42 더 내려간다
+              className="relative flex w-full flex-col items-start px-6 pb-[42px] pt-5 text-left"
             >
-              {s.paths.map((d, j) => (
-                <path key={j} d={d} />
-              ))}
-            </svg>
-          ))}
+              <span
+                className={clsx(
+                  'flex gap-2 text-[11px] tracking-wider',
+                  card.onDark ? 'text-white/70' : 'opacity-60',
+                )}
+              >
+                <span>{card.index}</span>
+                <span>{card.eyebrow}</span>
+              </span>
+              <span className="mt-3 block text-[22px] font-bold leading-tight">{card.title}</span>
+              <span
+                className={clsx(
+                  'mt-1.5 block text-[11px]',
+                  card.onDark ? 'text-white/80' : 'opacity-70',
+                )}
+              >
+                {card.caption}
+              </span>
+            </button>
 
-        <h2 className="text-[28px] font-bold leading-tight">{meta.title}</h2>
-        <p className={clsx('mt-1 text-xs', meta.onDark ? 'text-white/80' : 'opacity-70')}>
-          {caption}
-        </p>
-
-        {/*
-          일러스트 원본은 흰 배경이 포함된 PNG 다. multiply 로 얹으면 흰색이 사라지고
-          카드 색이 그대로 배어 나온다 — 시안에서 일러스트가 카드 색으로 물들어 보이는 것과 같다.
-        */}
-        {meta.art ? (
-          <img
-            src={`/illustrations/${meta.art}.png`}
-            alt=""
-            aria-hidden="true"
-            className="relative mx-auto mt-4 h-56 w-auto object-contain mix-blend-multiply"
-          />
-        ) : (
-          <div className="h-56" aria-hidden="true" />
-        )}
-      </div>
-
-      <div className="bg-card-raised px-6 py-6">
-        <CardBody card={meta.key} report={report} options={options} />
-      </div>
-    </section>
+            {isOpen && (
+              <div className="relative px-6 pb-8">
+                <CardBody card={card} report={report} options={options} />
+              </div>
+            )}
+          </section>
+        );
+      })}
+    </div>
   );
 }
+
+// --- 카드 내용 ----------------------------------------------------------------
 
 function CardBody({
   card,
   report,
   options,
 }: {
-  card: CardKey;
+  card: CardMeta;
   report: SkinReportDetail;
   options: SkinReportOptions;
 }) {
   const care = report.careResult;
 
-  if (card === 'SUMMARY') {
+  if (card.key === 'SUMMARY') {
     const c = report.confirmed;
     const rows = [
       { label: '부위', value: labelOf(options.areas, c.primaryArea) },
@@ -365,52 +318,91 @@ function CardBody({
       { label: '관리 상태', value: labelOf(options.careAvailability, c.careAvailability) },
     ];
     return (
-      <dl className="flex flex-col gap-4">
+      <dl className="flex flex-col gap-[13px] pt-6">
         {rows.map((row) => (
-          <div key={row.label} className="flex gap-6">
-            <dt className="w-16 shrink-0 text-sm font-semibold text-fg">{row.label}</dt>
-            <dd className="text-sm text-fg-muted">{row.value || '—'}</dd>
+          <div key={row.label} className="flex gap-8">
+            <dt className="w-[68px] shrink-0 text-body-strong">{row.label}</dt>
+            <dd className="text-xs leading-6">{row.value || '—'}</dd>
           </div>
         ))}
       </dl>
     );
   }
 
-  if (card === 'SIMILAR') {
-    const similar = care.similarExperience;
-    if (!similar) return <Empty>비슷한 이전 기록이 아직 없어요.</Empty>;
+  if (card.key === 'INGREDIENTS') {
     return (
-      <ul className="flex flex-col gap-5">
-        <li>
-          <p className="text-body-strong font-semibold text-fg">
-            {formatDotDate(similar.reportDate)}
-          </p>
-          <p className="mt-1 text-sm leading-relaxed text-fg-muted">{similar.displayText}</p>
-        </li>
-      </ul>
+      <NumberedList
+        onDark
+        items={RECOMMENDED_INGREDIENTS.map((it) => ({
+          title: it.name,
+          badge: it.effect,
+          description: it.description,
+        }))}
+      />
     );
   }
 
   const items =
-    card === 'DO_TODAY' ? care.doToday : card === 'AVOID_TODAY' ? care.avoidToday : care.checkNext;
+    card.key === 'DO_TODAY'
+      ? care.doToday
+      : card.key === 'AVOID_TODAY'
+        ? care.avoidToday
+        : care.checkNext;
 
-  if (items.length === 0) return <Empty>오늘은 안내할 항목이 없어요.</Empty>;
+  if (items.length === 0) {
+    return <p className="pt-6 text-sm opacity-70">오늘은 안내할 항목이 없어요.</p>;
+  }
 
   /*
-   * 시안은 항목마다 굵은 제목 + 설명 두 줄이지만 계약은 문자열 배열이다.
-   * 서버가 주는 문장을 그대로 한 줄로 세운다. (아래 TODO 참고)
+   * 시안은 항목마다 굵은 제목 + 설명 한 줄이지만 계약은 문자열 배열 하나다.
+   * 문장이 둘 이상이면 첫 문장을 제목으로, 나머지를 설명으로 나눈다.
+   * TODO(백엔드): `{ title, description }` 으로 내려주면 이 추측이 필요 없다.
    */
   return (
-    <ul className="flex flex-col gap-5">
-      {items.map((item, i) => (
-        <li key={i} className="text-body-strong font-semibold leading-relaxed text-fg">
-          {item}
-        </li>
-      ))}
-    </ul>
+    <NumberedList
+      onDark={card.onDark}
+      items={items.map((item) => {
+        const [head = item, ...rest] = splitSentences(item);
+        return { title: head, description: rest.join(' ') };
+      })}
+    />
   );
 }
 
-function Empty({ children }: { children: string }) {
-  return <p className="text-sm text-fg-muted">{children}</p>;
+function NumberedList({
+  items,
+  onDark,
+}: {
+  items: { title: string; badge?: string; description?: string }[];
+  onDark?: boolean;
+}) {
+  return (
+    <ol className="flex flex-col gap-[18px] pt-8">
+      {items.map((item, i) => (
+        <li key={item.title} className="flex gap-3">
+          {/* 시안 기준 24px 원, 어두운 채움 + 흰 숫자 */}
+          <span
+            aria-hidden="true"
+            className={clsx(
+              'mt-0.5 grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-semibold',
+              onDark ? 'bg-white/25 text-white' : 'bg-fg/70 text-white',
+            )}
+          >
+            {i + 1}
+          </span>
+          <div className="min-w-0">
+            <p className="text-body-strong">
+              {item.title}
+              {item.badge && (
+                <span className="ml-2 text-[11px] font-normal opacity-70">{item.badge}</span>
+              )}
+            </p>
+            {item.description && (
+              <p className="mt-1 text-[11px] leading-relaxed opacity-70">{item.description}</p>
+            )}
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
 }
