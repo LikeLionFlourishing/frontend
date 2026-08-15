@@ -13,10 +13,11 @@ import { Sentences, splitSentences } from '@/components/Sentences';
 import { labelOf, labelsOf, useReportOptions } from '@/hooks/useReportOptions';
 import { track } from '@/lib/analytics';
 import { clsx } from '@/lib/clsx';
+import { formatShortDate } from '@/lib/date';
 import { RECOMMENDED_INGREDIENTS } from '@/data/ingredients';
 import type { SkinReportDetail, SkinReportOptions } from '@/api/schemas';
 
-type CardKey = 'SUMMARY' | 'DO_TODAY' | 'AVOID_TODAY' | 'CHECK_NEXT' | 'INGREDIENTS';
+type CardKey = 'SUMMARY' | 'DO_TODAY' | 'AVOID_TODAY' | 'CHECK_NEXT' | 'SIMILAR' | 'INGREDIENTS';
 
 interface CardMeta {
   key: CardKey;
@@ -81,15 +82,28 @@ const CARDS: CardMeta[] = [
     glow: '#6A96FF',
   },
   {
-    key: 'INGREDIENTS',
+    /*
+     * 2026-08-16 결정으로 `이전 유사 경험`(F-06, P0)이 돌아왔다.
+     * 추천 성분과 둘 중 하나가 아니라 **둘 다** 둔다.
+     */
+    key: 'SIMILAR',
     index: '04',
+    eyebrow: 'SIMILAR',
+    title: '유사 기록 보기',
+    caption: '',
+    surface: 'bg-guide-similar',
+    surfaceHex: '#9DF2E4',
+    glow: '#7FE8E0',
+  },
+  {
+    key: 'INGREDIENTS',
+    index: '05',
     eyebrow: 'INGREDIENT GUIDE',
     title: '추천 성분 보기',
-    caption: '피부 상태가 이렇게 변했는지 확인해보세요.',
-    surface: 'bg-guide-similar',
-    surfaceHex: '#3C6582',
-    onDark: true,
-    glow: '#8AA7E9',
+    caption: '피부 상태가 어떻게 변했는지 확인해보세요.',
+    surface: 'bg-guide-ingredient',
+    surfaceHex: '#A6C5FF',
+    glow: '#8FB4FF',
   },
 ];
 
@@ -250,12 +264,18 @@ export function ReportResultPage() {
 // --- 덱 ----------------------------------------------------------------------
 
 /** 접힌 카드끼리 겹치는 양(px). 시안에서 다음 카드가 앞 카드 아래쪽을 덮는다. */
-/** 앞 카드가 뒤 카드를 덮는 깊이. 시안(30)보다 깊게 잡아 덱 전체 길이를 줄였다. */
 /** 시안(25:28667)에 적힌 안내. 서버가 `clinicianMessage` 를 비워 보낼 때 쓴다. */
 const CLINICIAN_FALLBACK =
   '피부를 임의로 짜거나 새로운 제품을 추가하지 말고 가능한 시점에 의무실 또는 의료진에게 확인해 주세요.';
 
-const OVERLAP = 30;
+/**
+ * 앞 카드를 덮는 깊이.
+ *
+ * 시안 실측(30:39213)에서 접힌 카드 사이 간격이 120 이다. 카드 안쪽 여백을
+ * 시안대로 두면 자연 높이가 144 가 나오므로 23 을 당겨 121 을 만든다.
+ * 겹치는 20 이 뒤 카드의 둥근 윗모서리를 채워 모서리 틈을 없앤다.
+ */
+const OVERLAP = 23;
 
 function Deck({
   deck,
@@ -274,6 +294,14 @@ function Deck({
     <div className="flex flex-col">
       {deck.map((card, index) => {
         const isOpen = card.key === opened;
+        /*
+         * `유사 기록` 의 부제는 건수라서 카드 정의가 아니라 여기서 만든다.
+         * 부제가 비면 접힌 높이가 달라져 칸 간격이 어긋난다.
+         */
+        const caption =
+          card.key === 'SIMILAR'
+            ? `${report.careResult.similarExperience ? 1 : 0}건의 결과가 있어요`
+            : card.caption;
         return (
           <section
             key={card.key}
@@ -290,8 +318,8 @@ function Deck({
               type="button"
               onClick={() => onToggle(card.key)}
               aria-expanded={isOpen}
-              // 시안 기준 좌 여백 24, 위 여백 20, 접힌 카드는 아래로 42 더 내려간다
-              className="relative flex w-full flex-col items-start px-6 pb-[32px] pt-5 text-left"
+              // 시안 실측(30:39213): 안쪽 왼쪽 26 · 라벨 위 17 · 제목 +37 · 부제 +30
+              className="relative flex w-full flex-col items-start px-[26px] pb-[40px] pt-[17px] text-left"
             >
               <span
                 className={clsx(
@@ -302,15 +330,19 @@ function Deck({
                 <span>{card.index}</span>
                 <span>{card.eyebrow}</span>
               </span>
-              <span className="mt-3 block text-[22px] font-bold leading-[23px]">{card.title}</span>
-              <span
-                className={clsx(
-                  'mt-1.5 block text-[11px]',
-                  card.onDark ? 'text-white/80' : 'opacity-70',
-                )}
-              >
-                {card.caption}
+              <span className="mt-[23px] block text-[22px] font-bold leading-[23px]">
+                {card.title}
               </span>
+              {caption && (
+                <span
+                  className={clsx(
+                    'mt-[7px] block text-[11px] leading-[17px]',
+                    card.onDark ? 'text-white/80' : 'opacity-70',
+                  )}
+                >
+                  {caption}
+                </span>
+              )}
             </button>
 
             {isOpen && (
@@ -356,6 +388,28 @@ function CardBody({
           </div>
         ))}
       </dl>
+    );
+  }
+
+  if (card.key === 'SIMILAR') {
+    /*
+     * 시안은 세 건을 보여주지만 계약의 `similarExperience` 는 **한 건 또는 null** 이다.
+     * (명세 F-06 도 `유사도 5점 이상 1건` 이라 계약이 명세를 따랐다)
+     * 목록으로 열릴 때까지 있는 만큼만 그린다. (docs/명세-대조.md 2-12)
+     */
+    const found = care.similarExperience ? [care.similarExperience] : [];
+    if (found.length === 0) {
+      return <p className="pt-6 text-sm opacity-70">아직 비슷한 기록이 없어요.</p>;
+    }
+    return (
+      <ul className="flex flex-col gap-[33px] pt-6">
+        {found.map((it) => (
+          <li key={it.reportId}>
+            <p className="text-body-strong font-bold">{formatShortDate(it.reportDate)}</p>
+            <p className="mt-[3px] text-[11px] opacity-80">{it.displayText}</p>
+          </li>
+        ))}
+      </ul>
     );
   }
 
