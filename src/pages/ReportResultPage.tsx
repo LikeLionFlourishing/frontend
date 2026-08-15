@@ -24,8 +24,10 @@ interface CardMeta {
   eyebrow: string;
   title: string;
   caption: string;
-  /** 카드 배경. 덱 순서대로 그린 → 남색으로 넘어간다. */
+  /** 카드 배경 클래스. 덱 순서대로 그린 → 남색으로 넘어간다. */
   surface: string;
+  /** 같은 색의 hex. 그라데이션 바깥쪽 색으로 쓴다. */
+  surfaceHex: string;
   /** 어두운 배경이라 글자를 흰색으로 뒤집어야 하는지 */
   onDark?: boolean;
   /**
@@ -43,7 +45,8 @@ const CARDS: CardMeta[] = [
     title: '현재 기록 요약',
     caption: '오늘의 피부 상태를 한눈에 확인해요',
     surface: 'bg-guide-summary',
-    glow: '#A2FF8C',
+    surfaceHex: '#8CFFB6',
+    glow: '#A1FF8D',
   },
   {
     key: 'DO_TODAY',
@@ -52,7 +55,8 @@ const CARDS: CardMeta[] = [
     title: '오늘 할 일',
     caption: '오늘의 피부 상태에 맞춰 관리해요',
     surface: 'bg-guide-do',
-    glow: '#8CE3B0',
+    surfaceHex: '#B7E8C2',
+    glow: '#8CFEB6',
   },
   {
     key: 'AVOID_TODAY',
@@ -61,7 +65,8 @@ const CARDS: CardMeta[] = [
     title: '오늘 피할 일',
     caption: '오늘의 피부 상태에 맞춰 관리해요',
     surface: 'bg-guide-avoid',
-    glow: '#A8A7E2',
+    surfaceHex: '#90C3C9',
+    glow: '#9AAED9',
   },
   {
     key: 'CHECK_NEXT',
@@ -70,8 +75,9 @@ const CARDS: CardMeta[] = [
     title: '다음에 확인 할 변화',
     caption: '피부 상태가 어떻게 변했는지 확인해보세요.',
     surface: 'bg-guide-next',
+    surfaceHex: '#346EFF',
     onDark: true,
-    glow: '#72D5CA',
+    glow: '#6A96FF',
   },
   {
     key: 'INGREDIENTS',
@@ -80,19 +86,28 @@ const CARDS: CardMeta[] = [
     title: '추천 성분 보기',
     caption: '피부 상태가 이렇게 변했는지 확인해보세요.',
     surface: 'bg-guide-similar',
+    surfaceHex: '#3C6582',
     onDark: true,
-    glow: '#7F928B',
+    glow: '#8AA7E9',
   },
 ];
 
-/** 카드 가운데 블롭. 배경색 위에 얹히고 글자 아래에 깔린다. */
-function CardGlow({ color }: { color: string | undefined }) {
+/**
+ * 카드에 번지는 빛.
+ *
+ * 시안의 카드는 단색이 아니라 가운데가 밝은 방사형 그라데이션이다.
+ * 흐린 원을 얹는 방식은 가장자리가 도넛처럼 남아서, 렌더에서 뽑은 중심색·바깥색으로
+ * `radial-gradient` 를 직접 그린다. 글자 아래에 깔린다.
+ */
+function CardGlow({ color, surface }: { color: string | undefined; surface: string }) {
   if (!color) return null;
   return (
     <span
       aria-hidden="true"
-      className="pointer-events-none absolute left-1/2 top-1/2 h-[70%] w-[80%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl"
-      style={{ background: color }}
+      className="pointer-events-none absolute inset-0"
+      style={{
+        background: `radial-gradient(ellipse 80% 65% at 50% 60%, ${color} 0%, ${surface} 72%)`,
+      }}
     />
   );
 }
@@ -249,12 +264,12 @@ function Deck({
             key={card.key}
             style={{ marginTop: index === 0 ? 0 : -OVERLAP, zIndex: index }}
             className={clsx(
-              'relative overflow-hidden rounded-card shadow-[0_-4px_16px_rgba(0,0,0,0.06)]',
+              'relative overflow-hidden rounded-card shadow-[0_-4px_14px_rgba(0,0,0,0.18)]',
               card.surface,
               card.onDark ? 'text-white' : 'text-fg',
             )}
           >
-            <CardGlow color={card.glow} />
+            <CardGlow color={card.glow} surface={card.surfaceHex} />
 
             <button
               type="button"

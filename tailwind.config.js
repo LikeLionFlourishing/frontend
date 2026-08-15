@@ -73,9 +73,9 @@ export default {
         guide: {
           summary: '#8CFFB6',
           do: '#B7E8C2',
-          avoid: '#91C2C7',
+          avoid: '#90C3C9',
           next: '#346EFF',
-          similar: '#396582',
+          similar: '#3C6582',
         },
         // 위험 신호·악화 표시. 강조색(그린)과 구분되어야 한다.
         caution: {

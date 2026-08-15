@@ -92,3 +92,12 @@ export const DECO_BOTTOM_GAP = 2.24;
 
 /** 온보딩 배경 블러 반경(px). Figma 필터의 stdDeviation 값 그대로. */
 export const DECO_BLUR = 5.95;
+
+/**
+ * 온보딩 배경 불투명도.
+ *
+ * 시안 렌더에서 블롭의 가장 진한 지점이 원색(#8CFFB6)이 아니라 배경과 섞인
+ * #B2FACC 이다. 배경 #F1F1F1 과의 혼합비를 역산하면 0.63 이 나온다.
+ * 로그인 화면의 같은 격자는 불투명하다.
+ */
+export const DECO_OPACITY = 0.63;

@@ -12,6 +12,7 @@ import { Mascot } from '@/components/Mascot';
 import { PixelArt } from '@/components/PixelArt';
 import {
   DECO_BLUR,
+  DECO_OPACITY,
   DECO_BOTTOM_CELL,
   DECO_BOTTOM_GAP,
   DECO_TOP_CELL,
@@ -120,12 +121,20 @@ function IntroStep({ onStart }: { onStart: () => void }) {
       {/*
        * 배경 픽셀 장식. 로그인과 같은 격자를 더 넓게 자른 뒤 흐리게 깐 것이라
        * 에셋이 아니라 격자 + CSS 블러로 그린다.
+       *
+       * 로그인의 장식은 불투명하지만 여기 것은 옅다 — 시안 렌더에서 가장 진한 지점이
+       * 원색이 아니라 배경과 섞인 값(#8CFFB6 → #B2FACC)이라 불투명도 0.63 이 나온다.
        */}
       <PixelArt
         bitmap={ONBOARDING_DECO_TOP}
         cell={DECO_TOP_CELL}
         gap={DECO_TOP_GAP}
-        style={{ left: `${(236 / 402) * 100}%`, top: 165, filter: `blur(${DECO_BLUR}px)` }}
+        style={{
+          left: `${(236 / 402) * 100}%`,
+          top: 165,
+          filter: `blur(${DECO_BLUR}px)`,
+          opacity: DECO_OPACITY,
+        }}
         className="pointer-events-none absolute"
       />
       <PixelArt
@@ -133,7 +142,12 @@ function IntroStep({ onStart }: { onStart: () => void }) {
         cell={DECO_BOTTOM_CELL}
         gap={DECO_BOTTOM_GAP}
         tint="bg-[#81B690]"
-        style={{ left: `${(-96 / 402) * 100}%`, top: 478, filter: `blur(${DECO_BLUR}px)` }}
+        style={{
+          left: `${(-96 / 402) * 100}%`,
+          top: 478,
+          filter: `blur(${DECO_BLUR}px)`,
+          opacity: DECO_OPACITY,
+        }}
         className="pointer-events-none absolute"
       />
 
