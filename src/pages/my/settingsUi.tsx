@@ -1,23 +1,11 @@
-import type { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Icon } from '@/components/Icon';
-
-/**
- * 설정 하위 화면 공통 레이아웃.
+/*
+ * 설정 화면(25:28903)의 조각들.
  *
- * 큰 제목을 왼쪽에 두는 `StepLayout` 과 달리, 시안의 설정 계열은
- * 원형 뒤로가기 + 가운데 정렬 제목이다. (Figma `설정` 5:728)
+ * 원래는 하위 화면(계정관리·알림 설정)과 공유하는 레이아웃이었지만
+ * 2026-08-16 결정으로 그 두 화면이 빠지면서 설정 탭 전용이 됐다.
  */
-export function SettingsLayout({ title, children }: { title: string; children: ReactNode }) {
-  const navigate = useNavigate();
-
-  return (
-    <div className="mx-auto w-full max-w-app px-4 pt-[calc(var(--safe-top)+16px)]">
-      <SettingsHeader title={title} onBack={() => navigate(-1)} />
-      {children}
-    </div>
-  );
-}
+import type { ReactNode } from 'react';
+import { Icon } from '@/components/Icon';
 
 /** 뒤로가기 없이 제목만 쓰는 경우(탭 루트)를 위해 헤더를 따로 노출한다. */
 export function SettingsHeader({ title, onBack }: { title: string; onBack?: () => void }) {
@@ -47,13 +35,4 @@ export function SettingsCard({ children }: { children: ReactNode }) {
 /** 카드 안에서 행을 나누는 얇은 구분선. 시안은 좌우 15px 씩 들여쓴다. */
 export function SettingsDivider() {
   return <div aria-hidden="true" className="mx-4 h-px bg-panel-label/25" />;
-}
-
-export function SettingsSection({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="mb-6">
-      <h2 className="mb-2 px-2 text-sm font-semibold text-fg-muted">{title}</h2>
-      {children}
-    </section>
-  );
 }

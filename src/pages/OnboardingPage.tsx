@@ -80,7 +80,10 @@ export function OnboardingPage() {
   return (
     /*
      * 시안의 온보딩2 화면에는 뒤로가기가 없다. 화면에 없는 것은 만들지 않는 원칙에
-     * 따라 그대로 뒀다. (점호 시각은 설정 > 알림 설정에서 고칠 수 있다)
+     * 따라 그대로 뒀다.
+     *
+     * 2026-08-16 시안에 없는 화면을 걷어내면서 `설정 > 알림 설정` 이 빠졌다.
+     * 지금은 여기서 고른 점호 시각을 **나중에 바꿀 방법이 없다.** (docs/명세-대조.md 2-10)
      */
     <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col px-4 pt-[calc(var(--safe-top)+47px)]">
       {step === 'checkInTime' && (

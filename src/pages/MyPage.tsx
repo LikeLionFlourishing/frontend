@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Icon, type IconName } from '@/components/Icon';
 import { useAuthStore } from '@/stores/authStore';
-import { SettingsCard, SettingsDivider, SettingsHeader } from './my/SettingsLayout';
+import { SettingsCard, SettingsDivider, SettingsHeader } from './my/settingsUi';
 
 interface MenuItem {
   icon: IconName;
@@ -19,8 +19,8 @@ interface MenuItem {
 const GROUPS: MenuItem[][] = [
   [
     { icon: 'person', label: '프로필 관리' },
-    { icon: 'lock', label: '계정관리', to: '/my/account' },
-    { icon: 'bell', label: '알림 설정', to: '/my/notifications' },
+    { icon: 'lock', label: '계정관리' },
+    { icon: 'bell', label: '알림 설정' },
   ],
   [
     { icon: 'clock', label: '기록', to: '/records' },

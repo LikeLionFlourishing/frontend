@@ -6,6 +6,7 @@ import { reports } from '@/api/endpoints';
 import { toUserMessage } from '@/api/problem';
 import { queryKeys } from '@/app/queryClient';
 import { AiLoading } from '@/components/AiLoading';
+import { ClinicianModal } from '@/components/ClinicianModal';
 import { MedicalDisclaimer } from '@/components/ResultSection';
 import { PrimaryButton, StepLayout } from '@/components/StepLayout';
 import { Sentences, splitSentences } from '@/components/Sentences';
@@ -124,6 +125,8 @@ export function ReportResultPage() {
   const queryClient = useQueryClient();
 
   const [opened, setOpened] = useState<CardKey | null>(null);
+  /** 의료진 확인 안내는 화면에 들어오자마자 한 번 뜨고, 닫으면 다시 뜨지 않는다. */
+  const [showClinician, setShowClinician] = useState(true);
 
   const optionsQuery = useReportOptions();
   const reportQuery = useQuery({
@@ -188,13 +191,6 @@ export function ReportResultPage() {
 
       {/* 아래 여백은 sticky 푸터가 대신한다. 여기 두면 그만큼 화면이 넘친다 */}
       <main className="flex-1 px-4">
-        {isClinician && (
-          <div className="mb-4 rounded-card bg-caution/20 px-5 py-4">
-            <p className="text-sm font-semibold text-fg">오늘은 셀프케어보다 확인이 먼저예요.</p>
-            <p className="mt-2 text-sm leading-[18px] text-fg-muted">{care.clinicianMessage}</p>
-          </div>
-        )}
-
         <Deck
           deck={deck}
           opened={opened}
@@ -238,6 +234,15 @@ export function ReportResultPage() {
           내일 상태 다시 확인하기
         </PrimaryButton>
       </footer>
+
+      {/* 시안(25:28667)은 결과 위에 모달로 먼저 띄운다. 배너로 두면 스크롤 밖에서 안 읽힌다 */}
+      {isClinician && showClinician && (
+        <ClinicianModal
+          // 계약상 nullable 이다. 비어 오면 시안에 적힌 문구를 그대로 쓴다.
+          message={care.clinicianMessage ?? CLINICIAN_FALLBACK}
+          onClose={() => setShowClinician(false)}
+        />
+      )}
     </div>
   );
 }
@@ -246,6 +251,10 @@ export function ReportResultPage() {
 
 /** 접힌 카드끼리 겹치는 양(px). 시안에서 다음 카드가 앞 카드 아래쪽을 덮는다. */
 /** 앞 카드가 뒤 카드를 덮는 깊이. 시안(30)보다 깊게 잡아 덱 전체 길이를 줄였다. */
+/** 시안(25:28667)에 적힌 안내. 서버가 `clinicianMessage` 를 비워 보낼 때 쓴다. */
+const CLINICIAN_FALLBACK =
+  '피부를 임의로 짜거나 새로운 제품을 추가하지 말고 가능한 시점에 의무실 또는 의료진에게 확인해 주세요.';
+
 const OVERLAP = 30;
 
 function Deck({
