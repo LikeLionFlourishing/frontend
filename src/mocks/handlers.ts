@@ -81,6 +81,7 @@ export const mockState = {
     this.authenticated = true;
     localStorage.removeItem('jedaero.service-profile');
     localStorage.removeItem('jedaero.report-draft');
+    localStorage.removeItem('jedaero.check-in-schedule');
   },
 
   /** 온보딩을 처음부터 다시 보고 싶을 때. 로컬 프로필도 함께 비운다. */

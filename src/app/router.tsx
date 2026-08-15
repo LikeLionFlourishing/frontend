@@ -9,8 +9,6 @@ import { HomePage } from '@/pages/HomePage';
 import { ReportFlowPage } from '@/pages/ReportFlowPage';
 import { ReportResultPage } from '@/pages/ReportResultPage';
 import { FollowUpPage } from '@/pages/FollowUpPage';
-import { CalendarPage } from '@/pages/CalendarPage';
-import { DateCheckInPage } from '@/pages/DateCheckInPage';
 import { RecordsPage } from '@/pages/RecordsPage';
 import { RecordDetailPage } from '@/pages/RecordDetailPage';
 import { MyPage } from '@/pages/MyPage';
@@ -31,10 +29,6 @@ export const router = createBrowserRouter([
       { path: '/report', element: <ReportFlowPage /> },
       { path: '/report/result/:reportId', element: <ReportResultPage /> },
       { path: '/follow-up/:reportId', element: <FollowUpPage /> },
-
-      // 캘린더도 하단 탭 밖이다. 범례 시트가 화면 아래를 차지해 탭 바와 겹친다.
-      { path: '/calendar', element: <CalendarPage /> },
-      { path: '/calendar/:date', element: <DateCheckInPage /> },
 
       {
         element: <TabLayout />,
