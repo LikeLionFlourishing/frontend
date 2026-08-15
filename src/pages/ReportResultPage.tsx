@@ -332,7 +332,8 @@ function Deck({
             </button>
 
             {isOpen && (
-              <div className="relative px-6 pb-8">
+              // 시안 기준 안쪽 여백 좌 27(머리말과 같은 줄), 아래 36
+              <div className="relative px-[27px] pb-[36px]">
                 <CardBody card={card} report={report} options={options} />
               </div>
             )}
@@ -366,11 +367,12 @@ function CardBody({
       { label: '관리 상태', value: labelOf(options.careAvailability, c.careAvailability) },
     ];
     return (
-      <dl className="flex flex-col gap-[13px] pt-6">
+      /* 시안 31:46229 — 첫 줄이 카드 위에서 197, 줄 간격 31.7, 값 열은 카드 왼쪽에서 120 */
+      <dl className="flex flex-col gap-[13px] pt-[54px]">
         {rows.map((row) => (
-          <div key={row.label} className="flex gap-8">
-            <dt className="w-[68px] shrink-0 text-body-strong">{row.label}</dt>
-            <dd className="text-xs leading-6">{row.value || '—'}</dd>
+          <div key={row.label} className="flex">
+            <dt className="w-[93px] shrink-0 text-body-strong leading-[19px]">{row.label}</dt>
+            <dd className="text-xs leading-[19px]">{row.value || '—'}</dd>
           </div>
         ))}
       </dl>
@@ -388,11 +390,12 @@ function CardBody({
       return <p className="pt-6 text-sm opacity-70">아직 비슷한 기록이 없어요.</p>;
     }
     return (
-      <ul className="flex flex-col gap-[33px] pt-6">
+      /* 시안 31:46341 — 첫 줄이 카드 위에서 196, 항목 간격 55, 날짜 SemiBold 16 / 설명 12 */
+      <ul className="flex flex-col gap-[16px] pt-[53px]">
         {found.map((it) => (
           <li key={it.reportId}>
             <p className="text-body-strong">{formatShortDate(it.reportDate)}</p>
-            <p className="mt-[3px] text-[11px] opacity-80">{it.displayText}</p>
+            <p className="text-xs leading-[17px]">{it.displayText}</p>
           </li>
         ))}
       </ul>
@@ -443,9 +446,11 @@ function NumberedList({
   items: { title: string; badge?: string; description?: string }[];
 }) {
   return (
-    <ol className="flex flex-col gap-[18px] pt-8">
+    /* 시안 31:46252 — 첫 항목이 카드 위에서 182, 항목 간격 64.44 */
+    <ol className="flex flex-col gap-[22px] pt-[39px]">
       {items.map((item, i) => (
-        <li key={item.title} className="flex gap-3">
+        // 시안 — 번호 원과 글자 사이 10
+        <li key={item.title} className="flex gap-[10px]">
           <span
             aria-hidden="true"
             // 시안 31:46265 — 24px 원, 어두운 채움에 Regular 16 / #D5D5D5 숫자
@@ -456,12 +461,11 @@ function NumberedList({
           <div className="min-w-0">
             <p className="text-body-strong">
               {item.title}
-              {item.badge && (
-                <span className="ml-2 text-[11px] font-normal opacity-70">{item.badge}</span>
-              )}
+              {item.badge && <span className="ml-2 text-xs font-normal">{item.badge}</span>}
             </p>
             {item.description && (
-              <p className="mt-1 text-[11px] leading-[14px] opacity-70">{item.description}</p>
+              /* 시안 31:46255 — 제목 아래 4, Regular 12 / 줄높이 16.5, 흐리게 깔지 않는다 */
+              <p className="mt-1 text-xs leading-[16.5px]">{item.description}</p>
             )}
           </div>
         </li>
