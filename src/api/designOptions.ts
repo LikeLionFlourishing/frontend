@@ -1,4 +1,4 @@
-import type { Appearance, BodyArea, CareAvailability, Sensation, Situation } from './schemas';
+import type { Appearance, BodyArea, CareAvailability, Situation } from './schemas';
 
 /*
  * 확정 시안(피부보고1 22:13847 / 피부보고2 22:12586)의 선택지 어휘.
@@ -67,7 +67,8 @@ export interface AppearanceOption extends DesignOption<Appearance> {
 
 /*
  * 시안에는 여섯 장뿐이라 계약의 `OOZING`(진물)·`CRUST`(딱지)를 고를 방법이 없다.
- * 진물은 관리 전 확인(pre-care) 분기의 방아쇠라서 그 분기가 영영 안 켜진다.
+ * 다만 `관리 전 확인` 화면에서 사용자가 `고름·진물·물집이 보여요` 를 직접 고르므로
+ * **의료진 확인 분기 자체는 정상 동작한다.** 미리 켜 주는 편의만 사라진다.
  */
 export const APPEARANCE_OPTIONS: AppearanceOption[] = [
   { value: 'REDNESS', label: '붉은 반점', api: 'REDNESS', image: 'redness' },
@@ -151,28 +152,18 @@ export const CARE_OPTIONS: DesignOption<CareAvailability>[] = [
 
 /*
  * 시안의 이 질문은 계약의 `sensations`(가려움·따가움·통증…)과 **다른 질문**이다.
- * 사실상 피부 타입을 묻고 있어서 `TIGHTNESS` 말고는 옮길 자리가 없다.
- * 옮길 수 없는 값(유분많음·민감함)은 서버에 전달되지 않는다.
+ * 사실상 피부 타입을 묻고 있어서 옮길 자리가 없다.
+ *
+ * 억지로 `sensations` 에 밀어 넣으면 AI 가 한 문장에서 뽑아 둔 `따가움` 같은 값을
+ * 덮어써 버린다. 그래서 **보내지 않고** 화면에서만 쓴다.
+ * 저장할 필드(`skinType`)를 요청해 뒀다. (docs/backend-요청.md 3번)
  */
-export const SKIN_STATE_OPTIONS: DesignOption<Sensation | null>[] = [
-  { value: 'DRY', label: '건조함', api: 'TIGHTNESS' },
-  { value: 'OILY', label: '유분많음', api: null },
-  { value: 'DEHYDRATED', label: '속건조,당김', api: 'TIGHTNESS' },
-  { value: 'SENSITIVE', label: '민감함', api: null },
+export const SKIN_STATE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'DRY', label: '건조함' },
+  { value: 'OILY', label: '유분많음' },
+  { value: 'DEHYDRATED', label: '속건조,당김' },
+  { value: 'SENSITIVE', label: '민감함' },
 ];
-
-/**
- * 화면 값 → 계약 `sensations`.
- * 옮길 수 있는 게 하나도 없으면 최소 1개 제약 때문에 `NONE` 을 보낸다.
- */
-export function toSensations(values: string[]): Sensation[] {
-  const mapped = values
-    .map((v) => SKIN_STATE_OPTIONS.find((o) => o.value === v)?.api)
-    .filter((v): v is Sensation => Boolean(v));
-
-  const unique = [...new Set(mapped)];
-  return unique.length > 0 ? unique : ['NONE'];
-}
 
 /** 화면 값 → 계약 `situations`. 같은 enum 으로 접히는 값은 하나로 합친다. */
 export function toSituations(values: string[]): Situation[] {
