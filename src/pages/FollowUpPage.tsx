@@ -110,7 +110,7 @@ export function FollowUpPage() {
             /*
              * 시안의 의료진 확인 화면도 `관리 실행 정도`를 묻지만
              * 계약의 ClinicianFollowUpRequest 에는 담을 자리가 없어 버려진다.
-             * (docs/backend-요청.md 15번)
+             * (docs/backend-요청.md 10번)
              */
           }
         : {

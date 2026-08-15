@@ -9,7 +9,7 @@ import type { Appearance, BodyArea, CareAvailability, Sensation, Situation } fro
  *
  * 문제는 시안의 어휘가 계약 enum 과 1:1 이 아니라는 것이다. 아래 표의
  * `api` 가 실제로 서버에 보내는 값이고, 주석에 어긋나는 지점을 남겼다.
- * (docs/backend-요청.md 4·11·12·13번)
+ * (docs/backend-요청.md 3·7·8·9번)
  */
 
 export interface DesignOption<T> {
