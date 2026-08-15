@@ -129,7 +129,8 @@ interface ButtonProps {
 
 /**
  * 네온 그린 풀폭 버튼. 화면당 하나가 원칙이다.
- * 시안의 주 버튼은 어느 화면에서나 370×79 다.
+ * 시안의 주 버튼은 어느 화면에서나 373×79 · 모서리 30 이고 글자는 `검`(#434343)이다.
+ * (피부보고1 31:47663 · 피부보고2 31:46000 · 한 문장 31:44749 모두 같다)
  */
 export function PrimaryButton({ children, onClick, disabled, type = 'button' }: ButtonProps) {
   return (
@@ -138,10 +139,8 @@ export function PrimaryButton({ children, onClick, disabled, type = 'button' }: 
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        'flex h-[79px] w-full items-center justify-center rounded-pill px-5 text-body-strong transition',
-        disabled
-          ? 'bg-panel text-panel-label'
-          : 'bg-accent text-panel-text active:bg-accent-pressed',
+        'flex h-[79px] w-full items-center justify-center rounded-[30px] px-5 text-body-strong transition',
+        disabled ? 'bg-panel text-panel-label' : 'bg-accent text-fg-muted active:bg-accent-pressed',
       )}
     >
       {children}

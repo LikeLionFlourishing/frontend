@@ -83,7 +83,7 @@ export function ChoiceList(props: Props) {
   return (
     <fieldset className="flex flex-col gap-4" disabled={disabled}>
       {question && (
-        <legend className="whitespace-pre-line text-[28px] font-bold leading-9 text-fg">
+        <legend className="whitespace-pre-line text-[30px] font-bold leading-9 text-fg-muted">
           {question}
         </legend>
       )}
@@ -101,15 +101,16 @@ export function ChoiceList(props: Props) {
               aria-checked={selected}
               onClick={() => handleSelect(choice.value)}
               className={clsx(
-                'flex w-full items-center gap-[13px] py-3 text-[11px] transition',
-                size === 'compact' ? 'min-h-[60px] rounded-pill' : 'min-h-[72px] rounded-card',
+                // 시안 31:44523 — 370×72, 모서리 26, 왼쪽 여백 25, 원과 글자 사이 13, 글자 12
+                'flex w-full items-center gap-[13px] py-3 text-xs transition',
+                size === 'compact' ? 'min-h-[60px] rounded-pill' : 'min-h-[72px] rounded-[26px]',
                 align === 'center' ? 'justify-center px-5 text-center' : 'pl-[25px] pr-4 text-left',
                 /*
                  * 개편 시안은 선택 상태를 일관되게 파랑으로 쓴다.
                  * 라디오가 없는 `center` 형태는 테두리만으로는 선택이 잘 안 보여서
                  * 상황 선택 타일(15:6483)처럼 파랑으로 채운다.
                  */
-                selected && align === 'center' ? 'bg-info text-white' : 'bg-panel text-panel-text',
+                selected && align === 'center' ? 'bg-info text-white' : 'bg-panel text-fg-muted',
                 selected && align === 'start' && 'ring-2 ring-info',
                 disabled && 'opacity-50',
               )}

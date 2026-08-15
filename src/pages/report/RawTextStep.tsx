@@ -42,12 +42,13 @@ export function RawTextStep({
           aria-label="오늘 피부 상태"
           className={clsx(
             // `block` 이 없으면 inline 요소의 baseline 여백이 6px 붙어 아래가 전부 밀린다
-            'block h-[407px] w-full resize-none rounded-card bg-panel px-[27px] pb-12 pt-[30px]',
-            'text-base text-panel-text',
-            'placeholder:text-panel-label focus:outline-none focus:ring-2 focus:ring-accent',
+            // 시안 31:44742 — 369×407, 모서리 25, 바탕 #D5D5D5, 글자 12px / #434343
+            'block h-[407px] w-full resize-none rounded-[25px] bg-panel px-[27px] pb-12 pt-[30px]',
+            'text-xs text-fg-muted',
+            'placeholder:text-fg-muted focus:outline-none focus:ring-2 focus:ring-accent',
           )}
         />
-        <span className="pointer-events-none absolute bottom-[23px] right-5 text-xs text-panel-label">
+        <span className="pointer-events-none absolute bottom-[23px] right-[25px] text-xs text-fg-muted">
           {value.length}/{MAX_LENGTH}
         </span>
       </div>
@@ -66,10 +67,10 @@ export function RawTextStep({
       <button
         type="button"
         onClick={onOpenAssist}
-        className="relative mt-[14px] flex h-[81px] w-full items-center justify-center rounded-card bg-panel px-6 text-body-strong text-panel-text"
+        className="relative mt-[14px] flex h-[81px] w-full items-center justify-center rounded-[30px] bg-panel px-6 text-body-strong text-fg-muted"
       >
         어떻게 써야할지 잘 모르겠어요.
-        <span aria-hidden="true" className="absolute right-9 text-xl text-panel-text">
+        <span aria-hidden="true" className="absolute right-[46px] text-xl text-fg-muted">
           ›
         </span>
       </button>
