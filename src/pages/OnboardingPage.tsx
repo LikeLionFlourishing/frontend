@@ -83,7 +83,9 @@ export function OnboardingPage() {
      * 따라 그대로 뒀다.
      *
      * 2026-08-16 시안에 없는 화면을 걷어내면서 `설정 > 알림 설정` 이 빠졌다.
-     * 지금은 여기서 고른 점호 시각을 **나중에 바꿀 방법이 없다.** (docs/명세-대조.md 2-10)
+     * 다만 점호 시각은 원래도 서버에 안 갔다 — 계약의 `NotificationSettings.time` 이
+     * `const '17:30'` 이라 저장할 곳이 없다. 여기서 고른 값은 지금도 앞으로도
+     * localStorage 에만 남는다. 실제로 잃은 건 **알림 on/off** 다. (docs/명세-대조.md 2-10)
      */
     <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col px-4 pt-[calc(var(--safe-top)+47px)]">
       {step === 'checkInTime' && (

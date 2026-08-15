@@ -21,10 +21,6 @@ interface ReportDraft {
   reportDate: string | null;
   rawText: string;
 
-  // 사용자가 보조 도구에서 직접 고른 값. AI 추출값보다 우선한다.
-  manualPrimaryArea: BodyArea | null;
-  manualAppearances: AppearanceSelection;
-
   /*
    * 피부보고1·2 에서 사용자가 고른 **시안 어휘** 값.
    * 계약 enum 과 1:1 이 아니라 제출 직전에 designOptions 로 옮긴다.
@@ -62,8 +58,6 @@ interface ReportDraftState extends ReportDraft {
 const EMPTY: ReportDraft = {
   reportDate: null,
   rawText: '',
-  manualPrimaryArea: null,
-  manualAppearances: [],
   area: null,
   appearance: null,
   designSituations: [],

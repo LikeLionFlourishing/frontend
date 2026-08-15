@@ -12,7 +12,6 @@ import { useReportDraftStore } from '@/stores/reportDraftStore';
 import { ConfirmStep, type ConfirmValues } from './report/ConfirmStep';
 import { PreCareStep } from './report/PreCareStep';
 import { RawTextStep } from './report/RawTextStep';
-import { AppearanceAssistStep } from './report/AppearanceAssistStep';
 import { SkinStatusStep } from './report/SkinStatusStep';
 import { Report1Step } from './report/Report1Step';
 import { Report2Step } from './report/Report2Step';
@@ -20,6 +19,7 @@ import {
   APPEARANCE_OPTIONS,
   AREA_OPTIONS,
   CARE_OPTIONS,
+  SITUATION_OPTIONS,
   areaFromApi,
   areaNote,
   toSituations,
@@ -51,11 +51,6 @@ export function ReportFlowPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>(0);
-  /*
-   * 참고 일러스트 보조 입력. 1단계에서 분기하지만 시안의 인디케이터상 2번째 칸이다.
-   * 단계 번호를 늘리지 않고 별도 상태로 둔다.
-   */
-  const [assisting, setAssisting] = useState(false);
   const [aiFailed, setAiFailed] = useState(false);
 
   const draft = useReportDraftStore();
@@ -77,16 +72,6 @@ export function ReportFlowPage() {
     mutationFn: () =>
       reports.interpret({
         rawText: draft.rawText,
-        ...(draft.manualPrimaryArea || draft.manualAppearances.length > 0
-          ? {
-              manualSelections: {
-                ...(draft.manualPrimaryArea ? { primaryArea: draft.manualPrimaryArea } : {}),
-                ...(draft.manualAppearances.length > 0
-                  ? { appearances: draft.manualAppearances }
-                  : {}),
-              },
-            }
-          : {}),
       }),
     onSuccess: (result) => {
       const ok = result.processingStatus === 'SUCCESS';
@@ -102,7 +87,8 @@ export function ReportFlowPage() {
       return reports.create(
         {
           reportDate: homeQuery.data!.serverDate,
-          rawText: draft.rawText,
+          // 글 없이 선택만으로 온 경우 계약의 minLength 1 을 못 채운다. 고른 값으로 대신 채운다.
+          rawText: draft.rawText.trim() || describeSelections(),
           confirmed: {
             primaryArea: draft.primaryArea!,
             otherAreasNote: draft.otherAreasNote,
@@ -119,8 +105,8 @@ export function ReportFlowPage() {
     onSuccess: (report) => {
       track('REPORT_SUBMITTED', {
         resultType: report.resultType,
-        // 참고 일러스트를 열어 직접 고른 적이 있는지
-        inputAssistUsed: draft.manualAppearances.length > 0 || draft.manualPrimaryArea !== null,
+        // 글 없이 선택만으로 기록했는지
+        inputAssistUsed: draft.rawText.trim().length === 0,
       });
       draft.reset();
       navigate(`/report/result/${report.id}`, { replace: true });
@@ -133,9 +119,8 @@ export function ReportFlowPage() {
     const proposed = result.proposed;
     draft.patch({
       // 사용자가 직접 고른 값이 AI 추출값보다 우선한다. (F-02 수동 선택값 우선순위)
-      primaryArea: draft.manualPrimaryArea ?? proposed.primaryArea,
-      appearances:
-        draft.manualAppearances.length > 0 ? draft.manualAppearances : proposed.appearances,
+      primaryArea: proposed.primaryArea,
+      appearances: proposed.appearances,
       otherAreasNote: proposed.otherAreasNote,
       sensations: proposed.sensations,
       situations: proposed.situations,
@@ -145,13 +130,34 @@ export function ReportFlowPage() {
        * 피부보고1·2 는 AI 가 뽑아 준 값에서 출발한다.
        * 시안 어휘로 옮길 수 있는 것만 미리 채우고, 나머지는 사용자가 고른다.
        */
-      area: draft.area ?? areaFromApi(draft.manualPrimaryArea ?? proposed.primaryArea),
+      area: draft.area ?? areaFromApi(proposed.primaryArea),
       appearance:
         draft.appearance ??
         APPEARANCE_OPTIONS.find((o) => proposed.appearances.includes(o.api))?.value ??
         null,
       care: draft.care ?? CARE_OPTIONS.find((o) => o.api === proposed.careAvailability)?.value,
     });
+  }
+
+  /**
+   * `어떻게 써야할지 잘 모르겠어요` 로 들어와 글을 한 줄도 안 쓴 경우의 원문.
+   *
+   * 계약이 `rawText` 를 필수·최소 1자로 받는다. 빈 문자열을 보내면 422 다.
+   * 나중에 이력 상세의 `내가 작성한 내용` 에 그대로 보이므로,
+   * 사용자가 쓴 것처럼 꾸미지 않고 **고른 값을 나열했다는 사실을 드러낸다.**
+   */
+  function describeSelections(): string {
+    const parts = [
+      AREA_OPTIONS.find((o) => o.value === draft.area)?.label,
+      APPEARANCE_OPTIONS.find((o) => o.value === draft.appearance)?.label,
+      draft.designSituations
+        .map((v) => SITUATION_OPTIONS.find((o) => o.value === v)?.label)
+        .filter(Boolean)
+        .join(', ') || null,
+      CARE_OPTIONS.find((o) => o.value === draft.care)?.label,
+    ].filter(Boolean);
+
+    return parts.length > 0 ? `선택으로 입력: ${parts.join(' · ')}` : '선택으로 입력';
   }
 
   /** 피부보고1·2 에서 고른 시안 어휘를 계약 모양으로 옮긴다. */
@@ -224,13 +230,10 @@ export function ReportFlowPage() {
 
   // --- 스텝 ---------------------------------------------------------------
 
-  const header = assisting
-    ? { title: '겉모습은 어떤가요?', subtitle: '가장 비슷한 모습을 선택해주세요' }
-    : STEP_HEADER[step];
+  const header = STEP_HEADER[step];
 
   const goBack = () => {
-    if (assisting) setAssisting(false);
-    else if (step === 0) navigate('/');
+    if (step === 0) navigate('/');
     else setStep((s) => (s - 1) as Step);
   };
 
@@ -267,36 +270,28 @@ export function ReportFlowPage() {
         />
       )}
 
-      {assisting && (
-        <AppearanceAssistStep
-          options={optionsQuery.data}
-          value={draft.manualAppearances}
-          onChange={(manualAppearances) =>
-            // 수동 선택값은 AI 추출값보다 우선한다. (F-02)
-            draft.patch({ manualAppearances, appearances: manualAppearances })
-          }
-          onNext={() => {
-            setAssisting(false);
-            setStep(2);
-          }}
-        />
-      )}
-
-      {step === 1 && !assisting && (
+      {step === 1 && (
         <RawTextStep
           value={draft.rawText}
           onChange={(rawText) => draft.patch({ rawText })}
           onNext={() => interpret.mutate()}
+          /*
+           * 시안의 `어떻게 써야할지 잘 모르겠어요`.
+           * 예전에는 점 패턴만 있는 별도 화면을 열었는데, 바로 다음 화면인
+           * 피부보고1 이 같은 질문을 그림 타일로 다시 물어서 중복이었다.
+           * (게다가 거기서 고른 값은 피부보고1 선택에 덮여 사라졌다)
+           * 이제는 글 없이 선택만으로 갈 수 있게 피부보고1 로 곧장 보낸다.
+           */
           onOpenAssist={() => {
             track('INPUT_ASSIST_OPENED');
-            setAssisting(true);
+            setStep(2);
           }}
           submitting={interpret.isPending}
           errorMessage={interpret.isError ? interpretErrorMessage(interpret.error) : null}
         />
       )}
 
-      {step === 2 && !assisting && (
+      {step === 2 && (
         <Report1Step
           area={draft.area}
           appearance={draft.appearance}
