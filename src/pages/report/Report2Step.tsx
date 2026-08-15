@@ -76,7 +76,7 @@ export function Report2Step({ situations, care, skinStates, onChange, onNext }: 
       </div>
 
       <Question
-        top={40}
+        top={33}
         title={'지금 관리할 수 있는\n상태는 어떤가요?'}
         hint="현재 세안,관리 여부를 선택해주세요."
       />
@@ -87,7 +87,7 @@ export function Report2Step({ situations, care, skinStates, onChange, onNext }: 
       />
 
       <Question
-        top={42}
+        top={32}
         title={'현재 피부 상태는\n어떤가요?'}
         hint="지금 피부에서 느껴지는 상태를 선택해주세요."
       />
@@ -97,7 +97,7 @@ export function Report2Step({ situations, care, skinStates, onChange, onNext }: 
         onSelect={toggleSkinState}
       />
 
-      <div className="mt-[47px] pb-[38px]">
+      <div className="mt-[31px] pb-[30px]">
         <PrimaryButton onClick={onNext} disabled={!canSubmit}>
           다음
         </PrimaryButton>
@@ -127,7 +127,7 @@ function TileGrid({
   onSelect: (value: string) => void;
 }) {
   return (
-    <div className="mt-[24px] grid grid-cols-2 gap-x-[6px] gap-y-[7px]">
+    <div className="mt-[23px] grid grid-cols-2 gap-x-[6px] gap-y-[7px]">
       {options.map((option) => {
         const selected = isSelected(option.value);
         return (

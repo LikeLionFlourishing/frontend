@@ -93,7 +93,7 @@ const CARDS: CardMeta[] = [
     caption: '',
     surface: 'bg-guide-similar',
     surfaceHex: '#9DF2E4',
-    glow: '#7FE8E0',
+    glow: '#709CFC',
   },
   {
     key: 'INGREDIENTS',
@@ -103,7 +103,7 @@ const CARDS: CardMeta[] = [
     caption: '피부 상태가 어떻게 변했는지 확인해보세요.',
     surface: 'bg-guide-ingredient',
     surfaceHex: '#A6C5FF',
-    glow: '#8FB4FF',
+    glow: '#D5E4FF',
   },
 ];
 
