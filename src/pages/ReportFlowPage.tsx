@@ -20,9 +20,6 @@ import {
   AREA_OPTIONS,
   CARE_OPTIONS,
   SITUATION_OPTIONS,
-  areaFromApi,
-  areaNote,
-  toSituations,
 } from '@/api/designOptions';
 import { seedPreCareChecks } from '@/api/schemas';
 import type { ReportInterpretation } from '@/api/schemas';
@@ -128,14 +125,11 @@ export function ReportFlowPage() {
 
       /*
        * 피부보고1·2 는 AI 가 뽑아 준 값에서 출발한다.
-       * 시안 어휘로 옮길 수 있는 것만 미리 채우고, 나머지는 사용자가 고른다.
+       * 2026-08-16 부터 화면 값과 계약 값이 같아서 옮겨 담을 것이 없다.
        */
-      area: draft.area ?? areaFromApi(proposed.primaryArea),
-      appearance:
-        draft.appearance ??
-        APPEARANCE_OPTIONS.find((o) => proposed.appearances.includes(o.api))?.value ??
-        null,
-      care: draft.care ?? CARE_OPTIONS.find((o) => o.api === proposed.careAvailability)?.value,
+      area: draft.area ?? proposed.primaryArea,
+      appearance: draft.appearance ?? proposed.appearances[0] ?? null,
+      care: draft.care ?? proposed.careAvailability ?? undefined,
     });
   }
 
@@ -160,27 +154,25 @@ export function ReportFlowPage() {
     return parts.length > 0 ? `선택으로 입력: ${parts.join(' · ')}` : '선택으로 입력';
   }
 
-  /** 피부보고1·2 에서 고른 시안 어휘를 계약 모양으로 옮긴다. */
+  /**
+   * 피부보고1·2 에서 고른 값을 제출용 자리로 옮긴다.
+   *
+   * 2026-08-16 개편으로 부위·겉모습·상황·관리 상태는 **화면 값이 곧 계약 값**이라
+   * 그대로 복사한다. 옛날처럼 `OTHER` 로 접히거나 메모로 새는 값이 없다.
+   */
   function applyDesignSelections() {
-    const areaOption = AREA_OPTIONS.find((o) => o.value === draft.area);
-    const appearanceOption = APPEARANCE_OPTIONS.find((o) => o.value === draft.appearance);
-
     draft.patch({
-      ...(areaOption ? { primaryArea: areaOption.api } : {}),
-      // 계약에 없는 부위(턱·눈가·관자놀이)는 OTHER 로 가므로 메모에 라벨을 남긴다.
-      otherAreasNote: areaNote(draft.area) ?? draft.otherAreasNote,
-      ...(appearanceOption ? { appearances: [appearanceOption.api] } : {}),
-      situations: toSituations(draft.designSituations),
+      ...(draft.area ? { primaryArea: draft.area } : {}),
+      ...(draft.appearance ? { appearances: [draft.appearance] } : {}),
+      situations: draft.designSituations,
       /*
        * `불편`(sensations)은 AI 가 한 문장에서 뽑아 둔 값을 그대로 둔다.
-       * 피부보고2 의 `현재 피부 상태`(건조함·유분많음…)는 **다른 질문**이라
-       * 여기에 덮어쓰면 사용자가 쓴 `따가워요` 가 지워진다.
-       * 비어 있을 때만 최소 1개 제약을 채운다. (docs/명세-대조.md 2-2)
+       * 피부보고2 의 `현재 피부 상태`(붉어짐·트러블·과피지)는 계약의 감각 enum 과
+       * 값이 달라 아직 보낼 수 없다. enum 이 열리면 여기서 바로 넘긴다.
+       * (docs/명세-대조.md 2-12)
        */
       ...(draft.sensations.length === 0 ? { sensations: ['NONE' as const] } : {}),
-      ...(draft.care
-        ? { careAvailability: CARE_OPTIONS.find((o) => o.value === draft.care)?.api }
-        : {}),
+      ...(draft.care ? { careAvailability: draft.care } : {}),
     });
   }
 

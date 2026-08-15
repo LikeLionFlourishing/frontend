@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { newIdempotencyKey } from '@/api/client';
 import type {
+  Appearance,
   AppearanceSelection,
   BodyArea,
   CareAvailability,
@@ -22,16 +23,20 @@ interface ReportDraft {
   rawText: string;
 
   /*
-   * 피부보고1·2 에서 사용자가 고른 **시안 어휘** 값.
-   * 계약 enum 과 1:1 이 아니라 제출 직전에 designOptions 로 옮긴다.
+   * 피부보고1·2 에서 사용자가 고른 값.
+   *
+   * 2026-08-16 개편으로 **화면 값이 곧 계약 값**이 됐다(부위 13종·상황 5종이
+   * 모두 계약 enum 이다). 옛날처럼 어휘를 옮겨 담지 않고 그대로 복사한다.
+   *
+   * `skinStates`(붉어짐·트러블·과피지)만 아직 계약에 자리가 없어 문자열로 둔다.
    */
-  area: string | null;
-  appearance: string | null;
-  designSituations: string[];
-  care: string | null;
+  area: BodyArea | null;
+  appearance: Appearance | null;
+  designSituations: SituationSelection;
+  care: CareAvailability | null;
   skinStates: string[];
 
-  // 위 값을 계약 모양으로 옮긴 결과. `보고 내용 확인` 화면이 이걸 보여준다.
+  // 제출 직전에 확정되는 값. `보고 내용 확인` 화면이 이걸 보여준다.
   primaryArea: BodyArea | null;
   otherAreasNote: string | null;
   appearances: AppearanceSelection;

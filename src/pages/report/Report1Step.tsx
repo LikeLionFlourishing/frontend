@@ -2,7 +2,8 @@ import { useRef } from 'react';
 import faceFront from '@/assets/face-front.png';
 import { PrimaryButton } from '@/components/StepLayout';
 import { clsx } from '@/lib/clsx';
-import { AREA_OPTIONS, APPEARANCE_OPTIONS } from '@/api/designOptions';
+import { AREA_OPTIONS, APPEARANCE_OPTIONS, hasDot } from '@/api/designOptions';
+import type { Appearance, BodyArea } from '@/api/schemas';
 
 /* 타일 일러스트는 파일명이 값과 1:1 이라 한 번에 읽어 온다. */
 const APPEARANCE_IMAGES = import.meta.glob<string>('@/assets/appearance-*.png', {
@@ -16,14 +17,16 @@ function appearanceImage(name: string): string | undefined {
 }
 
 interface Props {
-  area: string | null;
-  appearance: string | null;
-  onChange: (partial: { area?: string; appearance?: string }) => void;
+  area: BodyArea | null;
+  appearance: Appearance | null;
+  onChange: (partial: { area?: BodyArea; appearance?: Appearance }) => void;
   onNext: () => void;
 }
 
 /**
- * 피부보고1 (시안 25:31783) — 부위와 겉모습을 한 화면에서 받는다.
+ * 피부보고1 (시안 30:40620) — 부위와 겉모습을 한 화면에서 받는다.
+ *
+ * 2026-08-16 개편으로 부위가 8종 → **13종** 이 되고 전부 계약 enum 이 됐다.
  *
  * 얼굴 그림 위의 점과 아래 칩은 같은 값을 가리킨다. 어느 쪽을 눌러도 같이 선택된다.
  * 그림만으로는 정확히 못 짚는 사람을 위해 `직접 선택하기` 로 칩 목록을 펼친다.
@@ -42,7 +45,7 @@ export function Report1Step({ area, appearance, onChange, onNext }: Props) {
          */}
         <img src={faceFront} alt="" className="h-full w-full object-cover" />
 
-        {AREA_OPTIONS.map((option) => {
+        {AREA_OPTIONS.filter(hasDot).map((option) => {
           const selected = area === option.value;
           return (
             <button
@@ -86,8 +89,11 @@ export function Report1Step({ area, appearance, onChange, onNext }: Props) {
               aria-pressed={selected}
               onClick={() => onChange({ area: option.value })}
               className={clsx(
-                // 시안 기준 칩은 폭이 70 으로 고정이라 한 줄에 다섯 개가 들어간다
-                'flex h-[42px] w-[70px] min-h-0 items-center justify-center rounded-pill text-xs transition',
+                /*
+                 * 13종이 되면서 칩 폭이 글자에 따라 달라진다(`코` 와 `오른 턱선` 이 같이 있다).
+                 * 시안도 고정폭이 아니라 안쪽 여백 기준이다.
+                 */
+                'flex h-[42px] min-h-0 items-center justify-center rounded-pill px-[18px] text-xs transition',
                 selected ? 'bg-info font-semibold text-white' : 'bg-panel-tile text-fg shadow-neu',
               )}
             >
