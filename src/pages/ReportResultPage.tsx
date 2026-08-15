@@ -26,12 +26,12 @@ interface CardMeta {
   eyebrow: string;
   title: string;
   caption: string;
+  /** 머리말 색. 시안에서 카드마다 다르다. */
+  eyebrowHex: string;
   /** 카드 배경 클래스. 덱 순서대로 그린 → 남색으로 넘어간다. */
   surface: string;
   /** 같은 색의 hex. 그라데이션 바깥쪽 색으로 쓴다. */
   surfaceHex: string;
-  /** 어두운 배경이라 글자를 흰색으로 뒤집어야 하는지 */
-  onDark?: boolean;
   /**
    * 카드 가운데에 번지는 빛 색. 시안의 카드는 단색이 아니라
    * 배경색 위에 다른 색조의 블롭이 하나 얹혀 있다.
@@ -42,6 +42,7 @@ interface CardMeta {
 const CARDS: CardMeta[] = [
   {
     key: 'SUMMARY',
+    eyebrowHex: '#4AA76C',
     index: '00',
     eyebrow: 'CURRENT LOG',
     title: '현재 기록 요약',
@@ -52,6 +53,7 @@ const CARDS: CardMeta[] = [
   },
   {
     key: 'DO_TODAY',
+    eyebrowHex: '#4AA76C',
     index: '01',
     eyebrow: 'TODAY',
     title: '오늘 할 일',
@@ -62,6 +64,7 @@ const CARDS: CardMeta[] = [
   },
   {
     key: 'AVOID_TODAY',
+    eyebrowHex: '#004953',
     index: '02',
     eyebrow: 'AVOID',
     title: '오늘 피할 일',
@@ -72,13 +75,13 @@ const CARDS: CardMeta[] = [
   },
   {
     key: 'CHECK_NEXT',
+    eyebrowHex: '#142C6A',
     index: '03',
     eyebrow: 'WATCH',
     title: '다음에 확인 할 변화',
     caption: '피부 상태가 어떻게 변했는지 확인해보세요.',
     surface: 'bg-guide-next',
-    surfaceHex: '#346EFF',
-    onDark: true,
+    surfaceHex: '#3770FF',
     glow: '#6A96FF',
   },
   {
@@ -87,6 +90,7 @@ const CARDS: CardMeta[] = [
      * 추천 성분과 둘 중 하나가 아니라 **둘 다** 둔다.
      */
     key: 'SIMILAR',
+    eyebrowHex: '#142C6A',
     index: '04',
     eyebrow: 'SIMILAR',
     title: '유사 기록 보기',
@@ -97,6 +101,7 @@ const CARDS: CardMeta[] = [
   },
   {
     key: 'INGREDIENTS',
+    eyebrowHex: '#2231D0',
     index: '05',
     eyebrow: 'INGREDIENT GUIDE',
     title: '추천 성분 보기',
@@ -196,14 +201,14 @@ export function ReportResultPage() {
           >
             ‹
           </button>
-          <h1 className="text-[28px] font-bold leading-9 text-fg">오늘의 관리 가이드</h1>
+          <h1 className="text-[30px] font-bold leading-9 text-fg-muted">오늘의 관리 가이드</h1>
         </div>
         <p className="mt-2 text-xs text-fg-muted">
           현재 상태와 비슷한 이전 기록을 바탕으로 추천드려요.
         </p>
       </header>
 
-      <main className="px-4">
+      <main className="pl-[14px] pr-[17px]">
         <Deck
           deck={deck}
           opened={opened}
@@ -298,9 +303,11 @@ function Deck({
             key={card.key}
             style={{ marginTop: index === 0 ? 0 : -OVERLAP, zIndex: index }}
             className={clsx(
-              'relative overflow-hidden rounded-card shadow-[0_-4px_14px_rgba(0,0,0,0.18)]',
+              // 시안 31:46245 — 371×386, 모서리 25, 위로 드리우는 그림자
+              'relative overflow-hidden rounded-[25px] shadow-[0_-3px_15.2px_rgba(0,0,0,0.25)]',
               card.surface,
-              card.onDark ? 'text-white' : 'text-fg',
+              // 시안은 파란 카드(03)에서도 제목이 흰색이 아니라 검정(#030303)이다
+              'text-fg',
             )}
           >
             <CardGlow color={card.glow} surface={card.surfaceHex} />
@@ -309,31 +316,19 @@ function Deck({
               type="button"
               onClick={() => onToggle(card.key)}
               aria-expanded={isOpen}
-              // 시안 실측(30:39213): 안쪽 왼쪽 26 · 라벨 위 17 · 제목 +37 · 부제 +30
-              className="relative flex w-full flex-col items-start px-[26px] pb-[40px] pt-[17px] text-left"
+              // 시안 실측(31:46225): 안쪽 왼쪽 27 · 라벨 위 17 · 제목 +37 · 부제 +30
+              className="relative flex w-full flex-col items-start px-[27px] pb-[40px] pt-[17px] text-left"
             >
-              <span
-                className={clsx(
-                  'flex gap-2 text-[11px] tracking-wider',
-                  card.onDark ? 'text-white/70' : 'opacity-60',
-                )}
-              >
+              {/* 머리말 색은 카드마다 다르다(시안 31:46241 등). 흐리게 깔지 않는다 */}
+              <span className="flex gap-2 text-xs" style={{ color: card.eyebrowHex }}>
                 <span>{card.index}</span>
                 <span>{card.eyebrow}</span>
               </span>
-              <span className="mt-[23px] block text-[22px] font-bold leading-[23px]">
+              {/* 시안 변수 `본문강조한글` = SemiBold 20 */}
+              <span className="mt-[23px] block text-[20px] font-semibold leading-[23px]">
                 {card.title}
               </span>
-              {caption && (
-                <span
-                  className={clsx(
-                    'mt-[7px] block text-[11px] leading-[17px]',
-                    card.onDark ? 'text-white/80' : 'opacity-70',
-                  )}
-                >
-                  {caption}
-                </span>
-              )}
+              {caption && <span className="mt-[7px] block text-xs leading-[17px]">{caption}</span>}
             </button>
 
             {isOpen && (
@@ -407,7 +402,6 @@ function CardBody({
   if (card.key === 'INGREDIENTS') {
     return (
       <NumberedList
-        onDark
         items={RECOMMENDED_INGREDIENTS.map((it) => ({
           title: it.name,
           badge: it.effect,
@@ -435,7 +429,6 @@ function CardBody({
    */
   return (
     <NumberedList
-      onDark={card.onDark}
       items={items.map((item) => {
         const [head = item, ...rest] = splitSentences(item);
         return { title: head, description: rest.join(' ') };
@@ -446,22 +439,17 @@ function CardBody({
 
 function NumberedList({
   items,
-  onDark,
 }: {
   items: { title: string; badge?: string; description?: string }[];
-  onDark?: boolean;
 }) {
   return (
     <ol className="flex flex-col gap-[18px] pt-8">
       {items.map((item, i) => (
         <li key={item.title} className="flex gap-3">
-          {/* 시안 기준 24px 원, 어두운 채움 + 흰 숫자 */}
           <span
             aria-hidden="true"
-            className={clsx(
-              'mt-0.5 grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-semibold',
-              onDark ? 'bg-white/25 text-white' : 'bg-fg/70 text-white',
-            )}
+            // 시안 31:46265 — 24px 원, 어두운 채움에 Regular 16 / #D5D5D5 숫자
+            className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-fg text-body-strong font-normal text-panel"
           >
             {i + 1}
           </span>
