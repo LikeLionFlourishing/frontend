@@ -50,7 +50,8 @@ export default {
         },
         fg: {
           DEFAULT: '#010101',
-          muted: '#363636',
+          // 시안 변수 `검`. 큰 제목·요일·TODAY'S CHECK 처럼 검정 바로 아래 단계의 글자색이다.
+          muted: '#434343',
           faint: '#6B6B6B',
           // 캘린더의 요일 머리글·지난 달 날짜처럼 '읽히지 않아도 되는' 글자.
           // 대비가 매우 낮으므로 뜻이 담긴 글자에는 쓰지 않는다.
@@ -90,7 +91,14 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
+        sans: [
+          'Pretendard Variable',
+          'Pretendard',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'system-ui',
+          'sans-serif',
+        ],
       },
       fontSize: {
         // Figma text style 대응

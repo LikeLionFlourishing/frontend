@@ -10,6 +10,23 @@ export function formatShortDate(isoDate: string): string {
   return `${String(m).padStart(2, '0')}.${String(d).padStart(2, '0')}(${weekday})`;
 }
 
+/**
+ * 같은 표기를 두 조각으로 나눈다.
+ *
+ * 시안(31:44591)은 한 줄 안에서 `07.30` 을 SemiBold 16 으로, `(수)` 를 Regular 12 로
+ * 쓴다. 한 문자열로 그리면 이 크기 차이가 사라져서 날짜가 밋밋해진다.
+ */
+export function formatShortDateParts(isoDate: string): { date: string; weekday: string } {
+  const [y, m, d] = isoDate.split('-').map(Number);
+  if (!y || !m || !d) return { date: isoDate, weekday: '' };
+
+  const weekday = WEEKDAY[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+  return {
+    date: `${String(m).padStart(2, '0')}.${String(d).padStart(2, '0')}`,
+    weekday: `(${weekday})`,
+  };
+}
+
 /** `2026-05-31` → `5월 31일 (토)` — 기록 목록 카드 표기. */
 export function formatListDate(isoDate: string): string {
   const [y, m, d] = isoDate.split('-').map(Number);

@@ -1,3 +1,13 @@
+/*
+ * 시안 글꼴. 이걸 안 깔면 `font-family` 에 이름만 남고 실제로는 시스템 폰트
+ * (맥·아이폰은 SF Pro, 안드로이드는 Roboto)로 떨어져서 시안과 글자 모양이 통째로 달라진다.
+ *
+ * 가변 글꼴이라 굵기 45~920 이 연속이다. 시안이 쓰는 Thin(100)·Regular(400)·
+ * SemiBold(600)가 전부 실제 굵기로 나오고, 브라우저가 가짜로 굵게 만드는 일이 없다.
+ * 동적 서브셋이라 화면에 실제로 쓰인 글자 조각만 받아 온다.
+ */
+@import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -13,6 +23,7 @@
   body {
     @apply bg-base text-fg antialiased;
     font-family:
+      'Pretendard Variable',
       'Pretendard',
       -apple-system,
       BlinkMacSystemFont,

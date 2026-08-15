@@ -27,7 +27,8 @@ export function TabLayout() {
        * 비활성 탭도 47px 원 배경을 가진다 — 아이콘만 놓으면 시안과 다르다.
        */}
       <nav className="safe-bottom fixed bottom-0 left-1/2 z-20 -translate-x-1/2 pb-4">
-        <ul className="flex h-[72px] items-center gap-[9px] rounded-pill bg-[#E9E9E9] px-[19px] shadow-neu">
+        {/* 시안 31:44570 — 바 268×72, 안쪽 여백 19, 활성 113 · 비활성 47, 사이 11 */}
+        <ul className="flex h-[72px] items-center gap-[11px] rounded-pill bg-[#E9E9E9] px-[19px] shadow-neu">
           {TABS.map((tab) => (
             <li key={tab.to}>
               <NavLink

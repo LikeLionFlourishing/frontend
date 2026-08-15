@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import arrowRecord from '@/assets/arrow-record.svg';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { home as homeApi, notifications } from '@/api/endpoints';
@@ -7,7 +8,7 @@ import { queryKeys } from '@/app/queryClient';
 import { Icon, type IconName } from '@/components/Icon';
 import { Sentences } from '@/components/Sentences';
 import { labelOf, labelsOf, useReportOptions } from '@/hooks/useReportOptions';
-import { formatShortDate } from '@/lib/date';
+import { formatShortDateParts } from '@/lib/date';
 import { clsx } from '@/lib/clsx';
 import type { Home, SkinReportOptions } from '@/api/schemas';
 
@@ -59,11 +60,7 @@ export function HomePage() {
 
       {/* 시안 기준 카드 180×192 두 장, 사이 7px */}
       <div className="mt-[9px] grid grid-cols-2 gap-[7px]">
-        <RecentRecordCard
-          data={data}
-          options={optionsQuery.data}
-          onOpen={(id) => navigate(`/records/${id}`)}
-        />
+        <RecentRecordCard data={data} options={optionsQuery.data} />
         <NextCheckCard time={notificationQuery.data?.time ?? '17:30'} />
       </div>
     </div>
@@ -79,7 +76,7 @@ function ProfileHeader() {
       <div className="size-[54px] shrink-0 rounded-full bg-card-raised" aria-hidden="true" />
 
       <div className="flex-1 pt-[11px]">
-        <p className="text-xs text-fg-faint">오늘도 관리해요</p>
+        <p className="text-xs font-thin text-fg">오늘도 관리해요</p>
         {/* PLACEHOLDER: 이름 필드가 계약에 없다. */}
         <p className="mt-0.5 text-body-strong text-fg">김멋사</p>
       </div>
@@ -97,11 +94,17 @@ function TodayDate({ serverDate }: { serverDate: string }) {
 
   return (
     <section aria-label="오늘 날짜" className="mt-[-6px]">
-      <p className="text-[72px] font-bold leading-[86px] tracking-tight text-info">
+      {/*
+       * 시안 31:44582 · 31:44583 — 둘 다 Pretendard **Regular** 이다.
+       * 굵게 쓰면 화면에서 가장 무거운 덩어리가 돼서 인상이 통째로 달라진다.
+       * (시안의 글꼴 굵기는 Thin 100 / Regular 400 / SemiBold 600 세 가지뿐이고
+       *  Bold 는 아예 쓰이지 않는다.)
+       */}
+      <p className="text-[72px] font-normal leading-[86px] text-info">
         {month}.{day}
       </p>
       {/* 시안에서 요일 상자가 날짜 상자와 12px 겹친다 */}
-      <p className="-mt-3 pl-[7px] text-[28px] font-semibold leading-9 text-fg">
+      <p className="-mt-3 pl-[7px] text-[30px] font-normal leading-9 text-fg-muted">
         {weekdayName(serverDate)}
       </p>
     </section>
@@ -143,11 +146,10 @@ function TodayCheckCard({ data, onNavigate }: { data: Home; onNavigate: (to: str
      * 위 간격만 시안(23)보다 9 줄였다 — 홈은 스크롤이 없어야 하는 화면이다.
      */
     <section className="mt-[14px] rounded-card bg-card-hero px-[24px] pb-[20px] pt-[19px] shadow-neu">
-      <p className="text-[11px] font-semibold tracking-[0.14em] text-fg-faint">
-        TODAY&apos;S CHECK
-      </p>
+      {/* 시안 31:44557 — Thin 12, 자간 없음. 굵거나 자간이 벌어지면 눈에 먼저 띄어 버린다 */}
+      <p className="text-xs font-thin text-fg-muted">TODAY&apos;S CHECK</p>
 
-      <h2 className="mt-[7px] text-[28px] font-bold leading-[38px] text-fg">
+      <h2 className="mt-[7px] text-[30px] font-normal leading-[38px] text-fg-muted">
         {answeredToday ? (
           <>
             오늘 점호를
@@ -163,8 +165,12 @@ function TodayCheckCard({ data, onNavigate }: { data: Home; onNavigate: (to: str
         )}
       </h2>
 
-      {/* 시안 기준 타일 163×140, 간격 7. 스크롤을 없애려고 높이만 8 줄였다 */}
-      <div className="mt-[16px] grid grid-cols-2 gap-[7px]">
+      {/*
+       * 시안 기준 타일 163×140, 간격 7. 스크롤을 없애려고 높이만 8 줄였다.
+       * 시안에서 타일은 글자보다 6 씩 바깥으로 나간다(카드 기준 안쪽 여백 18 vs 24).
+       * 그래서 좌우로 6 씩 당겨야 163 이 나온다 — 안 그러면 156 이라 눈에 띄게 좁다.
+       */}
+      <div className="-mx-[6px] mt-[16px] grid grid-cols-2 gap-[7px]">
         <ActionTile
           icon="note"
           title="경과 확인하기"
@@ -219,7 +225,8 @@ function ActionTile({
     >
       <Icon name={icon} className="size-8" />
       <span className="mt-[15px] text-body-strong">{title}</span>
-      <span className={clsx('mt-[5px] text-xs', isAccent ? 'text-panel-label' : 'text-fg-faint')}>
+      {/* 시안 31:44562 · 31:44567 — 설명도 타일 글자색과 같다(회색으로 죽이지 않는다) */}
+      <span className={clsx('mt-[5px] text-xs', isAccent ? 'text-panel-text' : 'text-fg-muted')}>
         {caption}
       </span>
     </button>
@@ -231,11 +238,9 @@ function ActionTile({
 function RecentRecordCard({
   data,
   options,
-  onOpen,
 }: {
   data: Home;
   options: SkinReportOptions | undefined;
-  onOpen: (reportId: string) => void;
 }) {
   const recent = data.recentReport;
 
@@ -247,6 +252,7 @@ function RecentRecordCard({
     );
   }
 
+  const recentDate = formatShortDateParts(recent.reportDate);
   const summary = [
     labelOf(options?.areas, recent.primaryArea),
     labelsOf(options?.appearances, recent.appearances),
@@ -256,30 +262,23 @@ function RecentRecordCard({
 
   return (
     <MiniCard label="RECENT RECORD" className="h-[192px]">
-      <p className="mt-[13px] text-body-strong text-fg">{formatShortDate(recent.reportDate)}</p>
-      <p className="mt-[4px] truncate text-xs text-fg-muted">{summary}</p>
+      <p className="mt-[13px] text-body-strong text-fg">
+        {recentDate.date}
+        <span className="text-xs font-normal"> {recentDate.weekday}</span>
+      </p>
+      <p className="mt-[4px] truncate text-xs text-fg">{summary}</p>
 
-      {/* 시안 기준 52px 원이 카드 오른쪽 아래에 걸친다 */}
-      <button
-        type="button"
-        onClick={() => onOpen(recent.id)}
-        aria-label="기록 자세히 보기"
-        className="mt-[9px] grid size-[52px] shrink-0 -translate-x-[2px] place-items-center self-end rounded-full bg-gradient-to-br from-[#CFFFE0] to-[#8CFFB6] text-panel-text"
-      >
-        <span aria-hidden="true" className="text-lg">
-          ↗
-        </span>
-      </button>
-
-      <hr className="mt-auto border-panel" />
+      {/*
+       * 시안(31:44593 · 31:44597)의 맨 아랫줄. 구분선은 없고, 52px 원이 글자와
+       * 같은 줄 오른쪽에 걸친다. 원은 단색이 아니라 카드 바탕색으로 번져 나가는
+       * 방사형 그라데이션이라 에셋을 그대로 쓴다(직접 그리면 가장자리가 남는다).
+       */}
       <Link
         to={`/records/${recent.id}`}
-        className="flex items-center justify-between pt-[10px] text-xs text-fg"
+        className="mt-auto flex items-center justify-between text-xs text-fg"
       >
         기록 자세히 보기
-        <span aria-hidden="true" className="text-fg-faint">
-          ›
-        </span>
+        <img src={arrowRecord} alt="" className="size-[52px] translate-x-[3px]" />
       </Link>
     </MiniCard>
   );
@@ -291,7 +290,7 @@ function NextCheckCard({ time }: { time: string }) {
     <MiniCard label="NEXT CHECK" className="h-[192px]">
       <div className="mt-[13px] flex items-start justify-between gap-2">
         <div className="text-left">
-          <p className="text-xs text-fg-muted">내일 경과 확인</p>
+          <p className="text-xs text-fg">내일 경과 확인</p>
           <p className="mt-[1px] text-body-strong font-semibold text-info">{time}</p>
         </div>
         <span className="grid size-[46px] shrink-0 place-items-center rounded-full border border-dashed border-info text-info">
@@ -299,14 +298,13 @@ function NextCheckCard({ time }: { time: string }) {
         </span>
       </div>
 
-      <hr className="mt-auto border-panel" />
       {/*
-       * 시안(30:37549)에 새로 생긴 줄. 갈 화면이 아직 시안에 없어서 눌리지 않는다.
+       * 시안(31:44594)에 새로 생긴 줄. 갈 화면이 아직 시안에 없어서 눌리지 않는다.
        * 설정의 `알림 설정` 행과 같은 상태다. (docs/명세-대조.md 2-10)
        */}
       <div
         aria-disabled="true"
-        className="flex items-center justify-between pt-[10px] text-xs text-fg opacity-60"
+        className="mt-auto flex items-center justify-between text-xs text-fg opacity-60"
       >
         알람 설정하기
         <span aria-hidden="true" className="text-fg-faint">
@@ -334,7 +332,8 @@ function MiniCard({
         className,
       )}
     >
-      <p className="text-[10px] font-semibold tracking-[0.14em] text-fg-faint">{label}</p>
+      {/* 시안 31:44589 · 31:44590 — Thin 12, 자간 없음, 검정 */}
+      <p className="text-xs font-thin text-fg">{label}</p>
       {children}
     </section>
   );
