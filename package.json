@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:mock": "tsc -b && vite build --mode mock",
     "preview": "vite preview",
     "lint": "oxlint",
     "typecheck": "tsc -b",
