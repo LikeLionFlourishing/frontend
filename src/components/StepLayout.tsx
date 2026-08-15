@@ -68,7 +68,11 @@ export function StepLayout({ step, totalSteps, onBack, title, subtitle, children
         {subtitle && <p className="mt-1 text-xs leading-[14px] text-fg-muted">{subtitle}</p>}
       </header>
 
-      <main className="flex-1 px-4 py-6">{children}</main>
+      {/*
+       * 아래 여백은 각 단계가 시안값으로 직접 정한다(피부보고1 65 · 2 135 · 한 문장 38).
+       * 여기서 py-6 을 주면 그 위에 24 가 더 붙어 화면마다 24 씩 넘친다.
+       */}
+      <main className="flex-1 px-4 pt-6">{children}</main>
 
       {footer && (
         <footer className="safe-bottom sticky bottom-0 bg-base px-4 pb-4 pt-3">{footer}</footer>

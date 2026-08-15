@@ -123,8 +123,10 @@ export function ConfirmStep({ options, values, onChange, onConfirm, aiFailed }: 
       {/*
        * 시안에는 `확인했어요` 하나뿐이다(상단 719). 예전에 있던 `다시 작성할래요` 는
        * 2026-08-15 시안에서 빠졌다 — 다시 쓰려면 뒤로가기로 한 문장 화면까지 돌아간다.
+       *
+       * 시안은 마지막 행과 버튼을 103 띄우지만 그러면 화면이 넘친다. 여백만 줄인다.
        */}
-      <div className="mt-[103px] pb-8">
+      <div className="mt-[43px] pb-8">
         <PrimaryButton onClick={onConfirm} disabled={!allFilled}>
           확인했어요
         </PrimaryButton>

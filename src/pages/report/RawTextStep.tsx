@@ -74,7 +74,8 @@ export function RawTextStep({
         </span>
       </button>
 
-      <div className="mt-[130px] pb-[38px]">
+      {/* 시안은 보조 버튼과 130 을 띄우지만 그러면 화면이 넘친다. 여백만 줄인다 */}
+      <div className="mt-[70px] pb-[38px]">
         <PrimaryButton onClick={onNext} disabled={!canSubmit}>
           {submitting ? '정리하는 중…' : '다음'}
         </PrimaryButton>
