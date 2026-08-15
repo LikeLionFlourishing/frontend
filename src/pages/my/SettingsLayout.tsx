@@ -22,7 +22,8 @@ export function SettingsLayout({ title, children }: { title: string; children: R
 /** 뒤로가기 없이 제목만 쓰는 경우(탭 루트)를 위해 헤더를 따로 노출한다. */
 export function SettingsHeader({ title, onBack }: { title: string; onBack?: () => void }) {
   return (
-    <header className="relative mb-6 flex h-10 items-center justify-center">
+    // 시안 기준 뒤로가기 원 39px, 그 아래 21px 에 다음 요소가 온다
+    <header className="relative mb-[21px] flex h-10 items-center justify-center">
       {onBack && (
         <button
           type="button"

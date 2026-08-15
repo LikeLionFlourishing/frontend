@@ -73,8 +73,11 @@ export function HomePage() {
       <TodayDate serverDate={data.serverDate} />
       <TodayCheckCard data={data} onNavigate={navigate} />
 
-      {/* 시안 기준 카드 사이 7px, 오른쪽 열 안에서는 6px */}
-      <div className="mt-[14px] grid grid-cols-2 gap-[7px]">
+      {/*
+       * 시안 기준 카드 사이 7px, 오른쪽 열 안에서는 6px.
+       * 위 간격은 시안(14)보다 5 줄였다 — 홈은 스크롤이 없어야 하는 화면이다.
+       */}
+      <div className="mt-[9px] grid grid-cols-2 gap-[7px]">
         <RecentRecordCard
           data={data}
           options={optionsQuery.data}
@@ -158,8 +161,11 @@ function TodayCheckCard({ data, onNavigate }: { data: Home; onNavigate: (to: str
   const answeredToday = data.today !== null;
 
   return (
-    // 시안 기준 368×309, 안쪽 여백 좌 24 / 위 19
-    <section className="mt-[23px] rounded-card bg-card-hero px-[24px] pb-[27px] pt-[19px]">
+    /*
+     * 시안 기준 368×309, 안쪽 여백 좌 24 / 위 19.
+     * 위 간격만 시안(23)보다 9 줄였다 — 홈은 스크롤이 없어야 하는 화면이다.
+     */
+    <section className="mt-[14px] rounded-card bg-card-hero px-[24px] pb-[20px] pt-[19px]">
       <p className="text-[11px] font-semibold tracking-[0.14em] text-fg-faint">
         TODAY&apos;S CHECK
       </p>
@@ -180,8 +186,8 @@ function TodayCheckCard({ data, onNavigate }: { data: Home; onNavigate: (to: str
         )}
       </h2>
 
-      {/* 시안 기준 타일 163×140, 간격 7 */}
-      <div className="mt-[21px] grid grid-cols-2 gap-[7px]">
+      {/* 시안 기준 타일 163×140, 간격 7. 스크롤을 없애려고 높이만 8 줄였다 */}
+      <div className="mt-[16px] grid grid-cols-2 gap-[7px]">
         <ActionTile
           icon="note"
           title="경과 확인하기"
@@ -229,7 +235,7 @@ function ActionTile({
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        'flex h-[140px] flex-col items-center rounded-card px-3 pt-[25px] text-center transition',
+        'flex h-[132px] flex-col items-center rounded-card px-3 pt-[22px] text-center transition',
         isAccent ? 'bg-accent text-panel-text' : 'bg-card-raised text-fg',
         disabled && 'opacity-40',
       )}

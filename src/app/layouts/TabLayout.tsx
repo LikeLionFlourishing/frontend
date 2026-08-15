@@ -13,7 +13,11 @@ const TABS: { to: string; label: string; name: string; icon: IconName; end: bool
 export function TabLayout() {
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-base">
-      <main className="flex-1 pb-28">
+      {/*
+       * 탭바가 fixed 라 그 높이(72 + 아래 여백 16 = 88)에 여유 8 만 더해 비운다.
+       * 예전 값(112)은 홈·설정을 스크롤시키는 주범이었다.
+       */}
+      <main className="flex-1 pb-[96px]">
         <Outlet />
       </main>
 

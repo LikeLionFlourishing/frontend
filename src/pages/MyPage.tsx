@@ -39,7 +39,7 @@ export function MyPage() {
   const user = useAuthStore((s) => s.user);
 
   return (
-    <div className="mx-auto w-full max-w-app px-4 pt-[calc(var(--safe-top)+16px)]">
+    <div className="mx-auto w-full max-w-app px-4 pt-[calc(var(--safe-top)+9px)]">
       {/* 시안(15:4748)은 탭 루트인데도 뒤로가기가 있다. */}
       <SettingsHeader title="설정" onBack={() => navigate(-1)} />
 
@@ -87,7 +87,7 @@ function MenuRow({ item }: { item: MenuItem }) {
     return (
       <div
         aria-disabled="true"
-        className="flex items-center gap-4 px-4 py-4 text-panel-label opacity-60"
+        className="flex h-[48px] items-center gap-4 px-4 text-panel-label opacity-60"
       >
         {label}
         <span className="shrink-0 text-xs">준비 중</span>
@@ -96,7 +96,7 @@ function MenuRow({ item }: { item: MenuItem }) {
   }
 
   return (
-    <Link to={item.to} className="flex items-center gap-4 px-4 py-4 text-panel-text">
+    <Link to={item.to} className="flex h-[48px] items-center gap-4 px-4 text-panel-text">
       {label}
       <span aria-hidden="true" className="shrink-0 text-panel-label">
         ›
