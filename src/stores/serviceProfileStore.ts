@@ -10,7 +10,7 @@ import { persist } from 'zustand/middleware';
  *
  * TODO(백엔드): `NotificationSettings.time` 이 `const '17:30'` 이라 저장할 곳이 없다.
  * 사용자별 `HH:mm` 로 열리면 이 스토어를 지우고 API 로 옮긴다.
- * (docs/backend-요청.md 4번)
+ * (docs/backend-요청.md 9번)
  */
 export interface ServiceProfile {
   /** `HH:mm` */

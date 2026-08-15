@@ -8,7 +8,7 @@ import type { SkinChange } from '@/api/schemas';
  *
  * 확정 시안(경과 확인 22:15790 / 피부변화확인 22:13923)은 세 개뿐이다.
  * 계약의 `SkinChange` 에는 `NEW_AREA`(새로운 부위)·`UNSURE`(잘 모르겠어요)도 있지만
- * 시안에서 사라져 화면에서 뺐다. (docs/backend-요청.md 9번)
+ * 시안에서 사라져 화면에서 뺐다. (docs/backend-요청.md 16번)
  */
 const CHOICES: {
   value: Extract<SkinChange, 'IMPROVED' | 'SIMILAR' | 'WORSENED'>;

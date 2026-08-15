@@ -254,7 +254,7 @@ function ConsentStep({
  *
  * 시안(22:12764)의 문구는 `8자 이상` 이지만 서버가 12자를 요구하므로
  * 8자로 두면 사용자가 이유를 모른 채 막힌다. 문구를 12자로 바꿔 맞췄다.
- * (docs/backend-요청.md 1번 — 시안 문구 수정 요청)
+ * 시안 문구도 12자로 고쳐 달라고 디자인에 전달했다.
  */
 function isValidPassword(value: string): boolean {
   return (
