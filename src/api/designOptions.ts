@@ -9,7 +9,7 @@ import type { Appearance, BodyArea, CareAvailability, Situation } from './schema
  *
  * 문제는 시안의 어휘가 계약 enum 과 1:1 이 아니라는 것이다. 아래 표의
  * `api` 가 실제로 서버에 보내는 값이고, 주석에 어긋나는 지점을 남겼다.
- * (docs/backend-요청.md 3·7·8·9번)
+ * (docs/명세-대조.md 2-2 · 2-3)
  */
 
 export interface DesignOption<T> {
@@ -156,7 +156,7 @@ export const CARE_OPTIONS: DesignOption<CareAvailability>[] = [
  *
  * 억지로 `sensations` 에 밀어 넣으면 AI 가 한 문장에서 뽑아 둔 `따가움` 같은 값을
  * 덮어써 버린다. 그래서 **보내지 않고** 화면에서만 쓴다.
- * 저장할 필드(`skinType`)를 요청해 뒀다. (docs/backend-요청.md 3번)
+ * 저장할 필드(`skinType`)를 요청해 뒀다. (docs/명세-대조.md 2-2)
  */
 export const SKIN_STATE_OPTIONS: { value: string; label: string }[] = [
   { value: 'DRY', label: '건조함' },

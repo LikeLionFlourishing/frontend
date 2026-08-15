@@ -169,7 +169,7 @@ export function ReportFlowPage() {
        * `불편`(sensations)은 AI 가 한 문장에서 뽑아 둔 값을 그대로 둔다.
        * 피부보고2 의 `현재 피부 상태`(건조함·유분많음…)는 **다른 질문**이라
        * 여기에 덮어쓰면 사용자가 쓴 `따가워요` 가 지워진다.
-       * 비어 있을 때만 최소 1개 제약을 채운다. (docs/backend-요청.md 3번)
+       * 비어 있을 때만 최소 1개 제약을 채운다. (docs/명세-대조.md 2-2)
        */
       ...(draft.sensations.length === 0 ? { sensations: ['NONE' as const] } : {}),
       ...(draft.care
