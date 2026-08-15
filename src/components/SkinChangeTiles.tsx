@@ -56,7 +56,11 @@ export function SkinChangeTiles({ value, onChange, tone = 'info', className }: P
             aria-checked={selected}
             onClick={() => onChange(choice.value)}
             className={clsx(
-              'flex h-[299px] flex-col items-center rounded-card px-2 pt-[97px] transition',
+              /*
+               * 시안 31:47700 실측 — 121×299, 모서리 8(다른 패널보다 훨씬 각졌다),
+               * 표정 위 107 · 표정 아래 58 · 제목 아래 12.
+               */
+              'flex h-[299px] flex-col items-center rounded-[8px] px-2 pt-[107px] transition',
               selected ? 'bg-info text-white' : 'bg-panel text-fg',
             )}
           >
@@ -66,11 +70,10 @@ export function SkinChangeTiles({ value, onChange, tone = 'info', className }: P
               gap={0}
               tint={selected ? 'bg-white' : tone === 'ink' ? 'bg-fg' : 'bg-info'}
             />
-            {/* 시안 기준 표정 아래 22px, 제목 16 / 설명 11 */}
-            <span className="mt-[22px] text-body-strong">{choice.label}</span>
+            <span className="mt-[58px] text-body-strong">{choice.label}</span>
             <span
               className={clsx(
-                'mt-[13px] whitespace-pre-line text-center text-[11px] leading-[14px]',
+                'mt-[12px] whitespace-pre-line text-center text-xs leading-[14px]',
                 selected ? 'text-white/80' : 'text-fg-muted',
               )}
             >

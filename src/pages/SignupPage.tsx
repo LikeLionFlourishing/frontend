@@ -113,7 +113,7 @@ export function SignupPage() {
 
       <p className="safe-bottom mt-[18px] pb-8 text-center text-xs text-fg-muted">
         이미 계정이 있으신가요?{' '}
-        <Link to="/login" className="text-body-strong text-info underline underline-offset-2">
+        <Link to="/login" className="text-body-strong text-info">
           로그인
         </Link>
       </p>
@@ -163,7 +163,7 @@ function ConsentStep({
     <div className="safe-top mx-auto flex min-h-dvh w-full max-w-app flex-col px-4">
       {/* 시안 기준 제목 상단 130 (상태바 44 제외 → 86) */}
       <header className="pt-[86px]">
-        <h1 className="text-[28px] font-bold leading-9 text-fg">
+        <h1 className="text-[30px] font-bold leading-9 text-fg-muted">
           서비스 이용을 위해
           <br />
           동의가 필요해요
@@ -180,7 +180,8 @@ function ConsentStep({
           return (
             <div
               key={item.key}
-              className="flex h-[83px] items-center rounded-card bg-panel pl-[25px] pr-9"
+              // 시안 31:45955 — 369×83, 모서리 26, 원 26, 라벨 SemiBold 16
+              className="flex h-[83px] items-center rounded-[26px] bg-panel pl-[25px] pr-9"
             >
               <button
                 type="button"
@@ -199,13 +200,13 @@ function ConsentStep({
                 >
                   {checked && <span className="size-3.5 rounded-full bg-info" />}
                 </span>
-                <span className="text-body-strong text-panel-text">{item.label}</span>
+                <span className="text-body-strong text-fg-muted">{item.label}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setDetail(item)}
-                className="shrink-0 text-xs text-panel-label"
+                className="shrink-0 text-xs text-fg-muted"
               >
                 자세히
               </button>
@@ -225,7 +226,7 @@ function ConsentStep({
         </PrimaryButton>
         <p className="mt-[14px] text-center text-xs text-fg-muted">
           이미 계정이 있으신가요?{' '}
-          <Link to="/login" className="text-body-strong text-info underline underline-offset-2">
+          <Link to="/login" className="text-body-strong text-info">
             로그인
           </Link>
         </p>
