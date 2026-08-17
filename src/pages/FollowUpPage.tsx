@@ -111,14 +111,10 @@ export function FollowUpPage() {
             clinicianCheckStatus: clinicianCheck as 'CHECKED' | 'NOT_YET' | 'PREFER_NOT_TO_RECORD',
             /*
              * 2026-08-16 결정: 의료진 확인 분기에서도 **행동 실행을 함께 묻는다.**
-             * 예전에는 명세 F-05 를 근거로 계약이 맞다고 봤지만 기획이 뒤집었다.
-             *
-             * 화면에서는 이미 받고 있는데 계약의 `ClinicianFollowUpRequest` 에
-             * `actionCompletion` 이 없어 **아직 서버로 못 보낸다.**
-             * 필드가 열리면 아래 한 줄만 살리면 된다. (docs/명세-대조.md 2-12)
-             *
-             * actionCompletion: actionCompletion as ActionCompletion,
+             * v1 계약에는 이 필드가 없어 화면에서 받고도 버렸는데, v2 의
+             * `ClinicianFollowUpRequest` 에 필수로 들어오면서 그대로 보낸다.
              */
+            actionCompletion: actionCompletion as 'MOSTLY_DONE' | 'PARTLY_DONE' | 'NOT_DONE',
           }
         : {
             kind: 'SELF_CARE',

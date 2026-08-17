@@ -95,7 +95,23 @@ export interface paths {
     get?: never;
     /**
      * 온보딩 완료
-     * @description 최신 필수 동의와 알림 선택을 저장합니다.
+     * @description 최신 필수 동의와 기본 피부 점호 시각을 저장합니다.
+     *
+     *     [변경] 동의는 2건입니다.
+     *     1. 개인정보·민감정보 수집·이용 동의 (필수, `sensitiveDataConsent`)
+     *     2. 알림 수신 동의 (알림을 켜는 경우에만 필수, `notificationConsent`)
+     *
+     *     [변경] 기본 피부 점호 시각(`notificationTime`)을 **온보딩 마지막 화면에서 한 번 설정**합니다.
+     *     화면 구성은 시간 피커(기본 17:30) + `알림을 받지 않을게요` + `시작하기` 입니다.
+     *
+     *     - `시작하기`를 누른 경우: `notificationEnabled: true`, 피커 값이 `notificationTime`,
+     *       `notificationConsent: true`. 이 시점에 OS 알림 권한을 요청하고 그 결과를 `notificationPermission`에 담습니다.
+     *     - `알림을 받지 않을게요`를 누른 경우: `notificationEnabled: false`.
+     *       `notificationConsent`는 생략하거나 false이며 OS 권한을 요청하지 않습니다.
+     *       이때도 서버는 `notificationTime`을 기본값 17:30으로 저장합니다.
+     *       경과 입력 가능 시점(`PendingFollowUp.availableFrom`) 계산에 이 값이 필요하기 때문입니다.
+     *
+     *     `notificationEnabled`가 true인데 `notificationConsent`가 true가 아니면 422로 거부합니다.
      */
     put: operations['completeOnboarding'];
     post?: never;
@@ -120,8 +136,19 @@ export interface paths {
     options?: never;
     head?: never;
     /**
-     * 알림 사용 여부 변경
-     * @description P0의 발송 기준 시각은 Asia/Seoul 17:30으로 고정됩니다.
+     * 알림 사용 여부 변경 (시각 변경은 P1)
+     * @description 설정 화면에서 알림을 켜고 끕니다.
+     *
+     *     [P0] `enabled`, `consent`
+     *     [P1] `time` — 기능명세서 5.2 "알림 시간 변경"이 P1이므로 P0 구현에서는 이 필드를 받지 않아도 됩니다.
+     *          P0에서 요청에 `time`이 들어오면 422(code: `FEATURE_NOT_AVAILABLE`)로 거부하세요.
+     *          기본 피부 점호 시각의 최초 설정은 `PUT /me/onboarding`에서 처리합니다.
+     *
+     *     정책
+     *     - `enabled`를 false → true로 바꾸려면 `consent.agreed`가 true여야 합니다. 아니면 422입니다.
+     *     - 알림은 하루 최대 한 번만 발송하며, 미완료 경과가 있으면 피부 점호보다 경과 확인 알림이 우선합니다.
+     *     - 알림을 꺼도 홈에서 직접 기능을 이용할 수 있고, 경과 입력 가능 시점도 그대로 유지됩니다.
+     *     - (P1) `time`을 변경하면 다음 발송분부터 적용합니다. 이미 발송된 당일 알림은 재발송하지 않습니다.
      */
     patch: operations['updateNotificationSettings'];
     trace?: never;
@@ -220,6 +247,9 @@ export interface paths {
     /**
      * 피부 보고 선택값 조회
      * @description 프론트엔드 라벨과 API enum 값을 연결하는 버전 있는 목록입니다.
+     *
+     *     [중요] 겉모습(`appearances`)은 아직 6개 확정 전이라 스키마에 enum이 없습니다.
+     *     프론트엔드는 겉모습 선택지를 하드코딩하지 말고 반드시 이 응답의 `appearances`를 사용하세요.
      */
     get: operations['getSkinReportOptions'];
     put?: never;
@@ -267,6 +297,11 @@ export interface paths {
      * @description 사용자 최종 확인값을 저장하고 고정 규칙으로 결과 유형을 결정합니다.
      *     SELF_CARE_GUIDE이면 규칙 조회와 AI 설명을 동기 처리합니다. AI 설명 실패 시에도
      *     규칙의 기본 문구로 201을 반환합니다. 같은 날 한 건만 허용하며 Idempotency-Key로 중복을 방지합니다.
+     *
+     *     [신규] SELF_CARE_GUIDE 결과에는 추천 성분(`recommendedIngredients`)과
+     *     가이드 6개 섹션의 제목·설명(`guideSections`)이 포함됩니다.
+     *     추천 성분은 관리 규칙표에서 조회한 값만 사용하며 AI가 새로 만들지 않습니다.
+     *     특정 제품·브랜드·의약품은 반환하지 않습니다.
      */
     post: operations['createSkinReport'];
     delete?: never;
@@ -311,7 +346,7 @@ export interface paths {
     /**
      * 관리 설명 재생성
      * @description 최초 aiGenerationStatus가 FALLBACK인 SELF_CARE_GUIDE 보고에 한해 정확히 한 번 허용합니다.
-     *     규칙 ID, 버전, 허용·금지 행동은 바꾸지 않고 설명만 다시 생성합니다.
+     *     규칙 ID, 버전, 허용·금지 행동, 추천 성분은 바꾸지 않고 설명만 다시 생성합니다.
      */
     post: operations['retryCareGuideGeneration'];
     delete?: never;
@@ -335,6 +370,9 @@ export interface paths {
      * 다음 날 경과 저장
      * @description 입력 가능 시점부터 48시간 안에 한 번만 저장합니다. 같은 본문 재요청은 기존 값을 반환하고,
      *     다른 본문으로 덮어쓰려 하면 409를 반환합니다. 의료진의 진단·처방 내용은 받지 않습니다.
+     *
+     *     [변경] 결과 유형과 무관하게 피부 변화(`skinChange`)와 행동 실행 여부(`actionCompletion`)를 받습니다.
+     *     CLINICIAN_CHECK인 경우 여기에 의료진 확인 여부(`clinicianCheckStatus`)가 추가됩니다.
      */
     put: operations['saveFollowUp'];
     post?: never;
@@ -398,12 +436,26 @@ export interface components {
       readonly createdAt: string;
     };
     OnboardingRequest: {
-      /** @example 2026-08-09 */
+      /**
+       * @description 개인정보·민감정보 수집·이용 동의 버전 (동의 1/2)
+       * @example 2026-08-16
+       */
       consentVersion: string;
-      /** @constant */
+      /**
+       * @description 개인정보·민감정보 수집·이용 동의 (필수, 동의 1/2)
+       * @constant
+       */
       sensitiveDataConsent: true;
       notificationEnabled: boolean;
       notificationPermission: components['schemas']['NotificationPermission'];
+      notificationTime?: components['schemas']['NotificationTime'];
+      /**
+       * @description 알림 수신 동의. `시작하기`로 알림을 켜는 경우 필수이며 true여야 합니다.
+       *     시간 피커 화면에서 동의와 시각 설정이 한 번에 확정됩니다.
+       */
+      notificationConsent?: boolean;
+      /** @example 2026-08-16 */
+      notificationConsentVersion?: string;
     };
     Onboarding: {
       consentVersion: string;
@@ -411,18 +463,56 @@ export interface components {
       consentedAt: string;
       notificationEnabled: boolean;
       notificationPermission: components['schemas']['NotificationPermission'];
+      notificationTime: components['schemas']['NotificationTime'];
+      notificationConsent: components['schemas']['NotificationConsent'];
       /** Format: date-time */
       completedAt: string;
     };
+    NotificationConsent: {
+      agreed: boolean;
+      version: string;
+      /**
+       * Format: date-time
+       * @description 동의하지 않았거나 철회한 경우 null
+       */
+      agreedAt: string | null;
+    };
+    NotificationConsentInput: {
+      agreed: boolean;
+      version: string;
+    };
     /** @enum {string} */
     NotificationPermission: 'DEFAULT' | 'GRANTED' | 'DENIED' | 'UNSUPPORTED';
+    /**
+     * @description 기본 피부 점호 시각입니다. Asia/Seoul 기준 24시간 표기 HH:mm이며 기본값은 17:30입니다.
+     *
+     *     온보딩 마지막 화면("기본 피부점호 시간을 설정해주세요")의 시간 피커에서 한 번 설정합니다.
+     *     설정 화면에서 나중에 바꾸는 기능은 P1입니다.
+     *
+     *     이 값은 두 곳에 쓰입니다.
+     *     1. 매일 피부 점호 / 경과 확인 알림 발송 시각
+     *     2. 다음 날 경과 입력 가능 시점 (`PendingFollowUp.availableFrom`)
+     *
+     *     알림을 끈 사용자도 2번 때문에 값을 가집니다(기본 17:30).
+     *
+     *     [TODO] 피커의 분 단위 간격이 디자인에서 확정되지 않았습니다.
+     *     10분 단위로 확정되면 pattern을 '^([01][0-9]|2[0-3]):[0-5]0$' 로 좁히세요.
+     * @default 17:30
+     * @example 17:30
+     */
+    NotificationTime: string;
     NotificationSettings: {
       enabled: boolean;
-      /** @constant */
-      time: '17:30';
+      time: components['schemas']['NotificationTime'];
       /** @constant */
       timezone: 'Asia/Seoul';
+      /**
+       * @description 설정 화면에서 `time` 변경 UI를 노출할지 여부. P0 배포에서는 false입니다.
+       * @default false
+       */
+      timeEditable: boolean;
       permission: components['schemas']['NotificationPermission'];
+      consent: components['schemas']['NotificationConsent'];
       activeSubscriptionCount: number;
     };
     CreatePushSubscriptionRequest: {
@@ -469,6 +559,7 @@ export interface components {
     ManualSelections: {
       primaryArea?: components['schemas']['BodyArea'];
       appearances?: components['schemas']['AppearanceSelection'];
+      sensations?: components['schemas']['SensationSelection'];
     };
     InterpretReportRequest: {
       rawText: string;
@@ -551,10 +642,35 @@ export interface components {
       resultType: components['schemas']['ResultType'];
       matchedRuleIds: string[];
       ruleVersion: string;
+      /**
+       * @description 결과 카드에 노출할 6개 섹션의 제목과 설명입니다.
+       *     표시 순서는 배열 순서를 따릅니다. 각 섹션의 본문은 아래 대응 필드에서 읽습니다.
+       *
+       *     | key | 대응 본문 필드 |
+       *     |-----|----------------|
+       *     | CURRENT_SUMMARY | summary |
+       *     | DO_TODAY | doToday |
+       *     | AVOID_TODAY | avoidToday |
+       *     | SIMILAR_EXPERIENCE | similarExperience |
+       *     | CHECK_NEXT | checkNext |
+       *     | RECOMMENDED_INGREDIENTS | recommendedIngredients |
+       */
+      guideSections: components['schemas']['GuideSection'][];
+      /** @description 현재 기록 요약 (최대 2문장) */
       summary: string;
+      /** @description 오늘 할 일. 규칙의 allowedActions 범위 안에서만 생성합니다. */
       doToday: string[];
+      /** @description 오늘 피할 일. 규칙의 prohibitedActions 범위 안에서만 생성합니다. */
       avoidToday: string[];
+      /** @description 다음에 확인할 변화. 규칙의 monitorItems 범위 안에서만 생성합니다. */
       checkNext: string[];
+      /**
+       * @description 관리 규칙표에서 조회한 성분 정보만 반환합니다.
+       *     AI가 새로운 성분을 만들지 않으며, 특정 제품·브랜드·의약품은 반환하지 않습니다.
+       *     규칙에 해당 성분이 없으면 빈 배열입니다.
+       */
+      recommendedIngredients: components['schemas']['RecommendedIngredient'][];
+      /** @description 안내가 달라진 이유. 적용된 직전 상황과 현재 관리 상태 태그입니다. */
       reasonTags: string[];
       clinicianMessage?: string | null;
       similarExperience: components['schemas']['SimilarExperience'] | null;
@@ -564,12 +680,55 @@ export interface components {
       generatedAt: string;
       retryUsed: boolean;
     } & (unknown & unknown);
+    GuideSection: {
+      /** @enum {string} */
+      key:
+        | 'CURRENT_SUMMARY'
+        | 'DO_TODAY'
+        | 'AVOID_TODAY'
+        | 'SIMILAR_EXPERIENCE'
+        | 'CHECK_NEXT'
+        | 'RECOMMENDED_INGREDIENTS';
+      /** @example 오늘 할 일 */
+      title: string;
+      /**
+       * @description 섹션이 무엇을 뜻하는지 알려주는 한 줄 설명. 관리 규칙표에서 관리합니다.
+       * @example 지금 상태에서 오늘 안에 해볼 수 있는 행동입니다.
+       */
+      description: string;
+      /**
+       * @description 대응 본문이 비어 있어 섹션을 접힌 상태로 표시해야 하는 경우 true
+       * @default false
+       */
+      empty: boolean;
+    };
+    RecommendedIngredient: {
+      /** @example ING_PANTHENOL */
+      id: string;
+      /** @example 판테놀 */
+      name: string;
+      /** @description 관리 규칙표에 저장된 중립적 설명. 효능 보장, 치료 표현, 제품 추천을 포함하지 않습니다. */
+      description: string;
+      /** @description 주의 문구. 없으면 null입니다. */
+      cautionNote?: string | null;
+      /** @description 이 성분을 반환한 관리 규칙 ID. matchedRuleIds의 부분집합이어야 합니다. */
+      sourceRuleIds: string[];
+    };
     SimilarExperience: {
       /** Format: uuid */
       reportId: string;
       /** Format: date */
       reportDate: string;
+      /**
+       * @description 같은 대표 부위 +3, 같은 직전 상황 항목당 +2, 같은 겉모습 항목당 +1,
+       *     같은 느껴지는 불편 항목당 +1, 같은 현재 관리 상태 +1.
+       *     총 5점 이상인 COMPLETED 기록 중 최고점 1건만 반환합니다. 동점이면 최근 기록이 우선합니다.
+       */
       similarityScore: number;
+      /**
+       * @description AI를 다시 호출하지 않고 구조화 데이터를 고정 문장 형식으로 채운 문구입니다.
+       *     인과관계, 치료 효과, 확률·배수 표현을 포함하지 않습니다.
+       */
       displayText: string;
       skinChange: components['schemas']['SkinChange'];
     };
@@ -578,9 +737,16 @@ export interface components {
       reportId: string;
       /** Format: date */
       reportDate: string;
-      /** Format: date-time */
+      /**
+       * Format: date-time
+       * @description 다음 날, 사용자가 온보딩에서 설정한 피부 점호 시각(NotificationSettings.time)입니다.
+       *     알림을 꺼 둔 사용자도 이 값을 가지며 기본값은 17:30입니다.
+       */
       availableFrom: string;
-      /** Format: date-time */
+      /**
+       * Format: date-time
+       * @description availableFrom + 48시간
+       */
       expiresAt: string;
       resultType: components['schemas']['ResultType'];
     };
@@ -594,8 +760,7 @@ export interface components {
        */
       kind: 'SELF_CARE';
       skinChange: components['schemas']['SkinChange'];
-      /** @enum {string} */
-      actionCompletion: 'MOSTLY_DONE' | 'PARTLY_DONE' | 'NOT_DONE';
+      actionCompletion: components['schemas']['ActionCompletion'];
     };
     ClinicianFollowUpRequest: {
       /**
@@ -604,8 +769,8 @@ export interface components {
        */
       kind: 'CLINICIAN_CHECK';
       skinChange: components['schemas']['SkinChange'];
-      /** @enum {string} */
-      clinicianCheckStatus: 'CHECKED' | 'NOT_YET' | 'PREFER_NOT_TO_RECORD';
+      actionCompletion: components['schemas']['ActionCompletion'];
+      clinicianCheckStatus: components['schemas']['ClinicianCheckStatus'];
     };
     FollowUp:
       components['schemas']['SelfCareFollowUp'] | components['schemas']['ClinicianFollowUp'];
@@ -618,8 +783,7 @@ export interface components {
        */
       kind: 'SELF_CARE';
       skinChange: components['schemas']['SkinChange'];
-      /** @enum {string} */
-      actionCompletion: 'MOSTLY_DONE' | 'PARTLY_DONE' | 'NOT_DONE';
+      actionCompletion: components['schemas']['ActionCompletion'];
       /** Format: date-time */
       submittedAt: string;
     };
@@ -632,11 +796,21 @@ export interface components {
        */
       kind: 'CLINICIAN_CHECK';
       skinChange: components['schemas']['SkinChange'];
-      /** @enum {string} */
-      clinicianCheckStatus: 'CHECKED' | 'NOT_YET' | 'PREFER_NOT_TO_RECORD';
+      actionCompletion: components['schemas']['ActionCompletion'];
+      clinicianCheckStatus: components['schemas']['ClinicianCheckStatus'];
       /** Format: date-time */
       submittedAt: string;
     };
+    /**
+     * @description 다 실행했어요 / 일부만 실행했어요 / 실행하지 못했어요
+     * @enum {string}
+     */
+    ActionCompletion: 'MOSTLY_DONE' | 'PARTLY_DONE' | 'NOT_DONE';
+    /**
+     * @description 의무실·의료진에게 확인했어요 / 아직 확인하지 못했어요 / 기록하지 않을게요
+     * @enum {string}
+     */
+    ClinicianCheckStatus: 'CHECKED' | 'NOT_YET' | 'PREFER_NOT_TO_RECORD';
     SkinReportList: {
       data: components['schemas']['SkinReportSummary'][];
       pagination: components['schemas']['CursorPage'];
@@ -659,7 +833,9 @@ export interface components {
         | 'REPORT_SUBMITTED'
         | 'CARE_RESULT_VIEWED'
         | 'FOLLOW_UP_SUBMITTED'
-        | 'SIMILAR_EXPERIENCE_VIEWED';
+        | 'SIMILAR_EXPERIENCE_VIEWED'
+        | 'RECOMMENDED_INGREDIENTS_VIEWED'
+        | 'NOTIFICATION_TIME_SET';
       /** Format: date-time */
       occurredAt: string;
       properties?: {
@@ -667,6 +843,8 @@ export interface components {
         inputAssistUsed?: boolean;
         resultType?: components['schemas']['ResultType'];
         aiSucceeded?: boolean;
+        ingredientCount?: number;
+        usedDefaultTime?: boolean;
       };
     };
     Problem: {
@@ -686,13 +864,8 @@ export interface components {
         message: string;
       }[];
     };
-    /**
-     * @description 대표 부위. 피부 보고 한 건당 하나만 저장합니다.
-     *     WHOLE_FACE 는 특정 부위를 고르기 어려울 만큼 얼굴 전반이 불편한 경우에 사용합니다.
-     * @enum {string}
-     */
+    /** @enum {string} */
     BodyArea:
-      | 'WHOLE_FACE'
       | 'LEFT_FOREHEAD'
       | 'CENTER_FOREHEAD'
       | 'RIGHT_FOREHEAD'
@@ -706,34 +879,24 @@ export interface components {
       | 'RIGHT_JAWLINE'
       | 'NECK'
       | 'OTHER';
-    AppearanceSelection: (
-      | 'REDNESS'
-      | 'SMALL_BUMPS'
-      | 'WHITE_TIPPED_BUMPS'
-      | 'RED_BUMPS_AROUND_HAIR'
-      | 'ROUGHNESS_FLAKING'
-      | 'OOZING'
-      | 'CRUST'
-      | 'UNSURE'
-    )[];
-    SensationSelection: (
-      | 'ITCHING'
-      | 'STINGING_BURNING'
-      | 'PAIN_WHEN_PRESSED'
-      | 'PAIN_AT_REST'
-      | 'HEAT'
-      | 'TIGHTNESS'
-      | 'NONE'
-    )[];
+    /**
+     * @description [TODO] 겉모습 선택지 6개가 미확정입니다. enum이 비어 있으므로 서버는 참조 데이터
+     *     (/reference-data/skin-report-options 의 appearances)에 있는 value만 허용하고
+     *     그 밖의 값은 422로 거부해야 합니다.
+     */
+    AppearanceSelection: string[];
+    /**
+     * @description [변경] v2에서 이 필드의 의미가 "감각"에서 "불편 유형"으로 바뀌었습니다.
+     *     관리 규칙 매칭의 주 축이며, 유사도 계산에서 항목당 +1점입니다.
+     */
+    SensationSelection: ('REDNESS' | 'EXCESS_SEBUM' | 'BREAKOUT')[];
+    /** @description 유사도 계산에서 항목당 +2점으로 가장 큰 가중치를 가집니다. */
     SituationSelection: (
-      | 'SHAVING'
-      | 'SWEAT_OR_DUST_AFTER_TRAINING'
       | 'PROTECTIVE_GEAR_OR_MASK'
-      | 'DELAYED_WASHING'
+      | 'SHAVING'
+      | 'SQUEEZED_ACNE'
       | 'NEW_PRODUCT'
-      | 'TOUCHED_OR_SQUEEZED'
-      | 'SLEEP_DEPRIVATION'
-      | 'OTHER'
+      | 'SWEAT_OR_SEBUM'
       | 'NONE_RECALLED'
     )[];
     /** @enum {string} */
@@ -742,6 +905,10 @@ export interface components {
       | 'ALREADY_WASHED'
       | 'CAN_CARE_BEFORE_SLEEP'
       | 'ADDITIONAL_CARE_DIFFICULT';
+    /**
+     * @description NONE만 선택하면 SELF_CARE_GUIDE, 그 밖의 항목이 하나라도 있으면 CLINICIAN_CHECK입니다.
+     *     AI 추출값이 아니라 사용자가 최종 확인한 값으로만 분기합니다.
+     */
     PreCareCheckSelection: (
       'SPREADING_RAPIDLY' | 'SEVERE_PAIN_HEAT_SWELLING' | 'PUS_OOZING_BLISTER' | 'NONE'
     )[];
@@ -750,9 +917,9 @@ export interface components {
     /** @enum {string} */
     ReportStatus: 'FOLLOW_UP_PENDING' | 'COMPLETED' | 'EXPIRED';
     /** @enum {string} */
-    SkinChange: 'IMPROVED' | 'SIMILAR' | 'WORSENED' | 'NEW_AREA' | 'UNSURE';
+    SkinChange: 'IMPROVED' | 'SIMILAR' | 'WORSENED';
     SkinReportOptions: {
-      /** @example 2026-08-09 */
+      /** @example 2026-08-16 */
       version: string;
       areas: components['schemas']['OptionList'];
       appearances: components['schemas']['OptionList'];
@@ -760,6 +927,7 @@ export interface components {
       situations: components['schemas']['OptionList'];
       careAvailability: components['schemas']['OptionList'];
       preCareChecks: components['schemas']['OptionList'];
+      guideSections: components['schemas']['GuideSection'][];
     };
     OptionList: {
       value: string;
@@ -1087,7 +1255,9 @@ export interface operations {
     requestBody: {
       content: {
         'application/json': {
-          enabled: boolean;
+          enabled?: boolean;
+          time?: components['schemas']['NotificationTime'];
+          consent?: components['schemas']['NotificationConsentInput'];
         };
       };
     };

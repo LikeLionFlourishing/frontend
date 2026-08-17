@@ -50,15 +50,20 @@ export type ResultType = S['ResultType'];
 export type ReportStatus = S['ReportStatus'];
 export type SkinChange = S['SkinChange'];
 
+/** 결과 카드 6장의 제목·설명. v2 부터 서버가 준다. */
+export type GuideSection = S['GuideSection'];
+export type RecommendedIngredient = S['RecommendedIngredient'];
+
 /**
  * 배타 선택 규칙.
  *
  * OpenAPI 의 `not: { allOf: [contains: X, minItems: 2] }` 를 UI 규칙으로 옮긴 것이다.
  * 서버도 검증하지만, 사용자가 422 를 보기 전에 프론트에서 막는다.
+ *
+ * v2 에서 제약이 있는 건 이 둘뿐이다. `sensations` 는 `NONE` 이 사라졌고
+ * `appearances` 는 enum 자체가 없어져(참조 데이터로 검증) 배타 값이 없다.
  */
 export const EXCLUSIVE_OPTION = {
-  appearances: 'UNSURE',
-  sensations: 'NONE',
   situations: 'NONE_RECALLED',
   preCareChecks: 'NONE',
 } as const;

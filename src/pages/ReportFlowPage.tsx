@@ -166,13 +166,7 @@ export function ReportFlowPage() {
       ...(draft.area ? { primaryArea: draft.area } : {}),
       ...(draft.appearance ? { appearances: [draft.appearance] } : {}),
       situations: draft.designSituations,
-      /*
-       * `불편`(sensations)은 AI 가 한 문장에서 뽑아 둔 값을 그대로 둔다.
-       * 피부보고2 의 `현재 피부 상태`(붉어짐·트러블·과피지)는 계약의 감각 enum 과
-       * 값이 달라 아직 보낼 수 없다. enum 이 열리면 여기서 바로 넘긴다.
-       * (docs/명세-대조.md 2-12)
-       */
-      ...(draft.sensations.length === 0 ? { sensations: ['NONE' as const] } : {}),
+      // `현재 피부 상태`(sensations)는 피부보고2 에서 사용자가 고른 값이 그대로 간다.
       ...(draft.care ? { careAvailability: draft.care } : {}),
     });
   }
@@ -297,13 +291,13 @@ export function ReportFlowPage() {
         <Report2Step
           situations={draft.designSituations}
           care={draft.care}
-          skinStates={draft.skinStates}
+          sensations={draft.sensations}
           // 시안 어휘의 `situations` 는 계약의 같은 이름과 값 집합이 달라 따로 담는다.
-          onChange={({ situations, care, skinStates }) =>
+          onChange={({ situations, care, sensations }) =>
             draft.patch({
               ...(situations ? { designSituations: situations } : {}),
               ...(care ? { care } : {}),
-              ...(skinStates ? { skinStates } : {}),
+              ...(sensations ? { sensations } : {}),
             })
           }
           onNext={() => {

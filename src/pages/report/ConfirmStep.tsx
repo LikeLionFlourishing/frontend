@@ -193,7 +193,6 @@ function EditSheet({
           mode="multi"
           choices={options.appearances}
           value={values.appearances}
-          exclusiveValue={EXCLUSIVE_OPTION.appearances}
           onChange={(v) => onChange({ appearances: v as AppearanceSelection })}
         />
       )}
@@ -203,7 +202,6 @@ function EditSheet({
           mode="multi"
           choices={options.sensations}
           value={values.sensations}
-          exclusiveValue={EXCLUSIVE_OPTION.sensations}
           onChange={(v) => onChange({ sensations: v as SensationSelection })}
         />
       )}

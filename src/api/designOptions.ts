@@ -1,4 +1,4 @@
-import type { Appearance, BodyArea, CareAvailability, Situation } from './schemas';
+import type { Appearance, BodyArea, CareAvailability, Sensation, Situation } from './schemas';
 
 /*
  * 확정 시안(피부보고1 30:40620 / 피부보고2 30:38991)의 선택지.
@@ -88,17 +88,19 @@ export interface SituationOption {
  * 시안의 5종 + `해당 상황 없음`. 전부 계약 enum 그대로다.
  *
  * 관리 규칙표가 다루는 다섯 가지로 좁힌 결과라, 예전처럼 여러 값이 하나로
- * 접히거나 `OTHER` 로 새는 일이 없다. 계약에서 안 쓰는 값은
- * `DELAYED_WASHING` · `SLEEP_DEPRIVATION` · `OTHER` 셋이다.
+ * 접히거나 `OTHER` 로 새는 일이 없다.
+ * v2 에서 `DELAYED_WASHING` · `SLEEP_DEPRIVATION` · `OTHER` 가 계약에서도 빠졌고,
+ * `TOUCHED_OR_SQUEEZED` → `SQUEEZED_ACNE`,
+ * `SWEAT_OR_DUST_AFTER_TRAINING` → `SWEAT_OR_SEBUM` 로 이름이 바뀌었다.
  *
  * 시안 배치가 3×2 라 이 순서가 곧 화면 순서다.
  */
 export const SITUATION_OPTIONS: SituationOption[] = [
   { value: 'PROTECTIVE_GEAR_OR_MASK', label: '보호장비 착용', icon: 'mask' },
   { value: 'SHAVING', label: '면도', icon: 'razor' },
-  { value: 'TOUCHED_OR_SQUEEZED', label: '여드름을 짬', icon: 'squeeze' },
+  { value: 'SQUEEZED_ACNE', label: '여드름을 짬', icon: 'squeeze' },
   { value: 'NEW_PRODUCT', label: '새 제품 사용', icon: 'cart' },
-  { value: 'SWEAT_OR_DUST_AFTER_TRAINING', label: '땀/과피지', icon: 'sweat' },
+  { value: 'SWEAT_OR_SEBUM', label: '땀/과피지', icon: 'sweat' },
   { value: 'NONE_RECALLED', label: '해당 상황 없음', icon: 'noneCircle' },
 ];
 
@@ -113,28 +115,33 @@ export interface CareOption {
 }
 
 /*
- * 시안에는 둘뿐이다. 계약의 `CAN_CARE_BEFORE_SLEEP`·`ADDITIONAL_CARE_DIFFICULT`
- * 를 고를 방법이 없다. (docs/명세-대조.md 2-9)
+ * 계약의 네 가지를 모두 둔다.
+ *
+ * 시안(31:45994)에는 앞의 둘만 그려져 있지만, 뒤의 둘은 단순히 안 보이는 게 아니라
+ * **입력 자체가 불가능**해진다. 계약이 이 값을 관리 규칙 분기(`reasonTags`)와
+ * 유사도 점수(`같은 현재 관리 상태 +1`)에 쓰기 때문에, 두 값을 빼면 그 분기가
+ * 영원히 안 걸리고 유사도도 절반만 계산된다.
+ *
+ * 격자가 2열이라 두 줄이 되며 화면이 79 길어진다(타일 72 + 간격 7).
  */
 export const CARE_OPTIONS: CareOption[] = [
   { value: 'BEFORE_WASH_CAN_WASH_LATER', label: '세안 전' },
   { value: 'ALREADY_WASHED', label: '세안 완료' },
+  { value: 'CAN_CARE_BEFORE_SLEEP', label: '취침 전 관리 가능' },
+  { value: 'ADDITIONAL_CARE_DIFFICULT', label: '추가 관리 어려움' },
 ];
 
 // --- 현재 피부 상태 (피부보고2) -----------------------------------------------
 
 /*
- * 2026-08-16 결정: `느껴지는 불편` 을 **붉어짐 · 트러블 · 과피지** 세 가지로 바꾼다.
+ * `현재 피부 상태` — 계약의 `SensationSelection` 그대로다.
  *
- * 계약의 `SensationSelection` 은 아직 감각 7종(가려움·따가움·통증…)이라
- * 여기 값을 그대로 보낼 수 없다. enum 이 열릴 때까지 **화면에서만 쓰고
- * 서버에는 AI 가 한 문장에서 뽑아 둔 값을 보낸다.**
- *
- * TODO(백엔드): SensationSelection 을 아래 3종으로 교체. 그때 이 표를 지우고
- * 계약 enum 을 직접 쓴다. (docs/명세-대조.md 2-12)
+ * v1 은 감각 7종(가려움·따가움·통증…)이라 화면 값을 보낼 수 없었고, 그동안
+ * `skinStates` 라는 화면 전용 필드에 담아 두고 서버에는 안 보냈다.
+ * v2 에서 계약이 이 세 가지로 바뀌면서 그 우회가 사라졌다 — 고른 값이 곧 보낼 값이다.
  */
-export const SKIN_STATE_OPTIONS: { value: string; label: string }[] = [
+export const SENSATION_OPTIONS: { value: Sensation; label: string }[] = [
   { value: 'REDNESS', label: '붉어짐' },
-  { value: 'TROUBLE', label: '트러블' },
-  { value: 'SEBUM', label: '과피지' },
+  { value: 'BREAKOUT', label: '트러블' },
+  { value: 'EXCESS_SEBUM', label: '과피지' },
 ];

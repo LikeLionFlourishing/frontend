@@ -21,8 +21,6 @@ export const SKIN_CHANGE_LABEL: Record<SkinChange, string> = {
   IMPROVED: '좋아졌어요',
   SIMILAR: '비슷해요',
   WORSENED: '악화됐어요',
-  NEW_AREA: '새로운 부위에도 생겼어요',
-  UNSURE: '잘 모르겠어요',
 };
 
 export const ACTION_COMPLETION_LABEL = {

@@ -5,18 +5,18 @@ import {
   CARE_OPTIONS,
   SITUATION_NONE,
   SITUATION_OPTIONS,
-  SKIN_STATE_OPTIONS,
+  SENSATION_OPTIONS,
 } from '@/api/designOptions';
-import type { CareAvailability, Situation } from '@/api/schemas';
+import type { CareAvailability, Sensation, Situation } from '@/api/schemas';
 
 interface Props {
   situations: Situation[];
   care: CareAvailability | null;
-  skinStates: string[];
+  sensations: Sensation[];
   onChange: (partial: {
     situations?: Situation[];
     care?: CareAvailability;
-    skinStates?: string[];
+    sensations?: Sensation[];
   }) => void;
   onNext: () => void;
 }
@@ -27,7 +27,7 @@ interface Props {
  * 2026-08-16 개편으로 상황이 12종 → **5종 + 없음** 으로 줄고 전부 계약 enum 이 됐다.
  * `해당 상황 없음` 도 아래 넓은 버튼이 아니라 격자 안 여섯 번째 타일이다.
  */
-export function Report2Step({ situations, care, skinStates, onChange, onNext }: Props) {
+export function Report2Step({ situations, care, sensations, onChange, onNext }: Props) {
   const toggleSituation = (value: Situation) => {
     // `해당 상황 없음` 은 다른 값과 함께 고를 수 없다. (계약의 not/contains 제약)
     if (value === SITUATION_NONE) {
@@ -42,14 +42,14 @@ export function Report2Step({ situations, care, skinStates, onChange, onNext }: 
     onChange({ situations: next });
   };
 
-  const toggleSkinState = (value: string) =>
+  const toggleSensation = (value: string) =>
     onChange({
-      skinStates: skinStates.includes(value)
-        ? skinStates.filter((v) => v !== value)
-        : [...skinStates, value],
+      sensations: sensations.includes(value as Sensation)
+        ? sensations.filter((v) => v !== value)
+        : [...sensations, value as Sensation],
     });
 
-  const canSubmit = situations.length > 0 && care !== null && skinStates.length > 0;
+  const canSubmit = situations.length > 0 && care !== null && sensations.length > 0;
 
   return (
     <div className="flex flex-col">
@@ -97,9 +97,9 @@ export function Report2Step({ situations, care, skinStates, onChange, onNext }: 
         hint="지금 피부에서 느껴지는 상태를 선택해주세요."
       />
       <TileGrid
-        options={SKIN_STATE_OPTIONS}
-        isSelected={(value) => skinStates.includes(value)}
-        onSelect={toggleSkinState}
+        options={SENSATION_OPTIONS}
+        isSelected={(value) => sensations.includes(value as Sensation)}
+        onSelect={toggleSensation}
       />
 
       <div className="mt-[31px] pb-[30px]">

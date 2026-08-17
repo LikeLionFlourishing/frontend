@@ -14,18 +14,31 @@ import { labelOf, labelsOf, useReportOptions } from '@/hooks/useReportOptions';
 import { track } from '@/lib/analytics';
 import { clsx } from '@/lib/clsx';
 import { formatShortDate } from '@/lib/date';
-import { RECOMMENDED_INGREDIENTS } from '@/data/ingredients';
-import type { SkinReportDetail, SkinReportOptions } from '@/api/schemas';
+import type { GuideSection, SkinReportDetail, SkinReportOptions } from '@/api/schemas';
 
 type CardKey = 'SUMMARY' | 'DO_TODAY' | 'AVOID_TODAY' | 'CHECK_NEXT' | 'SIMILAR' | 'INGREDIENTS';
 
+/** 화면 쪽 이름과 계약의 `GuideSection.key` 를 잇는다. */
+const SECTION_KEY: Record<CardKey, GuideSection['key']> = {
+  SUMMARY: 'CURRENT_SUMMARY',
+  DO_TODAY: 'DO_TODAY',
+  AVOID_TODAY: 'AVOID_TODAY',
+  CHECK_NEXT: 'CHECK_NEXT',
+  SIMILAR: 'SIMILAR_EXPERIENCE',
+  INGREDIENTS: 'RECOMMENDED_INGREDIENTS',
+};
+
+/**
+ * 카드의 **생김새**만 담는다.
+ *
+ * 제목·설명은 v2 부터 서버가 `careResult.guideSections` 로 준다.
+ * 여기에 하드코딩해 두면 규칙표가 바뀔 때 화면만 옛 문구로 남는다.
+ */
 interface CardMeta {
   key: CardKey;
   /** 카드 좌상단의 `00 CURRENT LOG` 표기 */
   index: string;
   eyebrow: string;
-  title: string;
-  caption: string;
   /** 머리말 색. 시안에서 카드마다 다르다. */
   eyebrowHex: string;
   /** 카드 배경 클래스. 덱 순서대로 그린 → 남색으로 넘어간다. */
@@ -45,8 +58,6 @@ const CARDS: CardMeta[] = [
     eyebrowHex: '#4AA76C',
     index: '00',
     eyebrow: 'CURRENT LOG',
-    title: '현재 기록 요약',
-    caption: '오늘의 피부 상태를 한눈에 확인해요',
     surface: 'bg-guide-summary',
     surfaceHex: '#8CFFB6',
     glow: '#A1FF8D',
@@ -56,8 +67,6 @@ const CARDS: CardMeta[] = [
     eyebrowHex: '#4AA76C',
     index: '01',
     eyebrow: 'TODAY',
-    title: '오늘 할 일',
-    caption: '오늘의 피부 상태에 맞춰 관리해요',
     surface: 'bg-guide-do',
     surfaceHex: '#B7E8C2',
     glow: '#8CFEB6',
@@ -67,8 +76,6 @@ const CARDS: CardMeta[] = [
     eyebrowHex: '#004953',
     index: '02',
     eyebrow: 'AVOID',
-    title: '오늘 피할 일',
-    caption: '오늘의 피부 상태에 맞춰 관리해요',
     surface: 'bg-guide-avoid',
     surfaceHex: '#90C3C9',
     glow: '#9AAED9',
@@ -78,8 +85,6 @@ const CARDS: CardMeta[] = [
     eyebrowHex: '#142C6A',
     index: '03',
     eyebrow: 'WATCH',
-    title: '다음에 확인 할 변화',
-    caption: '피부 상태가 어떻게 변했는지 확인해보세요.',
     surface: 'bg-guide-next',
     surfaceHex: '#3770FF',
     glow: '#6A96FF',
@@ -93,8 +98,6 @@ const CARDS: CardMeta[] = [
     eyebrowHex: '#142C6A',
     index: '04',
     eyebrow: 'SIMILAR',
-    title: '유사 기록 보기',
-    caption: '',
     surface: 'bg-guide-similar',
     surfaceHex: '#9DF2E4',
     glow: '#709CFC',
@@ -104,8 +107,6 @@ const CARDS: CardMeta[] = [
     eyebrowHex: '#2231D0',
     index: '05',
     eyebrow: 'INGREDIENT GUIDE',
-    title: '추천 성분 보기',
-    caption: '피부 상태가 어떻게 변했는지 확인해보세요.',
     surface: 'bg-guide-ingredient',
     surfaceHex: '#A6C5FF',
     glow: '#D5E4FF',
@@ -290,14 +291,21 @@ function Deck({
     <div className="flex flex-col">
       {deck.map((card, index) => {
         const isOpen = card.key === opened;
+        const section = report.careResult.guideSections.find(
+          (g) => g.key === SECTION_KEY[card.key],
+        );
+        const title = section?.title ?? '';
         /*
-         * `유사 기록` 의 부제는 건수라서 카드 정의가 아니라 여기서 만든다.
-         * 부제가 비면 접힌 높이가 달라져 칸 간격이 어긋난다.
+         * `유사 기록` 은 계약상 **한 건 또는 null** 이라 건수를 여기서 만든다.
+         * 시안(31:46336)은 `3건의 결과가 있어요` 로 세 건을 그렸지만 계약이
+         * 최고점 1건만 주므로 시안을 접고 1건 기준으로 쓴다. (2026-08-16 결정)
          */
         const caption =
           card.key === 'SIMILAR'
-            ? `${report.careResult.similarExperience ? 1 : 0}건의 결과가 있어요`
-            : card.caption;
+            ? report.careResult.similarExperience
+              ? '가장 비슷한 기록 1건'
+              : '아직 비슷한 기록이 없어요'
+            : (section?.description ?? '');
         return (
           <section
             key={card.key}
@@ -326,7 +334,7 @@ function Deck({
               </span>
               {/* 시안 변수 `본문강조한글` = SemiBold 20 */}
               <span className="mt-[23px] block text-[20px] font-semibold leading-[23px]">
-                {card.title}
+                {title}
               </span>
               {caption && <span className="mt-[7px] block text-xs leading-[17px]">{caption}</span>}
             </button>
@@ -387,7 +395,15 @@ function CardBody({
      */
     const found = care.similarExperience ? [care.similarExperience] : [];
     if (found.length === 0) {
-      return <p className="pt-6 text-sm opacity-70">아직 비슷한 기록이 없어요.</p>;
+      /*
+       * 유사도 5점(부위 +3 · 상황 +2 …) 문턱이 높아 기록이 쌓이기 전에는 자주 비어 있다.
+       * 카드를 감추면 6장 덱의 칸 간격이 어긋나므로 자리는 두고 문구만 바꾼다.
+       */
+      return (
+        <p className="pt-[53px] text-xs leading-[17px]">
+          아직 비슷한 기록이 없어요. 기록이 쌓이면 여기에 보여 드릴게요.
+        </p>
+      );
     }
     return (
       /* 시안 31:46341 — 첫 줄이 카드 위에서 196, 항목 간격 55, 날짜 SemiBold 16 / 설명 12 */
@@ -403,12 +419,19 @@ function CardBody({
   }
 
   if (card.key === 'INGREDIENTS') {
+    if (care.recommendedIngredients.length === 0) {
+      return <p className="pt-[39px] text-xs leading-[17px]">추천할 성분이 없어요.</p>;
+    }
     return (
+      /*
+       * v2 부터 서버가 준다. 시안에는 이름 옆에 배지(`진정 피부 장벽 케어`)가 있지만
+       * 계약의 `RecommendedIngredient` 에는 그 자리에 해당하는 필드가 없다
+       * (name · description · cautionNote 뿐)이라 배지는 그리지 않는다.
+       */
       <NumberedList
-        items={RECOMMENDED_INGREDIENTS.map((it) => ({
+        items={care.recommendedIngredients.map((it) => ({
           title: it.name,
-          badge: it.effect,
-          description: it.description,
+          description: [it.description, it.cautionNote].filter(Boolean).join(' '),
         }))}
       />
     );

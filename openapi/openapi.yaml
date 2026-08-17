@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
   title: 제대로 API
-  version: 1.0.0
-  summary: 현역 장병용 피부 셀프케어 PWA의 P0 API 계약
+  version: 2.0.0 # [변경] v1: 1.0.0
+  summary: 현역 장병용 피부 셀프케어 PWA의 API 계약 (P0 + 최종 결정 반영)
   description: |
     사용자가 피부 불편과 직전 상황을 보고하면 AI가 입력을 구조화하고,
     사용자가 확정한 값과 검토된 관리 규칙을 바탕으로 오늘 가능한 행동을 안내하는 API입니다.
@@ -13,8 +13,45 @@ info:
     인증은 이메일과 비밀번호로만 제공하며 세션은 Secure, HttpOnly 쿠키로 전달합니다.
     상태 변경 요청은 세션 쿠키와 X-CSRF-Token 헤더를 함께 요구합니다.
     이메일 인증, 비밀번호 재설정, 익명 사용자는 MVP 범위에서 제외합니다.
+
+    ## v2.0.0 개정 요약 (2026-08-16 최종 결정 반영)
+
+    | # | 항목 | v1 | v2 | 구분 |
+    |---|------|----|----|------|
+    | 1 | 부위 | 13개 | 13개 | 유지 |
+    | 2 | 겉모습 appearances | enum 8개 | enum 미확정(TODO), maxItems 6 | 보류 |
+    | 3 | 느껴지는 불편 sensations | 감각 7개 | 불편 유형 3개로 전면 대체 | 변경 |
+    | 4 | 직전 상황 situations | 9개 | 6개 | 변경 |
+    | 5 | 피부 변화 SkinChange | 5개 | 3개 | 변경 |
+    | 6 | 의료진 경과 | 확인 여부만 | 확인 여부 + 행동 실행 여부 | 변경 |
+    | 7 | 결과 카드 | 이전 유사 경험 | 이전 유사 경험 + 추천 성분 | 신규 |
+    | 8 | 가이드 | 4개 본문 필드 | 6개 섹션 제목·설명(guideSections) | 신규 |
+    | 9 | 알림 시각 | 17:30 고정 | 온보딩에서 사용자가 선택(기본 17:30) | 변경 |
+    | 10 | 동의 | 개인정보 1건 | 개인정보 1건 + 알림 수신 1건 | 신규 |
+
+    ### 하위 호환 안내
+    3·4·5번은 enum 값을 제거하는 파괴적 변경이라 v1 클라이언트와 호환되지 않습니다.
+    기존 저장 데이터가 있다면 배포 전 마이그레이션이 필요합니다.
+
+    - `sensations`: v1 감각값(ITCHING, STINGING_BURNING, PAIN_WHEN_PRESSED, PAIN_AT_REST, HEAT, TIGHTNESS, NONE) → v2 3개 값으로 매핑 불가. 과거 기록은 별도 보존 컬럼으로 옮기고 유사도 계산에서 제외할 것.
+    - `situations`: DELAYED_WASHING, SLEEP_DEPRIVATION, OTHER 삭제. SWEAT_OR_DUST_AFTER_TRAINING → SWEAT_OR_SEBUM, TOUCHED_OR_SQUEEZED → SQUEEZED_ACNE 로 리네임.
+    - `SkinChange`: NEW_AREA, UNSURE 삭제. 과거 기록은 EXPIRED 취급하거나 유사 경험 표시 대상에서 제외할 것.
+
+    ### 알림 시각의 P0 / P1 경계
+    피부 점호 시각은 **온보딩 마지막 단계에서 한 번 설정**하는 것이 P0입니다.
+    설정 화면에서 나중에 시각을 바꾸는 기능은 기능명세서 5.2 기준 P1입니다.
+
+    - P0: `PUT /me/onboarding` 의 `notificationTime` — 온보딩 시간 피커 화면
+    - P0: `PATCH /me/notification-settings` 의 `enabled` — 설정에서 알림 켜기·끄기
+    - P1: `PATCH /me/notification-settings` 의 `time` — 설정에서 시각 변경
+
+    ### 미결 사항 (구현 전 확정 필요)
+    - [ ] 겉모습 6개 확정 — 확정 전까지 `AppearanceSelection.items.enum` 비어 있음
+    - [ ] 겉모습 확정 시 `진물`(OOZING) 값을 반드시 포함할 것. 관리 전 확인 `PUS_OOZING_BLISTER` 자동 선택 로직이 이 값에 묶여 있음
+    - [ ] 온보딩 시간 피커의 분 단위 간격(1분 / 5분 / 10분 / 30분) — 디자인 확정 후 `NotificationTime.pattern`에 반영
+    - [ ] 기능명세서 F-04 메모 "온보딩의 환경적 특성 기반 개인화 행동" — 온보딩 수집 항목 자체가 미정이라 v2에 반영하지 않음
   contact:
-    name: 제대로 개발팀
+    name: 플러리싱
   license:
     name: Proprietary
     identifier: LicenseRef-Proprietary
@@ -188,7 +225,25 @@ paths:
       operationId: completeOnboarding
       tags: [Onboarding]
       summary: 온보딩 완료
-      description: 최신 필수 동의와 알림 선택을 저장합니다.
+      # [변경] 동의 2건 체계로 확장 + 기본 피부 점호 시각을 여기서 설정합니다.
+      description: |
+        최신 필수 동의와 기본 피부 점호 시각을 저장합니다.
+
+        [변경] 동의는 2건입니다.
+        1. 개인정보·민감정보 수집·이용 동의 (필수, `sensitiveDataConsent`)
+        2. 알림 수신 동의 (알림을 켜는 경우에만 필수, `notificationConsent`)
+
+        [변경] 기본 피부 점호 시각(`notificationTime`)을 **온보딩 마지막 화면에서 한 번 설정**합니다.
+        화면 구성은 시간 피커(기본 17:30) + `알림을 받지 않을게요` + `시작하기` 입니다.
+
+        - `시작하기`를 누른 경우: `notificationEnabled: true`, 피커 값이 `notificationTime`,
+          `notificationConsent: true`. 이 시점에 OS 알림 권한을 요청하고 그 결과를 `notificationPermission`에 담습니다.
+        - `알림을 받지 않을게요`를 누른 경우: `notificationEnabled: false`.
+          `notificationConsent`는 생략하거나 false이며 OS 권한을 요청하지 않습니다.
+          이때도 서버는 `notificationTime`을 기본값 17:30으로 저장합니다.
+          경과 입력 가능 시점(`PendingFollowUp.availableFrom`) 계산에 이 값이 필요하기 때문입니다.
+
+        `notificationEnabled`가 true인데 `notificationConsent`가 true가 아니면 422로 거부합니다.
       security:
         - cookieAuth: []
           csrfToken: []
@@ -197,6 +252,34 @@ paths:
         content:
           application/json:
             schema: { $ref: '#/components/schemas/OnboardingRequest' }
+            examples:
+              startWithNotification:
+                summary: 시간 피커에서 21:00을 고르고 `시작하기`
+                value:
+                  consentVersion: '2026-08-16'
+                  sensitiveDataConsent: true
+                  notificationEnabled: true
+                  notificationPermission: GRANTED
+                  notificationTime: '21:00'
+                  notificationConsent: true
+                  notificationConsentVersion: '2026-08-16'
+              startWithDefaultTime:
+                summary: 기본값 17:30 그대로 `시작하기`
+                value:
+                  consentVersion: '2026-08-16'
+                  sensitiveDataConsent: true
+                  notificationEnabled: true
+                  notificationPermission: GRANTED
+                  notificationTime: '17:30'
+                  notificationConsent: true
+                  notificationConsentVersion: '2026-08-16'
+              skipNotification:
+                summary: '`알림을 받지 않을게요`'
+                value:
+                  consentVersion: '2026-08-16'
+                  sensitiveDataConsent: true
+                  notificationEnabled: false
+                  notificationPermission: DEFAULT
       responses:
         '200':
           description: 저장된 온보딩 상태
@@ -221,8 +304,20 @@ paths:
     patch:
       operationId: updateNotificationSettings
       tags: [Notifications]
-      summary: 알림 사용 여부 변경
-      description: P0의 발송 기준 시각은 Asia/Seoul 17:30으로 고정됩니다.
+      summary: 알림 사용 여부 변경 (시각 변경은 P1)
+      description: |
+        설정 화면에서 알림을 켜고 끕니다.
+
+        [P0] `enabled`, `consent`
+        [P1] `time` — 기능명세서 5.2 "알림 시간 변경"이 P1이므로 P0 구현에서는 이 필드를 받지 않아도 됩니다.
+             P0에서 요청에 `time`이 들어오면 422(code: `FEATURE_NOT_AVAILABLE`)로 거부하세요.
+             기본 피부 점호 시각의 최초 설정은 `PUT /me/onboarding`에서 처리합니다.
+
+        정책
+        - `enabled`를 false → true로 바꾸려면 `consent.agreed`가 true여야 합니다. 아니면 422입니다.
+        - 알림은 하루 최대 한 번만 발송하며, 미완료 경과가 있으면 피부 점호보다 경과 확인 알림이 우선합니다.
+        - 알림을 꺼도 홈에서 직접 기능을 이용할 수 있고, 경과 입력 가능 시점도 그대로 유지됩니다.
+        - (P1) `time`을 변경하면 다음 발송분부터 적용합니다. 이미 발송된 당일 알림은 재발송하지 않습니다.
       security:
         - cookieAuth: []
           csrfToken: []
@@ -233,9 +328,27 @@ paths:
             schema:
               type: object
               additionalProperties: false
-              required: [enabled]
+              minProperties: 1
               properties:
-                enabled: { type: boolean }
+                enabled: { type: boolean } # [P0]
+                time: { $ref: '#/components/schemas/NotificationTime' } # [P1] P0에서는 422로 거부
+                consent: { $ref: '#/components/schemas/NotificationConsentInput' } # [신규][P0]
+            examples:
+              turnOff:
+                summary: 알림 끄기 (P0)
+                value:
+                  enabled: false
+              turnOn:
+                summary: 알림 켜기, 동의 동반 (P0)
+                value:
+                  enabled: true
+                  consent:
+                    agreed: true
+                    version: '2026-08-16'
+              changeTime:
+                summary: 발송 시각 변경 (P1)
+                value:
+                  time: '21:00'
       responses:
         '200':
           description: 변경된 알림 설정
@@ -352,7 +465,12 @@ paths:
       operationId: getSkinReportOptions
       tags: [ReferenceData]
       summary: 피부 보고 선택값 조회
-      description: 프론트엔드 라벨과 API enum 값을 연결하는 버전 있는 목록입니다.
+      # [변경] appearances enum 미확정 기간 동안 이 엔드포인트가 겉모습 값의 유일한 정본입니다.
+      description: |
+        프론트엔드 라벨과 API enum 값을 연결하는 버전 있는 목록입니다.
+
+        [중요] 겉모습(`appearances`)은 아직 6개 확정 전이라 스키마에 enum이 없습니다.
+        프론트엔드는 겉모습 선택지를 하드코딩하지 말고 반드시 이 응답의 `appearances`를 사용하세요.
       responses:
         '200':
           description: 선택값 목록
@@ -384,7 +502,7 @@ paths:
                   rawText: 오늘 아침에 면도하고 야외훈련했는데 오른쪽 턱이 빨갛고 따가워요. 지금은 씻었어요.
                   manualSelections:
                     primaryArea: RIGHT_CHIN
-                    appearances: [REDNESS]
+                    sensations: [REDNESS] # [변경] v1 예시: appearances: [REDNESS]
       responses:
         '200':
           description: 구조화 결과 또는 수동 입력용 실패 상태
@@ -405,6 +523,11 @@ paths:
         사용자 최종 확인값을 저장하고 고정 규칙으로 결과 유형을 결정합니다.
         SELF_CARE_GUIDE이면 규칙 조회와 AI 설명을 동기 처리합니다. AI 설명 실패 시에도
         규칙의 기본 문구로 201을 반환합니다. 같은 날 한 건만 허용하며 Idempotency-Key로 중복을 방지합니다.
+
+        [신규] SELF_CARE_GUIDE 결과에는 추천 성분(`recommendedIngredients`)과
+        가이드 6개 섹션의 제목·설명(`guideSections`)이 포함됩니다.
+        추천 성분은 관리 규칙표에서 조회한 값만 사용하며 AI가 새로 만들지 않습니다.
+        특정 제품·브랜드·의약품은 반환하지 않습니다.
       security:
         - cookieAuth: []
           csrfToken: []
@@ -482,7 +605,7 @@ paths:
       summary: 관리 설명 재생성
       description: |
         최초 aiGenerationStatus가 FALLBACK인 SELF_CARE_GUIDE 보고에 한해 정확히 한 번 허용합니다.
-        규칙 ID, 버전, 허용·금지 행동은 바꾸지 않고 설명만 다시 생성합니다.
+        규칙 ID, 버전, 허용·금지 행동, 추천 성분은 바꾸지 않고 설명만 다시 생성합니다.
       security:
         - cookieAuth: []
           csrfToken: []
@@ -518,9 +641,13 @@ paths:
       operationId: saveFollowUp
       tags: [FollowUps]
       summary: 다음 날 경과 저장
+      # [변경] CLINICIAN_CHECK 경과에도 행동 실행 여부(actionCompletion)를 함께 받습니다.
       description: |
         입력 가능 시점부터 48시간 안에 한 번만 저장합니다. 같은 본문 재요청은 기존 값을 반환하고,
         다른 본문으로 덮어쓰려 하면 409를 반환합니다. 의료진의 진단·처방 내용은 받지 않습니다.
+
+        [변경] 결과 유형과 무관하게 피부 변화(`skinChange`)와 행동 실행 여부(`actionCompletion`)를 받습니다.
+        CLINICIAN_CHECK인 경우 여기에 의료진 확인 여부(`clinicianCheckStatus`)가 추가됩니다.
       security:
         - cookieAuth: []
           csrfToken: []
@@ -529,6 +656,20 @@ paths:
         content:
           application/json:
             schema: { $ref: '#/components/schemas/SaveFollowUpRequest' }
+            examples:
+              selfCare:
+                summary: 일반 관리 안내를 받은 경우
+                value:
+                  kind: SELF_CARE
+                  skinChange: IMPROVED
+                  actionCompletion: MOSTLY_DONE
+              clinician:
+                summary: 의료진 확인 우선 안내를 받은 경우
+                value:
+                  kind: CLINICIAN_CHECK
+                  skinChange: SIMILAR
+                  actionCompletion: PARTLY_DONE
+                  clinicianCheckStatus: CHECKED
       responses:
         '200':
           description: 동일 경과가 이미 저장되어 있음
@@ -740,38 +881,117 @@ components:
         email: { type: string, format: email }
         signupcompleted: { type: boolean }
         createdAt: { type: string, format: date-time, readOnly: true }
+
+    # ------------------------------------------------------------------
+    # 온보딩 / 동의 — [변경] 동의 2건 체계
+    # ------------------------------------------------------------------
     OnboardingRequest:
       type: object
       additionalProperties: false
       required: [consentVersion, sensitiveDataConsent, notificationEnabled, notificationPermission]
+      # [신규] `시작하기`(notificationEnabled=true) 경로에서는 동의 2/2와 피커 값이 필수입니다.
+      #        `알림을 받지 않을게요` 경로에서는 셋 다 생략 가능하며 서버가 기본 17:30을 저장합니다.
+      if:
+        properties:
+          notificationEnabled: { const: true }
+        required: [notificationEnabled]
+      then:
+        required: [notificationConsent, notificationConsentVersion, notificationTime]
+        properties:
+          notificationConsent: { const: true }
       properties:
-        consentVersion: { type: string, minLength: 1, maxLength: 50, example: '2026-08-09' }
-        sensitiveDataConsent: { const: true }
+        consentVersion:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: '2026-08-16'
+          description: 개인정보·민감정보 수집·이용 동의 버전 (동의 1/2)
+        sensitiveDataConsent:
+          const: true
+          description: 개인정보·민감정보 수집·이용 동의 (필수, 동의 1/2)
         notificationEnabled: { type: boolean }
         notificationPermission: { $ref: '#/components/schemas/NotificationPermission' }
+        notificationTime: # [신규] 온보딩 시간 피커 값. v1: 17:30 고정이라 요청 필드 없음
+          $ref: '#/components/schemas/NotificationTime'
+        notificationConsent: # [신규] 동의 2/2
+          type: boolean
+          description: |
+            알림 수신 동의. `시작하기`로 알림을 켜는 경우 필수이며 true여야 합니다.
+            시간 피커 화면에서 동의와 시각 설정이 한 번에 확정됩니다.
+        notificationConsentVersion: # [신규] 동의 2/2 버전
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: '2026-08-16'
     Onboarding:
       type: object
       additionalProperties: false
-      required: [consentVersion, consentedAt, notificationEnabled, notificationPermission, completedAt]
+      required: [consentVersion, consentedAt, notificationEnabled, notificationPermission, notificationTime, notificationConsent, completedAt]
       properties:
         consentVersion: { type: string }
         consentedAt: { type: string, format: date-time }
         notificationEnabled: { type: boolean }
         notificationPermission: { $ref: '#/components/schemas/NotificationPermission' }
+        notificationTime: { $ref: '#/components/schemas/NotificationTime' } # [신규]
+        notificationConsent: { $ref: '#/components/schemas/NotificationConsent' } # [신규]
         completedAt: { type: string, format: date-time }
+    NotificationConsent: # [신규] 알림 수신 동의 기록 (동의 2/2)
+      type: object
+      additionalProperties: false
+      required: [agreed, version, agreedAt]
+      properties:
+        agreed: { type: boolean }
+        version: { type: string, minLength: 1, maxLength: 50 }
+        agreedAt:
+          type: [string, 'null']
+          format: date-time
+          description: 동의하지 않았거나 철회한 경우 null
+    NotificationConsentInput: # [신규] 알림 수신 동의 입력
+      type: object
+      additionalProperties: false
+      required: [agreed, version]
+      properties:
+        agreed: { type: boolean }
+        version: { type: string, minLength: 1, maxLength: 50 }
     NotificationPermission:
       type: string
       enum: [DEFAULT, GRANTED, DENIED, UNSUPPORTED]
+    NotificationTime: # [신규] 기본 피부 점호 시각 — 온보딩 시간 피커에서 설정
+      type: string
+      pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+      default: '17:30'
+      example: '17:30'
+      description: |
+        기본 피부 점호 시각입니다. Asia/Seoul 기준 24시간 표기 HH:mm이며 기본값은 17:30입니다.
+
+        온보딩 마지막 화면("기본 피부점호 시간을 설정해주세요")의 시간 피커에서 한 번 설정합니다.
+        설정 화면에서 나중에 바꾸는 기능은 P1입니다.
+
+        이 값은 두 곳에 쓰입니다.
+        1. 매일 피부 점호 / 경과 확인 알림 발송 시각
+        2. 다음 날 경과 입력 가능 시점 (`PendingFollowUp.availableFrom`)
+
+        알림을 끈 사용자도 2번 때문에 값을 가집니다(기본 17:30).
+
+        [TODO] 피커의 분 단위 간격이 디자인에서 확정되지 않았습니다.
+        10분 단위로 확정되면 pattern을 '^([01][0-9]|2[0-3]):[0-5]0$' 로 좁히세요.
     NotificationSettings:
       type: object
       additionalProperties: false
-      required: [enabled, time, timezone, permission, activeSubscriptionCount]
+      required: [enabled, time, timezone, timeEditable, permission, consent, activeSubscriptionCount]
       properties:
         enabled: { type: boolean }
-        time: { const: '17:30' }
+        # [변경] v1: { const: '17:30' } → 온보딩에서 설정한 값. 설정 화면에서의 변경은 P1.
+        time: { $ref: '#/components/schemas/NotificationTime' }
         timezone: { const: Asia/Seoul }
+        timeEditable: # [신규] P0에서는 항상 false. P1에서 시각 변경이 열리면 true.
+          type: boolean
+          default: false
+          description: 설정 화면에서 `time` 변경 UI를 노출할지 여부. P0 배포에서는 false입니다.
         permission: { $ref: '#/components/schemas/NotificationPermission' }
+        consent: { $ref: '#/components/schemas/NotificationConsent' } # [신규]
         activeSubscriptionCount: { type: integer, minimum: 0 }
+
     CreatePushSubscriptionRequest:
       type: object
       additionalProperties: false
@@ -799,6 +1019,7 @@ components:
         active: { type: boolean }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
+
     Home:
       type: object
       additionalProperties: false
@@ -831,12 +1052,14 @@ components:
           enum: [NO_DISCOMFORT, SKIN_REPORT]
         reportId: { type: [string, 'null'], format: uuid }
         updatedAt: { type: string, format: date-time }
+
     ManualSelections:
       type: object
       additionalProperties: false
       properties:
         primaryArea: { $ref: '#/components/schemas/BodyArea' }
         appearances: { $ref: '#/components/schemas/AppearanceSelection' }
+        sensations: { $ref: '#/components/schemas/SensationSelection' } # [신규] 불편 유형도 직접 선택 가능
     InterpretReportRequest:
       type: object
       additionalProperties: false
@@ -909,6 +1132,7 @@ components:
         sensations: { $ref: '#/components/schemas/SensationSelection' }
         situations: { $ref: '#/components/schemas/SituationSelection' }
         careAvailability: { $ref: '#/components/schemas/CareAvailability' }
+
     SkinReportSummary:
       type: object
       additionalProperties: false
@@ -982,10 +1206,14 @@ components:
             - $ref: '#/components/schemas/FollowUp'
             - type: 'null'
         createdAt: { type: string, format: date-time }
+
+    # ------------------------------------------------------------------
+    # 결과 카드 — [신규] 추천 성분 + 가이드 6개 섹션
+    # ------------------------------------------------------------------
     CareResult:
       type: object
       additionalProperties: false
-      required: [resultType, matchedRuleIds, ruleVersion, summary, doToday, avoidToday, checkNext, reasonTags, similarExperience, aiGenerationStatus, generatedAt, retryUsed]
+      required: [resultType, matchedRuleIds, ruleVersion, guideSections, summary, doToday, avoidToday, checkNext, recommendedIngredients, reasonTags, similarExperience, aiGenerationStatus, generatedAt, retryUsed]
       allOf:
         - if:
             properties:
@@ -1003,9 +1231,11 @@ components:
             required: [resultType]
           then:
             properties:
+              guideSections: { maxItems: 0 } # [신규] 의료진 확인 우선 안내에는 가이드 섹션을 제공하지 않음
               doToday: { maxItems: 0 }
               avoidToday: { maxItems: 0 }
               checkNext: { maxItems: 0 }
+              recommendedIngredients: { maxItems: 0 } # [신규] 추천 성분도 제공하지 않음
               clinicianMessage: { type: string, minLength: 1, maxLength: 1000 }
               aiGenerationStatus: { const: NOT_APPLICABLE }
       properties:
@@ -1015,23 +1245,53 @@ components:
           uniqueItems: true
           items: { type: string, minLength: 1, maxLength: 100 }
         ruleVersion: { type: string, minLength: 1, maxLength: 50 }
-        summary: { type: string, maxLength: 500 }
+        guideSections: # [신규] 가이드 제목 6개 + 설명. 프론트는 문구를 하드코딩하지 않고 이 값을 그대로 렌더링합니다.
+          type: array
+          maxItems: 6
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/GuideSection' }
+          description: |
+            결과 카드에 노출할 6개 섹션의 제목과 설명입니다.
+            표시 순서는 배열 순서를 따릅니다. 각 섹션의 본문은 아래 대응 필드에서 읽습니다.
+
+            | key | 대응 본문 필드 |
+            |-----|----------------|
+            | CURRENT_SUMMARY | summary |
+            | DO_TODAY | doToday |
+            | AVOID_TODAY | avoidToday |
+            | SIMILAR_EXPERIENCE | similarExperience |
+            | CHECK_NEXT | checkNext |
+            | RECOMMENDED_INGREDIENTS | recommendedIngredients |
+        summary: { type: string, maxLength: 500, description: 현재 기록 요약 (최대 2문장) }
         doToday:
           type: array
           maxItems: 2
           items: { type: string, maxLength: 300 }
+          description: 오늘 할 일. 규칙의 allowedActions 범위 안에서만 생성합니다.
         avoidToday:
           type: array
           maxItems: 2
           items: { type: string, maxLength: 300 }
+          description: 오늘 피할 일. 규칙의 prohibitedActions 범위 안에서만 생성합니다.
         checkNext:
           type: array
           maxItems: 2
           items: { type: string, maxLength: 300 }
+          description: 다음에 확인할 변화. 규칙의 monitorItems 범위 안에서만 생성합니다.
+        recommendedIngredients: # [신규] 추천 성분
+          type: array
+          maxItems: 3
+          uniqueItems: true
+          items: { $ref: '#/components/schemas/RecommendedIngredient' }
+          description: |
+            관리 규칙표에서 조회한 성분 정보만 반환합니다.
+            AI가 새로운 성분을 만들지 않으며, 특정 제품·브랜드·의약품은 반환하지 않습니다.
+            규칙에 해당 성분이 없으면 빈 배열입니다.
         reasonTags:
           type: array
           uniqueItems: true
           items: { type: string, maxLength: 50 }
+          description: 안내가 달라진 이유. 적용된 직전 상황과 현재 관리 상태 태그입니다.
         clinicianMessage: { type: [string, 'null'], maxLength: 1000 }
         similarExperience:
           oneOf:
@@ -1042,6 +1302,51 @@ components:
           enum: [GENERATED, FALLBACK, NOT_APPLICABLE]
         generatedAt: { type: string, format: date-time }
         retryUsed: { type: boolean }
+    GuideSection: # [신규]
+      type: object
+      additionalProperties: false
+      required: [key, title, description]
+      properties:
+        key:
+          type: string
+          enum:
+            - CURRENT_SUMMARY          # 현재 기록 요약
+            - DO_TODAY                 # 오늘 할 일
+            - AVOID_TODAY              # 오늘 피할 일
+            - SIMILAR_EXPERIENCE       # 이전 유사 경험
+            - CHECK_NEXT               # 다음에 확인할 변화
+            - RECOMMENDED_INGREDIENTS  # 추천 성분 보기
+        title: { type: string, minLength: 1, maxLength: 50, example: 오늘 할 일 }
+        description:
+          type: string
+          maxLength: 300
+          description: 섹션이 무엇을 뜻하는지 알려주는 한 줄 설명. 관리 규칙표에서 관리합니다.
+          example: 지금 상태에서 오늘 안에 해볼 수 있는 행동입니다.
+        empty:
+          type: boolean
+          default: false
+          description: 대응 본문이 비어 있어 섹션을 접힌 상태로 표시해야 하는 경우 true
+    RecommendedIngredient: # [신규]
+      type: object
+      additionalProperties: false
+      required: [id, name, description, sourceRuleIds]
+      properties:
+        id: { type: string, minLength: 1, maxLength: 100, example: ING_PANTHENOL }
+        name: { type: string, minLength: 1, maxLength: 100, example: 판테놀 }
+        description:
+          type: string
+          maxLength: 300
+          description: 관리 규칙표에 저장된 중립적 설명. 효능 보장, 치료 표현, 제품 추천을 포함하지 않습니다.
+        cautionNote:
+          type: [string, 'null']
+          maxLength: 300
+          description: 주의 문구. 없으면 null입니다.
+        sourceRuleIds:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: { type: string, minLength: 1, maxLength: 100 }
+          description: 이 성분을 반환한 관리 규칙 ID. matchedRuleIds의 부분집합이어야 합니다.
     SimilarExperience:
       type: object
       additionalProperties: false
@@ -1049,9 +1354,21 @@ components:
       properties:
         reportId: { type: string, format: uuid }
         reportDate: { type: string, format: date }
-        similarityScore: { type: integer, minimum: 5 }
-        displayText: { type: string, maxLength: 500 }
+        similarityScore:
+          type: integer
+          minimum: 5
+          description: |
+            같은 대표 부위 +3, 같은 직전 상황 항목당 +2, 같은 겉모습 항목당 +1,
+            같은 느껴지는 불편 항목당 +1, 같은 현재 관리 상태 +1.
+            총 5점 이상인 COMPLETED 기록 중 최고점 1건만 반환합니다. 동점이면 최근 기록이 우선합니다.
+        displayText:
+          type: string
+          maxLength: 500
+          description: |
+            AI를 다시 호출하지 않고 구조화 데이터를 고정 문장 형식으로 채운 문구입니다.
+            인과관계, 치료 효과, 확률·배수 표현을 포함하지 않습니다.
         skinChange: { $ref: '#/components/schemas/SkinChange' }
+
     PendingFollowUp:
       type: object
       additionalProperties: false
@@ -1059,9 +1376,22 @@ components:
       properties:
         reportId: { type: string, format: uuid }
         reportDate: { type: string, format: date }
-        availableFrom: { type: string, format: date-time }
-        expiresAt: { type: string, format: date-time }
+        availableFrom:
+          type: string
+          format: date-time
+          # [변경] v1: 다음 날 17:30 고정 → 온보딩에서 설정한 피부 점호 시각
+          description: |
+            다음 날, 사용자가 온보딩에서 설정한 피부 점호 시각(NotificationSettings.time)입니다.
+            알림을 꺼 둔 사용자도 이 값을 가지며 기본값은 17:30입니다.
+        expiresAt:
+          type: string
+          format: date-time
+          description: availableFrom + 48시간
         resultType: { $ref: '#/components/schemas/ResultType' }
+
+    # ------------------------------------------------------------------
+    # 다음 날 경과 — [변경] CLINICIAN_CHECK에도 행동 실행 여부 추가
+    # ------------------------------------------------------------------
     SaveFollowUpRequest:
       oneOf:
         - $ref: '#/components/schemas/SelfCareFollowUpRequest'
@@ -1078,19 +1408,17 @@ components:
       properties:
         kind: { const: SELF_CARE }
         skinChange: { $ref: '#/components/schemas/SkinChange' }
-        actionCompletion:
-          type: string
-          enum: [MOSTLY_DONE, PARTLY_DONE, NOT_DONE]
+        actionCompletion: { $ref: '#/components/schemas/ActionCompletion' }
     ClinicianFollowUpRequest:
       type: object
       additionalProperties: false
-      required: [kind, skinChange, clinicianCheckStatus]
+      # [변경] v1 required: [kind, skinChange, clinicianCheckStatus] → actionCompletion 추가
+      required: [kind, skinChange, actionCompletion, clinicianCheckStatus]
       properties:
         kind: { const: CLINICIAN_CHECK }
         skinChange: { $ref: '#/components/schemas/SkinChange' }
-        clinicianCheckStatus:
-          type: string
-          enum: [CHECKED, NOT_YET, PREFER_NOT_TO_RECORD]
+        actionCompletion: { $ref: '#/components/schemas/ActionCompletion' } # [신규]
+        clinicianCheckStatus: { $ref: '#/components/schemas/ClinicianCheckStatus' }
     FollowUp:
       oneOf:
         - $ref: '#/components/schemas/SelfCareFollowUp'
@@ -1108,22 +1436,29 @@ components:
         reportId: { type: string, format: uuid }
         kind: { const: SELF_CARE }
         skinChange: { $ref: '#/components/schemas/SkinChange' }
-        actionCompletion:
-          type: string
-          enum: [MOSTLY_DONE, PARTLY_DONE, NOT_DONE]
+        actionCompletion: { $ref: '#/components/schemas/ActionCompletion' }
         submittedAt: { type: string, format: date-time }
     ClinicianFollowUp:
       type: object
       additionalProperties: false
-      required: [reportId, kind, skinChange, clinicianCheckStatus, submittedAt]
+      # [변경] actionCompletion 추가
+      required: [reportId, kind, skinChange, actionCompletion, clinicianCheckStatus, submittedAt]
       properties:
         reportId: { type: string, format: uuid }
         kind: { const: CLINICIAN_CHECK }
         skinChange: { $ref: '#/components/schemas/SkinChange' }
-        clinicianCheckStatus:
-          type: string
-          enum: [CHECKED, NOT_YET, PREFER_NOT_TO_RECORD]
+        actionCompletion: { $ref: '#/components/schemas/ActionCompletion' } # [신규]
+        clinicianCheckStatus: { $ref: '#/components/schemas/ClinicianCheckStatus' }
         submittedAt: { type: string, format: date-time }
+    ActionCompletion: # [신규] v1에서는 SelfCare 쪽에만 인라인으로 있던 enum을 공용화
+      type: string
+      enum: [MOSTLY_DONE, PARTLY_DONE, NOT_DONE]
+      description: 다 실행했어요 / 일부만 실행했어요 / 실행하지 못했어요
+    ClinicianCheckStatus: # [신규] v1 인라인 enum을 공용화
+      type: string
+      enum: [CHECKED, NOT_YET, PREFER_NOT_TO_RECORD]
+      description: 의무실·의료진에게 확인했어요 / 아직 확인하지 못했어요 / 기록하지 않을게요
+
     SkinReportList:
       type: object
       additionalProperties: false
@@ -1141,6 +1476,7 @@ components:
         nextCursor: { type: [string, 'null'] }
         hasMore: { type: boolean }
         limit: { type: integer, minimum: 1, maximum: 100 }
+
     AnalyticsEventInput:
       type: object
       additionalProperties: false
@@ -1149,7 +1485,18 @@ components:
         eventId: { type: string, format: uuid }
         name:
           type: string
-          enum: [ONBOARDING_COMPLETED, REPORT_STARTED, INPUT_ASSIST_OPENED, AI_STRUCTURING_SUCCEEDED, AI_STRUCTURING_FAILED, REPORT_SUBMITTED, CARE_RESULT_VIEWED, FOLLOW_UP_SUBMITTED, SIMILAR_EXPERIENCE_VIEWED]
+          enum:
+            - ONBOARDING_COMPLETED
+            - REPORT_STARTED
+            - INPUT_ASSIST_OPENED
+            - AI_STRUCTURING_SUCCEEDED
+            - AI_STRUCTURING_FAILED
+            - REPORT_SUBMITTED
+            - CARE_RESULT_VIEWED
+            - FOLLOW_UP_SUBMITTED
+            - SIMILAR_EXPERIENCE_VIEWED
+            - RECOMMENDED_INGREDIENTS_VIEWED # [신규] 추천 성분 보기 섹션 조회
+            - NOTIFICATION_TIME_SET          # [신규] 온보딩에서 피부 점호 시각 설정 완료
         occurredAt: { type: string, format: date-time }
         properties:
           type: object
@@ -1159,6 +1506,8 @@ components:
             inputAssistUsed: { type: boolean }
             resultType: { $ref: '#/components/schemas/ResultType' }
             aiSucceeded: { type: boolean }
+            ingredientCount: { type: integer, minimum: 0, maximum: 3 } # [신규] 성분 개수만. 성분명은 보내지 않습니다.
+            usedDefaultTime: { type: boolean } # [신규] 온보딩에서 기본값 17:30을 그대로 썼는지. 시각 자체는 보내지 않습니다.
     Problem:
       type: object
       additionalProperties: false
@@ -1182,51 +1531,88 @@ components:
               code: { type: string }
               message: { type: string }
 
+    # ==================================================================
+    # 선택값 enum
+    # ==================================================================
+
+    # [유지] 부위 13개 — 결정표 확정
     BodyArea:
       type: string
-      description: |
-        대표 부위. 피부 보고 한 건당 하나만 저장합니다.
-        WHOLE_FACE 는 특정 부위를 고르기 어려울 만큼 얼굴 전반이 불편한 경우에 사용합니다.
-      enum: [WHOLE_FACE, LEFT_FOREHEAD, CENTER_FOREHEAD, RIGHT_FOREHEAD, NOSE, LEFT_CHEEK, RIGHT_CHEEK, AROUND_MOUTH, LEFT_CHIN, RIGHT_CHIN, LEFT_JAWLINE, RIGHT_JAWLINE, NECK, OTHER]
+      enum: [LEFT_FOREHEAD, CENTER_FOREHEAD, RIGHT_FOREHEAD, NOSE, LEFT_CHEEK, RIGHT_CHEEK, AROUND_MOUTH, LEFT_CHIN, RIGHT_CHIN, LEFT_JAWLINE, RIGHT_JAWLINE, NECK, OTHER]
+
+    # [TODO] 겉모습 6개 — 결정표 "패스 (자료 조사 후 결정)"
+    #   확정 전까지 enum을 비워 둡니다. 값은 /reference-data/skin-report-options 응답이 정본입니다.
+    #   v1 참고값(8개): REDNESS, SMALL_BUMPS, WHITE_TIPPED_BUMPS, RED_BUMPS_AROUND_HAIR,
+    #                   ROUGHNESS_FLAKING, OOZING, CRUST, UNSURE
+    #   확정 시 함께 결정해야 할 것:
+    #     1) UNSURE(잘 모르겠음) 유지 여부와 단독선택 제약(not/allOf) 복구
+    #     2) OOZING(진물) 반드시 포함 — PreCareCheck 자동 선택 로직이 이 값에 묶여 있음
+    #     3) CRUST(딱지)와 OOZING 분리 유지 (기능명세서 F-03)
+    #     4) REDNESS는 v2에서 SensationSelection으로 이동했으므로 겉모습에서 중복 정의하지 말 것
     AppearanceSelection:
       type: array
       minItems: 1
-      maxItems: 7
+      maxItems: 6 # [변경] v1: 7
       uniqueItems: true
       items:
         type: string
-        enum: [REDNESS, SMALL_BUMPS, WHITE_TIPPED_BUMPS, RED_BUMPS_AROUND_HAIR, ROUGHNESS_FLAKING, OOZING, CRUST, UNSURE]
-      not:
-        allOf:
-          - contains: { const: UNSURE }
-          - minItems: 2
+        minLength: 1
+        maxLength: 50
+        # enum: [] # [TODO] 겉모습 6개 확정 후 채울 것
+      description: |
+        [TODO] 겉모습 선택지 6개가 미확정입니다. enum이 비어 있으므로 서버는 참조 데이터
+        (/reference-data/skin-report-options 의 appearances)에 있는 value만 허용하고
+        그 밖의 값은 422로 거부해야 합니다.
+
+    # [변경] 느껴지는 불편 — v1 감각 7개를 폐기하고 결정표의 불편 유형 3개로 전면 대체
+    #   v1 삭제값: ITCHING, STINGING_BURNING, PAIN_WHEN_PRESSED, PAIN_AT_REST, HEAT, TIGHTNESS, NONE
+    #   v1 → v2 매핑 없음. 기존 데이터는 마이그레이션 대상입니다.
+    #   NONE(특별한 느낌 없음)도 삭제되어 최소 1개는 반드시 선택해야 합니다.
     SensationSelection:
       type: array
       minItems: 1
-      maxItems: 6
+      maxItems: 3 # [변경] v1: 6
       uniqueItems: true
       items:
         type: string
-        enum: [ITCHING, STINGING_BURNING, PAIN_WHEN_PRESSED, PAIN_AT_REST, HEAT, TIGHTNESS, NONE]
-      not:
-        allOf:
-          - contains: { const: NONE }
-          - minItems: 2
+        enum:
+          - REDNESS       # 붉어짐
+          - EXCESS_SEBUM  # 피지 과다 분비
+          - BREAKOUT      # 트러블
+      description: |
+        [변경] v2에서 이 필드의 의미가 "감각"에서 "불편 유형"으로 바뀌었습니다.
+        관리 규칙 매칭의 주 축이며, 유사도 계산에서 항목당 +1점입니다.
+
+    # [변경] 직전 상황 — v1 9개 → v2 6개 (결정표 "5개 (관리규칙)" + 없음)
+    #   삭제: DELAYED_WASHING(세안 지연), SLEEP_DEPRIVATION(수면 부족), OTHER(기타)
+    #   리네임: SWEAT_OR_DUST_AFTER_TRAINING → SWEAT_OR_SEBUM (훈련 후 땀 → 땀/과피지)
+    #           TOUCHED_OR_SQUEEZED → SQUEEZED_ACNE (만짐·짬 → 여드름을 짬)
     SituationSelection:
       type: array
       minItems: 1
-      maxItems: 8
+      maxItems: 5 # [변경] v1: 8. NONE_RECALLED는 단독 선택이므로 실질 최대 5개
       uniqueItems: true
       items:
         type: string
-        enum: [SHAVING, SWEAT_OR_DUST_AFTER_TRAINING, PROTECTIVE_GEAR_OR_MASK, DELAYED_WASHING, NEW_PRODUCT, TOUCHED_OR_SQUEEZED, SLEEP_DEPRIVATION, OTHER, NONE_RECALLED]
+        enum:
+          - PROTECTIVE_GEAR_OR_MASK # 보호장비·마스크 착용
+          - SHAVING                 # 면도
+          - SQUEEZED_ACNE           # 여드름을 짬
+          - NEW_PRODUCT             # 새 제품 사용
+          - SWEAT_OR_SEBUM          # 땀·과피지
+          - NONE_RECALLED           # 해당 상황 없음
       not:
         allOf:
           - contains: { const: NONE_RECALLED }
           - minItems: 2
+      description: 유사도 계산에서 항목당 +2점으로 가장 큰 가중치를 가집니다.
+
+    # [유지] 현재 관리 상태 4개
     CareAvailability:
       type: string
       enum: [BEFORE_WASH_CAN_WASH_LATER, ALREADY_WASHED, CAN_CARE_BEFORE_SLEEP, ADDITIONAL_CARE_DIFFICULT]
+
+    # [유지] 관리 전 확인 4개 — 결과 유형 분기의 유일한 근거
     PreCareCheckSelection:
       type: array
       minItems: 1
@@ -1239,27 +1625,42 @@ components:
         allOf:
           - contains: { const: NONE }
           - minItems: 2
+      description: |
+        NONE만 선택하면 SELF_CARE_GUIDE, 그 밖의 항목이 하나라도 있으면 CLINICIAN_CHECK입니다.
+        AI 추출값이 아니라 사용자가 최종 확인한 값으로만 분기합니다.
+
     ResultType:
       type: string
       enum: [SELF_CARE_GUIDE, CLINICIAN_CHECK]
     ReportStatus:
       type: string
       enum: [FOLLOW_UP_PENDING, COMPLETED, EXPIRED]
+
+    # [변경] 피부 변화 — v1 5개 → v2 3개
+    #   삭제: NEW_AREA(새로운 부위에도 생겼어요), UNSURE(잘 모르겠어요)
     SkinChange:
       type: string
-      enum: [IMPROVED, SIMILAR, WORSENED, NEW_AREA, UNSURE]
+      enum:
+        - IMPROVED # 좋아졌어요
+        - SIMILAR  # 비슷해요
+        - WORSENED # 악화됐어요
+
     SkinReportOptions:
       type: object
       additionalProperties: false
-      required: [version, areas, appearances, sensations, situations, careAvailability, preCareChecks]
+      required: [version, areas, appearances, sensations, situations, careAvailability, preCareChecks, guideSections]
       properties:
-        version: { type: string, example: '2026-08-09' }
+        version: { type: string, example: '2026-08-16' } # [변경] v1 예시: '2026-08-09'
         areas: { $ref: '#/components/schemas/OptionList' }
-        appearances: { $ref: '#/components/schemas/OptionList' }
+        appearances: { $ref: '#/components/schemas/OptionList' } # [TODO] 6개 확정 전까지 이 응답이 유일한 정본
         sensations: { $ref: '#/components/schemas/OptionList' }
         situations: { $ref: '#/components/schemas/OptionList' }
         careAvailability: { $ref: '#/components/schemas/OptionList' }
         preCareChecks: { $ref: '#/components/schemas/OptionList' }
+        guideSections: # [신규] 가이드 6개 섹션의 기본 제목·설명. 결과가 없을 때도 화면을 그릴 수 있게 합니다.
+          type: array
+          maxItems: 6
+          items: { $ref: '#/components/schemas/GuideSection' }
     OptionList:
       type: array
       items:

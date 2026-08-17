@@ -39,8 +39,8 @@ const ORDER: Step[] = ['intro', 'checkInTime'];
  * 같은 날 시안 재업로드에서 그 두 화면은 아예 사라졌다.
  * 동의는 이 흐름이 아니라 회원가입 안에서 받는다(시안의 `동의` 화면 버튼이 `가입하기`).
  *
- * `PUT /me/onboarding` 이 받는 값은 동의와 알림뿐이라 점호 시각은 로컬에 남는다.
- * (serviceProfileStore 의 TODO 참고)
+ * v2 계약부터 **기본 피부 점호 시각을 여기서 서버에 저장한다.** v1 은
+ * `NotificationSettings.time` 이 `const '17:30'` 이라 보낼 곳이 없었다.
  */
 export function OnboardingPage() {
   const navigate = useNavigate();
@@ -63,6 +63,18 @@ export function OnboardingPage() {
         sensitiveDataConsent: true,
         notificationEnabled: wantsNotification && permission === 'GRANTED',
         notificationPermission: permission,
+        /*
+         * 시각은 알림을 끈 사람도 보낸다. 계약이 이 값으로 다음 날 경과 입력
+         * 가능 시점(`PendingFollowUp.availableFrom`)을 계산하기 때문이다.
+         */
+        notificationTime: profile.checkInTime,
+        /*
+         * 계약은 `시작하기` 를 누른 것 자체를 알림 수신 동의로 본다.
+         * `notificationEnabled` 가 true 인데 이 값이 true 가 아니면 422 다.
+         */
+        ...(wantsNotification
+          ? { notificationConsent: true, notificationConsentVersion: consent.version }
+          : {}),
       });
       // 온보딩 완료 여부는 세션의 signupcompleted 로 판단하므로 다시 받아온다.
       return auth.currentSession();
@@ -84,9 +96,9 @@ export function OnboardingPage() {
      * 따라 그대로 뒀다.
      *
      * 2026-08-16 시안에 없는 화면을 걷어내면서 `설정 > 알림 설정` 이 빠졌다.
-     * 다만 점호 시각은 원래도 서버에 안 갔다 — 계약의 `NotificationSettings.time` 이
-     * `const '17:30'` 이라 저장할 곳이 없다. 여기서 고른 값은 지금도 앞으로도
-     * localStorage 에만 남는다. 실제로 잃은 건 **알림 on/off** 다. (docs/명세-대조.md 2-10)
+     * v2 에서 시각 저장이 열렸지만, 설정 화면에서 **나중에 바꾸는 것**은 P1 이고
+     * 서버가 `NotificationSettings.timeEditable: false` 로 알려 준다.
+     * 잃은 건 여전히 **알림 on/off** 다. (docs/명세-대조.md 2-10)
      */
     <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col px-4 pt-[calc(var(--safe-top)+47px)]">
       {step === 'checkInTime' && (
