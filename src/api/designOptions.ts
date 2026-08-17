@@ -70,9 +70,8 @@ export interface AppearanceOption {
  * `고름이 찬 돌기` 가 계약이 요구하던 진물·고름 자리다. 이 값이 선택되면
  * 관리 전 확인의 `PUS_OOZING_BLISTER` 가 미리 켜진다(schemas.ts seedPreCareChecks).
  *
- * TODO(백엔드): 계약의 `AppearanceSelection` 은 v2 에서도 enum 이 비어 있고
- * `/reference-data` 의 값으로만 검증한다. 아래 value 는 **확정 전 임시 이름**이다.
- * 서버가 여섯 값을 정하면 그대로 맞춘다. (2026-08-19 전달 예정)
+ * 계약의 `AppearanceSelection` 은 enum 이 비어 있고 `/reference-data` 의 값으로만
+ * 검증한다. 아래 value 는 서버가 여섯 값을 확정하기 전까지 쓰는 임시 이름이다.
  */
 export const APPEARANCE_OPTIONS: AppearanceOption[] = [
   { value: 'REDNESS', label: '붉어짐', image: 'redness' },
