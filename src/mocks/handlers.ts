@@ -27,7 +27,8 @@ function problem(status: number, code: string, detail: string) {
  * 시연 리허설과 예외 UI 확인에 쓴다.
  */
 export const mockState = {
-  scenario: 'happy' as 'happy' | 'ai-fail' | 'clinician' | 'slow' | 'server-error',
+  scenario: 'happy' as
+    'happy' | 'ai-fail' | 'clinician' | 'slow' | 'server-error' | 'cause-unknown',
   aiDelayMs: 1200,
 
   /** 오늘 점호 상태. null 이면 미응답. */
@@ -271,7 +272,11 @@ export const handlers = [
     const body = (await request.json()) as { preCareChecks?: string[] };
     const isClinician =
       mockState.scenario === 'clinician' || (body.preCareChecks ?? []).some((c) => c !== 'NONE');
-    const report = isClinician ? fx.clinicianReport : fx.selfCareReport;
+    let report = isClinician ? fx.clinicianReport : fx.selfCareReport;
+    // 원인 미파악 화면(32:53392)은 `reasonTags` 가 빈 상태로 본다.
+    if (mockState.scenario === 'cause-unknown') {
+      report = { ...report, careResult: { ...report.careResult, reasonTags: [] } };
+    }
 
     // 같은 날 `불편 없음` 이 저장돼 있었다면 피부 보고가 우선한다. (공통 정책 7.1)
     mockState.today = {
@@ -312,7 +317,10 @@ export const handlers = [
     if (!summary) return problem(404, 'NOT_FOUND', '기록을 찾을 수 없어요.');
 
     // 목록 항목을 상세로 부풀린다. 결과 유형에 맞는 기본 상세를 고르고 목록 값으로 덮는다.
-    const base = summary.resultType === 'CLINICIAN_CHECK' ? fx.clinicianReport : fx.selfCareReport;
+    let base = summary.resultType === 'CLINICIAN_CHECK' ? fx.clinicianReport : fx.selfCareReport;
+    if (mockState.scenario === 'cause-unknown') {
+      base = { ...base, careResult: { ...base.careResult, reasonTags: [] } };
+    }
     const hasFollowUp = summary.status === 'COMPLETED' && summary.skinChange !== null;
 
     return HttpResponse.json({

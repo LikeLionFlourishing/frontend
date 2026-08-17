@@ -62,18 +62,25 @@ export interface AppearanceOption {
 }
 
 /*
- * 시안은 여섯 장이고 계약의 `OOZING`(진물)·`CRUST`(딱지)가 빠져 있다.
- * 2026-08-16 결정표에서 이 항목은 `패스(자료 조사 후 결정)` 로 남았다.
- * 사용자는 `관리 전 확인` 에서 `고름·진물·물집` 을 직접 고르므로
- * **의료진 확인 분기는 지금도 정상 동작한다.** (docs/명세-대조.md 2-0)
+ * 2026-08-18 시안에서 여섯 종이 **전부 교체**됐다(라벨·일러스트 모두).
+ *   붉은 반점 → 붉어짐 / 작은 돌기 → 돌기와 울퉁불퉁함
+ *   털 주변 붉은 돌기 → 고름이 찬 돌기 / 뾰루지 → (없어짐)
+ *   각질·건조는 자리만 옮겼고 `번들거림/유분` 이 새로 들어왔다.
+ *
+ * `고름이 찬 돌기` 가 계약이 요구하던 진물·고름 자리다. 이 값이 선택되면
+ * 관리 전 확인의 `PUS_OOZING_BLISTER` 가 미리 켜진다(schemas.ts seedPreCareChecks).
+ *
+ * TODO(백엔드): 계약의 `AppearanceSelection` 은 v2 에서도 enum 이 비어 있고
+ * `/reference-data` 의 값으로만 검증한다. 아래 value 는 **확정 전 임시 이름**이다.
+ * 서버가 여섯 값을 정하면 그대로 맞춘다. (2026-08-19 전달 예정)
  */
 export const APPEARANCE_OPTIONS: AppearanceOption[] = [
-  { value: 'REDNESS', label: '붉은 반점', image: 'redness' },
-  { value: 'SMALL_BUMPS', label: '작은 돌기', image: 'small-bumps' },
-  { value: 'RED_BUMPS_AROUND_HAIR', label: '털 주변 붉은 돌기', image: 'red-bumps-around-hair' },
-  { value: 'WHITE_TIPPED_BUMPS', label: '뾰루지', image: 'white-tipped-bumps' },
+  { value: 'REDNESS', label: '붉어짐', image: 'redness' },
+  { value: 'BUMPS_UNEVEN', label: '돌기와 울퉁불퉁함', image: 'bumps-uneven' },
+  { value: 'PUS_BUMPS', label: '고름이 찬 돌기', image: 'pus-bumps' },
   { value: 'ROUGHNESS_FLAKING', label: '각질/건조', image: 'roughness-flaking' },
-  { value: 'UNSURE', label: '기타', image: 'other' },
+  { value: 'OILY_SHINE', label: '번들거림/유분', image: 'oily-shine' },
+  { value: 'OTHER', label: '기타', image: 'other' },
 ];
 
 // --- 직전 상황 (피부보고2) -----------------------------------------------------

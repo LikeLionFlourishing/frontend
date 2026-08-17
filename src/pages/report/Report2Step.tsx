@@ -102,7 +102,8 @@ export function Report2Step({ situations, care, sensations, onChange, onNext }: 
         onSelect={toggleSensation}
       />
 
-      <div className="mt-[31px] pb-[30px]">
+      {/* 시안 32:52978 — 타일 아래 40, 프레임 끝까지 35 */}
+      <div className="mt-[40px] pb-[35px]">
         <PrimaryButton onClick={onNext} disabled={!canSubmit}>
           다음
         </PrimaryButton>

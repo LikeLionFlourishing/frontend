@@ -84,12 +84,12 @@ export const reportOptions: SkinReportOptions = {
    * 관리 전 확인의 `PUS_OOZING_BLISTER` 자동 선택이 이 값에 묶여 있다.
    */
   appearances: [
-    { value: 'REDNESS', label: '붉은 반점' },
-    { value: 'SMALL_BUMPS', label: '작은 돌기' },
-    { value: 'RED_BUMPS_AROUND_HAIR', label: '털 주변 붉은 돌기' },
-    { value: 'WHITE_TIPPED_BUMPS', label: '뾰루지' },
+    { value: 'REDNESS', label: '붉어짐' },
+    { value: 'BUMPS_UNEVEN', label: '돌기와 울퉁불퉁함' },
+    { value: 'PUS_BUMPS', label: '고름이 찬 돌기' },
     { value: 'ROUGHNESS_FLAKING', label: '각질/건조' },
-    { value: 'OOZING', label: '진물' },
+    { value: 'OILY_SHINE', label: '번들거림/유분' },
+    { value: 'OTHER', label: '기타' },
   ],
   // v2 에서 감각 7종이 불편 유형 3종으로 전면 교체됐다.
   sensations: [

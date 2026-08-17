@@ -180,7 +180,7 @@ function TodayCheckCard({ data, onNavigate }: { data: Home; onNavigate: (to: str
         />
         <ActionTile
           icon="face"
-          title="피부 점호 시작"
+          title="피부 보고 시작"
           caption={answeredToday ? '오늘의 안내 다시 보기' : '상태를 기록하고 관리받기'}
           tone="accent"
           onClick={() =>

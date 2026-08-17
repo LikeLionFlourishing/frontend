@@ -7,6 +7,7 @@ import { toUserMessage } from '@/api/problem';
 import { queryKeys } from '@/app/queryClient';
 import { AiLoading } from '@/components/AiLoading';
 import { ClinicianModal } from '@/components/ClinicianModal';
+import causeUnknownIcon from '@/assets/icon-cause-unknown.svg';
 import { MedicalDisclaimer } from '@/components/ResultSection';
 import { StepLayout } from '@/components/StepLayout';
 import { Sentences, splitSentences } from '@/components/Sentences';
@@ -114,6 +115,31 @@ const CARDS: CardMeta[] = [
 ];
 
 /**
+ * 원인 미파악 안내 (시안 32:53392).
+ *
+ * 결과 화면과 같은 덱 위에 배너 하나가 더 붙은 형태다.
+ * 계약에 `원인 미파악` 전용 필드가 없어서 `reasonTags` 가 비었는지로 본다 —
+ * 이 값의 정의가 `안내가 달라진 이유. 적용된 직전 상황과 현재 관리 상태 태그` 라
+ * 비어 있으면 기록에서 원인을 못 집어낸 것이다.
+ *
+ * TODO(백엔드): 이 판단 기준이 맞는지 확인 필요. 전용 플래그가 생기면 그걸 쓴다.
+ */
+function CauseUnknownBanner() {
+  return (
+    // 시안 32:53408 — 369×100, 모서리 14, 바탕 #FCFFA3
+    <div className="mb-[26px] rounded-[14px] bg-[#FCFFA3] px-[21px] pb-[25px] pt-[25px]">
+      <p className="flex items-center gap-[10px] text-body-strong text-fg">
+        <img src={causeUnknownIcon} alt="" className="size-[24px] shrink-0" />
+        원인을 특정하기 어려워요
+      </p>
+      <p className="mt-[10px] text-xs leading-[14px] text-fg">
+        현재 기록만으로는 피부 상태의 원인을 파악하기 어려워요
+      </p>
+    </div>
+  );
+}
+
+/**
  * 카드에 번지는 빛.
  *
  * 시안의 카드는 단색이 아니라 가운데가 밝은 방사형 그라데이션이다.
@@ -210,6 +236,8 @@ export function ReportResultPage() {
       </header>
 
       <main className="pl-[14px] pr-[17px]">
+        {care.reasonTags.length === 0 && <CauseUnknownBanner />}
+
         <Deck
           deck={deck}
           opened={opened}
