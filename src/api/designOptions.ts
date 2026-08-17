@@ -115,20 +115,23 @@ export interface CareOption {
 }
 
 /*
- * 계약의 네 가지를 모두 둔다.
+ * 2026-08-16 기획 확정: **세안 전 · 세안 완료 · 세안 불가능** 세 가지다.
+ * (시안은 앞의 둘만, v2 계약은 네 가지라 양쪽 다 아니었다)
  *
- * 시안(31:45994)에는 앞의 둘만 그려져 있지만, 뒤의 둘은 단순히 안 보이는 게 아니라
- * **입력 자체가 불가능**해진다. 계약이 이 값을 관리 규칙 분기(`reasonTags`)와
- * 유사도 점수(`같은 현재 관리 상태 +1`)에 쓰기 때문에, 두 값을 빼면 그 분기가
- * 영원히 안 걸리고 유사도도 절반만 계산된다.
+ * TODO(백엔드): 계약의 `CareAvailability` 를 이 셋으로 줄여야 한다.
+ *   - `CAN_CARE_BEFORE_SLEEP`(취침 전 관리 가능) 삭제
+ *   - `세안 불가능` 은 새 값 `CANNOT_WASH` 로 정의 요청함
  *
- * 격자가 2열이라 두 줄이 되며 화면이 79 길어진다(타일 72 + 간격 7).
+ * 그때까지 세 번째 자리에 `ADDITIONAL_CARE_DIFFICULT`(오늘은 추가 관리가 어려움)를
+ * 임시로 태운다. 뜻이 정확히 같지는 않지만 계약에 있는 값 중 가장 가깝고,
+ * 없는 값을 보내면 422 라 저장 자체가 막힌다. 계약이 열리면 이 줄의 value 만 바꾼다.
+ *
+ * 격자가 2열이라 두 줄이 된다(2 + 1). 아래 `현재 피부 상태` 와 같은 모양이다.
  */
 export const CARE_OPTIONS: CareOption[] = [
   { value: 'BEFORE_WASH_CAN_WASH_LATER', label: '세안 전' },
   { value: 'ALREADY_WASHED', label: '세안 완료' },
-  { value: 'CAN_CARE_BEFORE_SLEEP', label: '취침 전 관리 가능' },
-  { value: 'ADDITIONAL_CARE_DIFFICULT', label: '추가 관리 어려움' },
+  { value: 'ADDITIONAL_CARE_DIFFICULT', label: '세안 불가능' },
 ];
 
 // --- 현재 피부 상태 (피부보고2) -----------------------------------------------

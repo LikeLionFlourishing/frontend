@@ -105,11 +105,11 @@ export const reportOptions: SkinReportOptions = {
     { value: 'SWEAT_OR_SEBUM', label: '땀/과피지' },
     { value: 'NONE_RECALLED', label: '해당 상황 없음' },
   ],
+  // 라벨은 원래 서버가 준다. 기획 확정안(세안 전·세안 완료·세안 불가능)에 맞춰 둔다.
   careAvailability: [
     { value: 'BEFORE_WASH_CAN_WASH_LATER', label: '세안 전' },
     { value: 'ALREADY_WASHED', label: '세안 완료' },
-    { value: 'CAN_CARE_BEFORE_SLEEP', label: '취침 전 관리 가능' },
-    { value: 'ADDITIONAL_CARE_DIFFICULT', label: '추가 관리 어려움' },
+    { value: 'ADDITIONAL_CARE_DIFFICULT', label: '세안 불가능' },
   ],
   preCareChecks: [
     { value: 'SPREADING_RAPIDLY', label: '짧은 시간에 빠르게 넓어지고 있어요' },
