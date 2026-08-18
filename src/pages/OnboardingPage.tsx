@@ -9,17 +9,6 @@ import { TimeWheel } from '@/components/TimeWheel';
 import { Icon, type IconName } from '@/components/Icon';
 import { Wordmark } from '@/components/Wordmark';
 import { Mascot } from '@/components/Mascot';
-import { PixelArt } from '@/components/PixelArt';
-import {
-  DECO_BLUR,
-  DECO_OPACITY,
-  DECO_BOTTOM_CELL,
-  DECO_BOTTOM_GAP,
-  DECO_TOP_CELL,
-  DECO_TOP_GAP,
-  ONBOARDING_DECO_BOTTOM,
-  ONBOARDING_DECO_TOP,
-} from '@/components/deco';
 import { track } from '@/lib/analytics';
 import { clsx } from '@/lib/clsx';
 import { Sentences } from '@/components/Sentences';
@@ -148,39 +137,6 @@ const HIGHLIGHTS: { icon: IconName; title: string; caption: string }[] = [
 function IntroStep({ onStart }: { onStart: () => void }) {
   return (
     <div className="safe-top relative mx-auto flex min-h-dvh w-full max-w-app flex-col overflow-hidden px-4">
-      {/*
-       * 배경 픽셀 장식. 로그인과 같은 격자를 더 넓게 자른 뒤 흐리게 깐 것이라
-       * 에셋이 아니라 격자 + CSS 블러로 그린다.
-       *
-       * 로그인의 장식은 불투명하지만 여기 것은 옅다 — 시안 렌더에서 가장 진한 지점이
-       * 원색이 아니라 배경과 섞인 값(#8CFFB6 → #B2FACC)이라 불투명도 0.63 이 나온다.
-       */}
-      <PixelArt
-        bitmap={ONBOARDING_DECO_TOP}
-        cell={DECO_TOP_CELL}
-        gap={DECO_TOP_GAP}
-        style={{
-          left: `${(236 / 402) * 100}%`,
-          top: 'calc(var(--safe-top) + 165px)',
-          filter: `blur(${DECO_BLUR}px)`,
-          opacity: DECO_OPACITY,
-        }}
-        className="pointer-events-none absolute"
-      />
-      <PixelArt
-        bitmap={ONBOARDING_DECO_BOTTOM}
-        cell={DECO_BOTTOM_CELL}
-        gap={DECO_BOTTOM_GAP}
-        tint="bg-[#81B690]"
-        style={{
-          left: `${(-96 / 402) * 100}%`,
-          top: 'calc(var(--safe-top) + 478px)',
-          filter: `blur(${DECO_BLUR}px)`,
-          opacity: DECO_OPACITY,
-        }}
-        className="pointer-events-none absolute"
-      />
-
       {/* 시안 기준 워드마크 상단 140 (상태바 44 제외 → 96), 설명은 그 아래 22px */}
       <header className="relative pt-[96px]">
         <Wordmark height={45} />
@@ -207,17 +163,24 @@ function IntroStep({ onStart }: { onStart: () => void }) {
             className={clsx(
               'flex flex-col items-center gap-2 px-1 text-center',
               // 시안의 세로선은 아이콘 줄 높이(58px)만큼만 그어져 있다
-              index > 0 && 'border-l border-[#B8CDBF]',
+              index > 0 && 'border-l border-[#C2C3C4]',
             )}
           >
-            <Icon name={item.icon} className="size-8 text-fg" />
-            <p className="text-[13px] font-semibold text-fg">{item.title}</p>
-            <p className="text-[11px] leading-4 text-fg-muted">{item.caption}</p>
+            <Icon name={item.icon} className="size-8 text-info" />
+            <p className="text-body-strong text-fg-muted">{item.title}</p>
+            {/* 시안에서 설명은 폭 77 안에서 두 줄로 접힌다 */}
+            <p className="max-w-[80px] text-xs leading-[16px] text-fg-muted">{item.caption}</p>
           </div>
         ))}
       </div>
 
-      <div className="safe-bottom relative pb-[53px]">
+      {/* 시안 32:52952 — 370×35, 바탕 #EBEBEB, 글자 12px #346EFF 가운데 */}
+      <p className="relative flex h-[35px] items-center justify-center rounded-[10px] bg-panel-soft text-xs text-info">
+        의료행위 및 피부질환 진단·처방은 제공하지 않습니다.
+      </p>
+
+      {/* 시안 — 안내 띠 아래 24 */}
+      <div className="safe-bottom relative mt-[24px] pb-[37px]">
         <ArrowButton onClick={onStart}>시작하기</ArrowButton>
       </div>
     </div>

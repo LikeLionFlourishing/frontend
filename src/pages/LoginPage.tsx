@@ -6,15 +6,6 @@ import { ApiError, toUserMessage } from '@/api/problem';
 import { PrimaryButton } from '@/components/StepLayout';
 import { TextField } from '@/components/TextField';
 import { Wordmark } from '@/components/Wordmark';
-import { PixelArt } from '@/components/PixelArt';
-import {
-  DECO_BOTTOM_CELL,
-  DECO_BOTTOM_GAP,
-  DECO_TOP_CELL,
-  DECO_TOP_GAP,
-  LOGIN_DECO_BOTTOM,
-  LOGIN_DECO_TOP,
-} from '@/components/deco';
 import { useAuthStore } from '@/stores/authStore';
 
 export function LoginPage() {
@@ -24,6 +15,8 @@ export function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  /** 한 번이라도 제출을 눌렀는지. 빈 채로 누르면 그때부터 안내를 띄운다. */
+  const [touched, setTouched] = useState(false);
 
   const login = useMutation({
     mutationFn: () => auth.login({ email: email.trim(), password }),
@@ -35,27 +28,17 @@ export function LoginPage() {
 
   if (user) return <Navigate to="/" replace />;
 
-  const canSubmit = email.trim().length > 0 && password.length > 0 && !login.isPending;
+  const filled = email.trim().length > 0 && password.length > 0;
+  /*
+   * 시안(32:52918)의 로그인 버튼은 빈 화면에서도 초록이다. 회색으로 죽여 두면
+   * 왜 못 누르는지 알려 주지 않은 채 막는 셈이라, 누를 수는 있게 두고
+   * 비어 있으면 이유를 말한다. 회원가입의 `다음` 도 같은 규칙이다.
+   */
+  const canSubmit = filled && !login.isPending;
 
   return (
     // 시안 기준 워드마크 상단 110 (25:30023)
     <div className="relative mx-auto flex min-h-dvh w-full max-w-app flex-col overflow-hidden px-4 pt-[calc(var(--safe-top)+110px)]">
-      {/* 시안의 배경 픽셀 장식. 프레임 밖으로 걸치는 위치까지 그대로 따랐다. */}
-      <PixelArt
-        bitmap={LOGIN_DECO_TOP}
-        cell={DECO_TOP_CELL}
-        gap={DECO_TOP_GAP}
-        style={{ left: `${(206 / 402) * 100}%`, top: 'calc(var(--safe-top) + 118px)' }}
-        className="pointer-events-none absolute"
-      />
-      <PixelArt
-        bitmap={LOGIN_DECO_BOTTOM}
-        cell={DECO_BOTTOM_CELL}
-        gap={DECO_BOTTOM_GAP}
-        style={{ left: `${(-33 / 402) * 100}%`, top: 'calc(var(--safe-top) + 479px)' }}
-        className="pointer-events-none absolute"
-      />
-
       <header className="relative">
         {/* 시안 32:52941 — 204×46 */}
         <Wordmark height={46} />
@@ -72,6 +55,7 @@ export function LoginPage() {
         className="relative mt-[122px] flex flex-col gap-[9px]"
         onSubmit={(e) => {
           e.preventDefault();
+          setTouched(true);
           if (canSubmit) login.mutate();
         }}
       >
@@ -101,9 +85,14 @@ export function LoginPage() {
 
         {/* 시안 기준 두 번째 필드 아래 186px 지점에 로그인 버튼 */}
         <div className="pt-[186px]">
-          <PrimaryButton type="submit" disabled={!canSubmit}>
+          <PrimaryButton type="submit" disabled={login.isPending}>
             {login.isPending ? '로그인 중…' : '로그인'}
           </PrimaryButton>
+          {touched && !filled && (
+            <p className="mt-3 text-center text-sm text-caution-500">
+              이메일과 비밀번호를 입력해 주세요.
+            </p>
+          )}
         </div>
       </form>
 
