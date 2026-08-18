@@ -128,10 +128,17 @@ function toApiPermission(result: string): ApiNotificationPermission {
  * 시안 32:52939 의 **3분할** 소개. 문구와 아이콘 모두 시안 그대로다.
  * (예전 시안은 4분할이었는데 세 칸으로 줄었다 — 구분선도 두 개다)
  */
-const HIGHLIGHTS: { icon: IconName; title: string; caption: string }[] = [
-  { icon: 'clock', title: '기록하고', caption: '피부불편과 상황을 남겨요' },
-  { icon: 'ai', title: '안내받고', caption: '관리방법을 확인해요' },
-  { icon: 'progress', title: '경과확인', caption: '다음 날 변화 확인해요' },
+const HIGHLIGHTS: { icon: IconName; iconClass: string; title: string; caption: string }[] = [
+  // 아이콘은 시안 벡터의 원래 크기를 쓴다 — 셋 다 32 정사각형이 아니다.
+  { icon: 'records', iconClass: 'size-8', title: '기록하고', caption: '피부불편과\n상황을 남겨요' },
+  { icon: 'ai', iconClass: 'h-8 w-[34px]', title: '안내받고', caption: '관리방법을\n확인해요' },
+  {
+    icon: 'progress',
+    iconClass: 'size-[29px]',
+    title: '경과확인',
+    // 시안은 `다음 날` 에서 끊는다. 그냥 흘려 두면 `다음 날 변화` 로 붙는다.
+    caption: '다음 날\n변화 확인해요',
+  },
 ];
 
 function IntroStep({ onStart }: { onStart: () => void }) {
@@ -139,9 +146,10 @@ function IntroStep({ onStart }: { onStart: () => void }) {
     <div className="safe-top relative mx-auto flex min-h-dvh w-full max-w-app flex-col overflow-hidden px-4">
       {/* 시안 기준 워드마크 상단 140 (상태바 44 제외 → 96), 설명은 그 아래 22px */}
       <header className="relative pt-[96px]">
-        <Wordmark height={45} />
+        {/* 시안 32:52974 — 204×46.3 */}
+        <Wordmark height={46} />
         {/* 시안의 설명 글상자는 두 줄에 28px — 줄높이가 글자 크기보다 조금 크다 */}
-        <p className="mt-[22px] text-xs leading-[14px] text-fg-muted">
+        <p className="mt-[19px] text-xs leading-[14px] text-fg-muted">
           오늘의 피부 상태를 간단하게 기록하고,
           <br />
           지금 필요한 관리 방법을 확인해보세요.
@@ -149,27 +157,38 @@ function IntroStep({ onStart }: { onStart: () => void }) {
       </header>
 
       {/*
-       * 마스코트 279×194. 시안에서 왼쪽 42 / 위 318 에 놓여 있어 가운데 정렬이 아니다.
-       * (좌우 여백이 42 대 81 로 다르다. 화면 좌우 안여백 16 을 빼고 26 만큼 민다)
+       * 마스코트 246×171 (시안 32:52970). 왼쪽 53 / 위 318 이라 가운데 정렬이 아니다.
+       * 화면 좌우 안여백 16 을 빼고 37 만큼 민다.
        */}
-      <div className="relative ml-[26px] mt-[83px] w-[279px]">
+      <div className="relative ml-[37px] mt-[77px] w-[246px]">
         <Mascot className="w-full" />
       </div>
 
-      <div className="relative mt-auto grid grid-cols-3 pb-[25px] pt-6">
+      {/*
+       * 시안 기준 아이콘 윗변 572, 설명 아랫변 679.5, 안내 띠 699.
+       * 아래에서부터 쌓이는 화면이라 아랫여백만 잡아 두면 위치가 맞는다.
+       */}
+      <div className="relative mt-auto grid grid-cols-3 pb-[20px]">
         {HIGHLIGHTS.map((item, index) => (
-          <div
-            key={item.title}
-            className={clsx(
-              'flex flex-col items-center gap-2 px-1 text-center',
-              // 시안의 세로선은 아이콘 줄 높이(58px)만큼만 그어져 있다
-              index > 0 && 'border-l border-[#C2C3C4]',
+          <div key={item.title} className="relative flex flex-col items-center px-1 text-center">
+            {/*
+             * 시안 32:52950·52951 — 세로선은 아이콘 윗변보다 15 위에서 시작해
+             * 58px 만 내려온다. 칸 높이 전체를 긋지 않는다.
+             */}
+            {index > 0 && (
+              <span
+                aria-hidden="true"
+                className="absolute -left-px -top-[15px] h-[58px] w-px bg-[#C2C3C4]"
+              />
             )}
-          >
-            <Icon name={item.icon} className="size-8 text-info" />
-            <p className="text-body-strong text-fg-muted">{item.title}</p>
-            {/* 시안에서 설명은 폭 77 안에서 두 줄로 접힌다 */}
-            <p className="max-w-[80px] text-xs leading-[16px] text-fg-muted">{item.caption}</p>
+            {/* 아이콘 높이가 32·32·29 로 제각각이라 32 짜리 줄에 윗변을 맞춘다 */}
+            <span className="flex h-8 items-start">
+              <Icon name={item.icon} className={clsx(item.iconClass, 'text-info')} />
+            </span>
+            {/* 시안 32:52947 — 제목도 12px 이다. 설명과 크기가 같고 굵기만 다르다 */}
+            <p className="mt-6 text-xs font-semibold leading-[19px] text-fg-muted">{item.title}</p>
+            {/* 시안에서 설명 글상자는 제목 글상자에 바로 붙어 시작한다 */}
+            <p className="whitespace-pre-line text-xs leading-4 text-fg-muted">{item.caption}</p>
           </div>
         ))}
       </div>
@@ -236,8 +255,11 @@ function CheckInTimeStep({
         </>
       }
     >
-      {/* 시안 기준 밴드 중심이 화면 상단에서 431px 지점이다 */}
-      <div className="flex flex-1 items-center justify-center">
+      {/*
+       * 시안 기준 밴드 중심이 392.5, 제목 아랫변이 163 이라 그 사이가 99 다.
+       * 남는 자리에 가운데 정렬하면 46px 쯤 아래로 내려앉는다.
+       */}
+      <div className="mt-8">
         <TimeWheel value={value} onChange={onChange} />
       </div>
     </StepBody>
