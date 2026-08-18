@@ -23,6 +23,17 @@ export default defineConfig(({ mode }) => {
           target: apiTarget,
           changeOrigin: true,
           secure: false,
+          /*
+           * 실백엔드는 상태변경 요청의 Origin 헤더를 검사해 배포 도메인만 허용한다.
+           * 로컬에서 그 백엔드로 테스트할 때 브라우저 Origin(localhost)이 그대로 가면
+           * 403 이 난다. VITE_DEV_PROXY_ORIGIN 을 주면 그 값으로 갈아끼워 통과시킨다.
+           * (로컬 백엔드가 Origin 을 안 보면 이 값을 비워 두면 된다)
+           */
+          configure: (proxy) => {
+            const origin = env.VITE_DEV_PROXY_ORIGIN;
+            if (!origin) return;
+            proxy.on('proxyReq', (proxyReq) => proxyReq.setHeader('origin', origin));
+          },
         },
       },
     },

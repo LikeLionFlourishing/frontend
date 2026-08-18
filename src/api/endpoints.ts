@@ -19,14 +19,28 @@ import type {
   User,
 } from './schemas';
 
+/*
+ * 계약 문서에는 `User.signupcompleted`(전부 소문자)로 적혀 있지만, 실서버는 나머지
+ * 필드처럼 camelCase `signupCompleted` 로 내려준다(2026-08-18 실연동에서 확인).
+ * 어느 철자로 와도 앱이 쓰는 `signupcompleted` 에 채워 넣어, 목·실서버 양쪽에서 돈다.
+ * TODO(백엔드): 계약 문서의 오타를 `signupCompleted` 로 고치면 이 보정을 지운다.
+ */
+function normalizeSession(session: AuthSession): AuthSession {
+  const user = session.user as User & { signupCompleted?: boolean };
+  return {
+    ...session,
+    user: { ...user, signupcompleted: user.signupcompleted ?? user.signupCompleted ?? false },
+  };
+}
+
 export const auth = {
   register: (body: { email: string; password: string }) =>
-    request<AuthSession>('/users', { method: 'POST', body }),
+    request<AuthSession>('/users', { method: 'POST', body }).then(normalizeSession),
 
   login: (body: { email: string; password: string }) =>
-    request<AuthSession>('/sessions', { method: 'POST', body }),
+    request<AuthSession>('/sessions', { method: 'POST', body }).then(normalizeSession),
 
-  currentSession: () => request<AuthSession>('/sessions/current'),
+  currentSession: () => request<AuthSession>('/sessions/current').then(normalizeSession),
 
   logout: () => request<void>('/sessions/current', { method: 'DELETE' }),
 
