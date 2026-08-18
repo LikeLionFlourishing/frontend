@@ -37,18 +37,19 @@ export function RecordsPage() {
     <div className="flex flex-col gap-6 px-4 pt-[calc(var(--safe-top)+20px)]">
       {/* 시안(15:8708)은 탭 루트인데도 제목 왼쪽에 뒤로가기가 있다. */}
       <header>
-        <div className="flex items-center gap-2">
+        {/* 시안 32:53112 — 제목·부제 모두 x 44 */}
+        <div className="relative">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="-ml-1 shrink-0 text-2xl leading-none text-fg"
+            className="absolute -left-1 top-0 flex h-11 w-8 items-start text-2xl leading-none text-fg"
             aria-label="뒤로"
           >
             ‹
           </button>
-          <h1 className="text-[30px] font-bold text-fg-muted">기록조회</h1>
+          <h1 className="pl-[27px] text-[30px] font-bold text-fg-muted">기록조회</h1>
         </div>
-        <p className="mt-1 pl-6 text-xs text-fg-muted">
+        <p className="mt-1 pl-[27px] text-xs text-fg-muted">
           이전에 기록한 피부 상태와 변화를 확인해보세요
         </p>
       </header>

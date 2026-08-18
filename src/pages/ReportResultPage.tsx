@@ -223,18 +223,21 @@ export function ReportResultPage() {
   return (
     <div className="flex flex-col">
       <header className="px-4 pb-2 pt-[calc(var(--safe-top)+20px)]">
-        <div className="flex items-start gap-2">
+        {/* 시안 32:53406 — 제목·부제 모두 x 44 에서 시작하고 화살표는 그 왼쪽에 뜬다 */}
+        <div className="relative">
           <button
             type="button"
             onClick={() => (opened ? setOpened(null) : navigate('/', { replace: true }))}
-            className="-ml-1 shrink-0 text-2xl leading-none text-fg"
+            className="absolute -left-1 top-0 flex h-11 w-8 items-start text-2xl leading-none text-fg"
             aria-label={opened ? '카드 닫기' : '홈으로'}
           >
             ‹
           </button>
-          <h1 className="text-[30px] font-bold leading-9 text-fg-muted">오늘의 관리 가이드</h1>
+          <h1 className="pl-[27px] text-[30px] font-bold leading-9 text-fg-muted">
+            오늘의 관리 가이드
+          </h1>
         </div>
-        <p className="mt-2 text-xs text-fg-muted">
+        <p className="mt-2 pl-[27px] text-xs text-fg-muted">
           현재 상태와 비슷한 이전 기록을 바탕으로 추천드려요.
         </p>
       </header>

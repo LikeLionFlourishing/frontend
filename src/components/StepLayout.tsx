@@ -69,8 +69,16 @@ export function StepLayout({ step, totalSteps, onBack, title, subtitle, children
           )}
         </div>
 
-        {/* 시안에서 부제 글상자는 제목 아래 4px, 높이 14 다(피부보고1·2 모두 같다) */}
-        {subtitle && <p className="mt-1 text-xs leading-[14px] text-fg-muted">{subtitle}</p>}
+        {/*
+         * 시안에서 부제 글상자는 제목 아래 4px, 높이 14 다(피부보고1·2 모두 같다).
+         * **부제도 제목과 같은 x 에서 시작한다** — 뒤로가기 화살표를 지나서다.
+         * 화면 왼쪽 끝에 붙이면 제목만 들여쓴 꼴이 되어 두 줄이 어긋나 보인다.
+         */}
+        {subtitle && (
+          <p className={clsx('mt-1 text-xs leading-[14px] text-fg-muted', onBack && 'pl-[27px]')}>
+            {subtitle}
+          </p>
+        )}
       </header>
 
       {/*
