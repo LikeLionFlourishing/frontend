@@ -228,15 +228,15 @@ function ConsentStep({
             <Sentences text={errorMessage} />
           </p>
         )}
+        {/*
+         * 시안 32:51714 의 문구는 `다음` 이다. 계정은 이 버튼에서 만들어지지만
+         * 화면에 적힌 말을 바꾸지는 않는다.
+         * 하단의 `이미 계정이 있으신가요? 로그인` 은 시안의 이 화면에 없다 —
+         * 앞 단계(계정 만들기)에만 있다.
+         */}
         <PrimaryButton onClick={onSubmit} disabled={!requiredAgreed || submitting}>
-          {submitting ? '가입 중…' : '가입하기'}
+          {submitting ? '가입 중…' : '다음'}
         </PrimaryButton>
-        <p className="mt-[14px] text-center text-xs text-fg-muted">
-          이미 계정이 있으신가요?{' '}
-          <Link to="/login" className="text-body-strong text-info">
-            로그인
-          </Link>
-        </p>
       </div>
 
       <BottomSheet

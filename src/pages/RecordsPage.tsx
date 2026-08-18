@@ -238,7 +238,7 @@ function PastDeck({
                 </span>
                 <span className={clsx('shrink-0 text-xs', surface.onDark ? '' : 'opacity-70')}>
                   {isClinician
-                    ? '▲ 위험 신호 포함'
+                    ? '⚠ 위험 신호 포함'
                     : progressBadge(report.status, report.skinChange ?? null)}
                 </span>
               </span>
