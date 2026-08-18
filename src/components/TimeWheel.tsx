@@ -161,8 +161,15 @@ function Column({
               // 가운데 온 숫자가 밴드색(#D5D5D5)과 같은 회색인 채로 지나가 묻힌다.
               // 네이티브 피커처럼 즉시 파랑으로 바뀌게 둔다.
               'flex w-full snap-center items-center justify-center leading-none',
-              // 시안 32:53075 — 고른 값 46px 파랑, 이웃 30px #D5D5D5. 둘 다 Regular 다
-              isSelected ? 'text-[46px] text-info' : 'text-[30px] text-panel',
+              /*
+               * 고른 값 46px 파랑, 이웃 30px 회색. 둘 다 Regular.
+               *
+               * 이웃 색은 시안값(#D5D5D5)이 아니라 #A5A5A5 를 쓴다. 시안값은
+               * 밴드 배경(#D5D5D5)과 완전히 같은 색이라, 빠르게 굴릴 때 밴드를
+               * 지나가는 숫자들이 배경에 묻혀 사라진다. 밴드 밖(밝은 배경)과
+               * 밴드 안(진한 회색) 양쪽에서 다 읽히는 중간 회색으로 낮췄다.
+               */
+              isSelected ? 'text-[46px] text-info' : 'text-[30px] text-[#A5A5A5]',
             )}
           >
             {pad(v)}
