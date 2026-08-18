@@ -1,5 +1,13 @@
+import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
+import { auth } from '@/api/endpoints';
+import { toUserMessage } from '@/api/problem';
+import { queryClient } from '@/app/queryClient';
+import { BottomSheet } from '@/components/BottomSheet';
 import { Icon, type IconName } from '@/components/Icon';
+import { Sentences } from '@/components/Sentences';
+import { PrimaryButton } from '@/components/StepLayout';
 import { useAuthStore } from '@/stores/authStore';
 import { SettingsCard, SettingsDivider, SettingsHeader } from './my/settingsUi';
 
@@ -8,6 +16,8 @@ interface MenuItem {
   label: string;
   /** 없으면 아직 열지 않은 항목이다. 죽은 버튼 대신 '준비 중'을 보여준다. */
   to?: string;
+  /** 화면을 옮기지 않고 그 자리에서 여는 항목. */
+  opens?: 'account';
 }
 
 /*
@@ -19,7 +29,7 @@ interface MenuItem {
 const GROUPS: MenuItem[][] = [
   [
     { icon: 'person', label: '프로필 관리' },
-    { icon: 'lock', label: '계정관리' },
+    { icon: 'lock', label: '계정관리', opens: 'account' },
     { icon: 'bell', label: '알림 설정' },
   ],
   [
@@ -37,6 +47,7 @@ const GROUPS: MenuItem[][] = [
 export function MyPage() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const [accountOpen, setAccountOpen] = useState(false);
 
   return (
     <div className="mx-auto w-full max-w-app px-4 pt-[calc(var(--safe-top)+9px)]">
@@ -52,13 +63,59 @@ export function MyPage() {
             {group.map((item, index) => (
               <div key={item.label}>
                 {index > 0 && <SettingsDivider />}
-                <MenuRow item={item} />
+                <MenuRow item={item} onOpen={() => setAccountOpen(true)} />
               </div>
             ))}
           </SettingsCard>
         ))}
       </div>
+
+      <AccountSheet open={accountOpen} onClose={() => setAccountOpen(false)} />
     </div>
+  );
+}
+
+/*
+ * 계정 관리.
+ *
+ * 시안에 `계정관리` 행은 있지만 그 행이 여는 화면은 없다. 그렇다고 비워 두면
+ * **한 번 로그인한 뒤 앱에서 나갈 방법이 없다.** 화면을 새로 만들지는 않고
+ * 이 행이 그 자리에서 바텀시트를 여는 것으로 뒀다. (docs/명세-대조.md 2-10)
+ */
+function AccountSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const navigate = useNavigate();
+  const setSession = useAuthStore((s) => s.setSession);
+
+  const logout = useMutation({
+    mutationFn: () => auth.logout(),
+    onSuccess: () => {
+      setSession(null);
+      // 다음 사용자의 화면에 앞사람 기록이 남지 않게 캐시를 비운다.
+      queryClient.clear();
+      navigate('/login', { replace: true });
+    },
+  });
+
+  return (
+    <BottomSheet
+      open={open}
+      onClose={onClose}
+      title="계정관리"
+      footer={
+        <PrimaryButton onClick={() => logout.mutate()} disabled={logout.isPending}>
+          {logout.isPending ? '로그아웃 중…' : '로그아웃'}
+        </PrimaryButton>
+      }
+    >
+      <p className="px-1 text-xs leading-4 text-fg-muted">
+        <Sentences text="로그아웃해도 기록은 지워지지 않아요. 다시 로그인하면 그대로 볼 수 있어요." />
+      </p>
+      {logout.isError && (
+        <p className="mt-3 px-1 text-sm text-caution-500">
+          <Sentences text={toUserMessage(logout.error)} />
+        </p>
+      )}
+    </BottomSheet>
   );
 }
 
@@ -78,7 +135,7 @@ function ProfileCard({ email }: { email: string }) {
   );
 }
 
-function MenuRow({ item }: { item: MenuItem }) {
+function MenuRow({ item, onOpen }: { item: MenuItem; onOpen: () => void }) {
   const label = (
     <>
       <Icon name={item.icon} className="size-5 shrink-0" />
@@ -86,6 +143,21 @@ function MenuRow({ item }: { item: MenuItem }) {
       <span className="flex-1 text-left text-body-strong">{item.label}</span>
     </>
   );
+
+  if (item.opens) {
+    return (
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex h-[51px] w-full items-center gap-4 px-[21px] text-left text-fg-muted"
+      >
+        {label}
+        <span aria-hidden="true" className="shrink-0 text-fg-muted">
+          ›
+        </span>
+      </button>
+    );
+  }
 
   if (!item.to) {
     return (
