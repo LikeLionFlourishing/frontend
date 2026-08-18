@@ -134,7 +134,15 @@ function Column({
       ref={ref}
       role="listbox"
       aria-label={label}
-      className="flex-1 snap-y snap-mandatory overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className={clsx(
+        'flex-1 snap-y snap-mandatory overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+        // iOS 관성 스크롤. 손을 떼면 여운을 남기며 미끄러진다.
+        '[-webkit-overflow-scrolling:touch]',
+        // 위아래 가장자리를 투명으로 흐린다. 이웃 숫자가 컨테이너에서 뚝 잘리지 않고
+        // 원통이 돌아가듯 페이드인·아웃 되어 굴리는 움직임이 매끈해 보인다.
+        '[mask-image:linear-gradient(to_bottom,transparent,#000_18%,#000_82%,transparent)]',
+        '[-webkit-mask-image:linear-gradient(to_bottom,transparent,#000_18%,#000_82%,transparent)]',
+      )}
       style={{ height: ITEM_HEIGHT * 3, paddingBlock: ITEM_HEIGHT }}
     >
       {values.map((v, i) => {
