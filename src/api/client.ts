@@ -1,7 +1,16 @@
 import { ApiError, NetworkError } from './problem';
 import type { Problem } from './schemas';
 
-const BASE = '/v1';
+/*
+ * 배포판은 다른 오리진의 API(https://api.flourishing.o-r.kr)를 직접 부른다.
+ * 크로스 오리진이라 아래 fetch 의 credentials:'include' 로 쿠키를 싣고,
+ * 백엔드가 CORS 로 이 프론트 도메인을 허용해 준다.
+ *
+ * dev 는 VITE_API_ORIGIN 이 비어 있어 same-origin `/v1` 이 되고, vite 프록시가
+ * 그걸 로컬 백엔드로 넘긴다. (mock 빌드도 비어 있어 MSW 가 `/v1` 을 가로챈다)
+ */
+const API_ORIGIN = (import.meta.env.VITE_API_ORIGIN as string | undefined) ?? '';
+const BASE = `${API_ORIGIN}/v1`;
 
 /**
  * CSRF 토큰은 GET /sessions/current 응답에 들어 있다.
