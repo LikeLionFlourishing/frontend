@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { clsx } from '@/lib/clsx';
 
 interface Props {
@@ -73,13 +73,16 @@ function Column({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const mounted = useRef(false);
+  // 스크롤로 selected 를 바꾸면 그 변경이 아래 useLayoutEffect 를 다시 깨워
+  // scrollTo 가 걸린다. 사용자가 손으로 굴리는 중엔 그 자동 보정을 눌러 둔다.
+  const scrolling = useRef<number | undefined>(undefined);
 
   // 선택 값을 가운데 밴드로 맞춘다.
   // 첫 렌더는 즉시(auto) 맞춰야 한다. smooth 로 두면 애니메이션이 시작되기 전 화면이
   // 맨 위(00)로 보인다.
   useLayoutEffect(() => {
     const index = values.indexOf(selected);
-    if (index < 0 || !ref.current) return;
+    if (index < 0 || !ref.current || scrolling.current !== undefined) return;
 
     ref.current.scrollTo({
       top: index * ITEM_HEIGHT,
@@ -87,6 +90,33 @@ function Column({
     });
     mounted.current = true;
   }, [selected, values]);
+
+  /*
+   * 이 컴포넌트는 스크롤 컨테이너다. 예전엔 선택이 클릭으로만 바뀌어서,
+   * 휠처럼 굴리면 숫자만 움직이고 파란 선택값은 밴드 밖으로 밀려나 깨져 보였다.
+   * 굴려서 가운데 온 값을 그때그때 선택으로 확정한다.
+   *
+   * scrollend 는 사파리 지원이 늦어 못 믿는다. 스크롤이 멎고 120ms 뒤
+   * 가장 가까운 칸을 계산해 확정하는 방식으로 대신한다.
+   */
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const onScroll = () => {
+      window.clearTimeout(scrolling.current);
+      scrolling.current = window.setTimeout(() => {
+        scrolling.current = undefined;
+        const index = Math.round(el.scrollTop / ITEM_HEIGHT);
+        const value = values[Math.max(0, Math.min(values.length - 1, index))];
+        if (value !== undefined && value !== selected) onSelect(value);
+      }, 120);
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      window.clearTimeout(scrolling.current);
+    };
+  }, [values, selected, onSelect]);
 
   return (
     <div
