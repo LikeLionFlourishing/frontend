@@ -118,9 +118,8 @@ const CARDS: CardMeta[] = [
  * 원인 미파악 안내 (시안 32:53392).
  *
  * 결과 화면과 같은 덱 위에 배너 하나가 더 붙은 형태다.
- * 계약에 `원인 미파악` 전용 필드가 없어서 `reasonTags` 가 비었는지로 본다 —
- * 이 값의 정의가 `안내가 달라진 이유. 적용된 직전 상황과 현재 관리 상태 태그` 라
- * 비어 있으면 기록에서 원인을 못 집어낸 것이다.
+ * **AI 문구 생성이 풀백된 경우**(`aiGenerationStatus === 'FALLBACK'`)에 뜬다.
+ * 이때는 성분 안내(05)도 함께 감춘다 — 시안에 카드가 다섯 장뿐이다.
  */
 function CauseUnknownBanner() {
   return (
@@ -208,11 +207,18 @@ export function ReportResultPage() {
   const care = report.careResult;
   const isClinician = report.resultType === 'CLINICIAN_CHECK';
 
+  /*
+   * AI 문구가 풀백으로 내려온 경우. 시안 `원인 미파악`(32:53392)이 이 상태다.
+   * 규칙의 기본 문구만 있어서 원인을 짚어 주지 못하고, 성분 안내도 감춘다.
+   */
+  const isFallback = care.aiGenerationStatus === 'FALLBACK';
+
   // 의료진 확인 결과는 계약상 doToday/avoidToday/checkNext 가 비어 있다.
   // 덱을 그대로 쓰면 빈 카드만 남으므로 안내를 먼저 세운다. (F-04)
-  const deck = isClinician
+  const baseDeck = isClinician
     ? CARDS.filter((c) => c.key === 'SUMMARY' || c.key === 'INGREDIENTS')
     : CARDS;
+  const deck = isFallback ? baseDeck.filter((c) => c.key !== 'INGREDIENTS') : baseDeck;
 
   return (
     <div className="flex flex-col">
@@ -234,7 +240,7 @@ export function ReportResultPage() {
       </header>
 
       <main className="pl-[14px] pr-[17px]">
-        {care.reasonTags.length === 0 && <CauseUnknownBanner />}
+        {isFallback && <CauseUnknownBanner />}
 
         <Deck
           deck={deck}
@@ -248,7 +254,7 @@ export function ReportResultPage() {
         />
 
         {/* AI 설명 생성에 실패하면 규칙의 기본 문구가 내려온다. 재생성은 딱 한 번만 허용된다. */}
-        {care.aiGenerationStatus === 'FALLBACK' && !care.retryUsed && (
+        {isFallback && !care.retryUsed && (
           <div className="mt-4 rounded-card bg-card-raised px-5 py-4">
             <p className="text-sm text-fg-muted">
               <Sentences text="안내 문구를 다시 만들 수 있어요. 관리 내용 자체는 바뀌지 않습니다." />

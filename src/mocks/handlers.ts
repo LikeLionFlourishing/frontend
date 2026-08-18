@@ -25,10 +25,22 @@ function problem(status: number, code: string, detail: string) {
  * 콘솔에서 `__mock.scenario = 'ai-fail'` 처럼 바꿔 예외 화면을 즉시 재현한다.
  * `__mock.reset()` 으로 초기 상태(경과 미기록 1건 대기)로 되돌린다.
  * 시연 리허설과 예외 UI 확인에 쓴다.
+ *
+ * 주소에 `?scenario=fallback` 을 붙이면 그 값으로 시작한다. 새로고침해도 유지되고
+ * 링크로 공유되므로, 팀에 특정 화면을 보여 줄 때 쓴다.
  */
+type Scenario = 'happy' | 'ai-fail' | 'clinician' | 'slow' | 'server-error' | 'fallback';
+
+const SCENARIOS: Scenario[] = ['happy', 'ai-fail', 'clinician', 'slow', 'server-error', 'fallback'];
+
+function initialScenario(): Scenario {
+  if (typeof location === 'undefined') return 'happy';
+  const q = new URLSearchParams(location.search).get('scenario');
+  return SCENARIOS.includes(q as Scenario) ? (q as Scenario) : 'happy';
+}
+
 export const mockState = {
-  scenario: 'happy' as
-    'happy' | 'ai-fail' | 'clinician' | 'slow' | 'server-error' | 'cause-unknown',
+  scenario: initialScenario() as Scenario,
   aiDelayMs: 1200,
 
   /** 오늘 점호 상태. null 이면 미응답. */
@@ -72,7 +84,7 @@ export const mockState = {
   },
 
   reset() {
-    this.scenario = 'happy';
+    this.scenario = initialScenario();
     this.today = null;
     this.pendingFollowUp = fx.home.pendingFollowUp;
     this.savedFollowUps = {};
@@ -273,9 +285,12 @@ export const handlers = [
     const isClinician =
       mockState.scenario === 'clinician' || (body.preCareChecks ?? []).some((c) => c !== 'NONE');
     let report = isClinician ? fx.clinicianReport : fx.selfCareReport;
-    // 원인 미파악 화면(32:53392)은 `reasonTags` 가 빈 상태로 본다.
-    if (mockState.scenario === 'cause-unknown') {
-      report = { ...report, careResult: { ...report.careResult, reasonTags: [] } };
+    // 원인 미파악 화면(32:53392) — AI 문구가 풀백된 상태.
+    if (mockState.scenario === 'fallback') {
+      report = {
+        ...report,
+        careResult: { ...report.careResult, aiGenerationStatus: 'FALLBACK', retryUsed: false },
+      };
     }
 
     // 같은 날 `불편 없음` 이 저장돼 있었다면 피부 보고가 우선한다. (공통 정책 7.1)
@@ -318,8 +333,11 @@ export const handlers = [
 
     // 목록 항목을 상세로 부풀린다. 결과 유형에 맞는 기본 상세를 고르고 목록 값으로 덮는다.
     let base = summary.resultType === 'CLINICIAN_CHECK' ? fx.clinicianReport : fx.selfCareReport;
-    if (mockState.scenario === 'cause-unknown') {
-      base = { ...base, careResult: { ...base.careResult, reasonTags: [] } };
+    if (mockState.scenario === 'fallback') {
+      base = {
+        ...base,
+        careResult: { ...base.careResult, aiGenerationStatus: 'FALLBACK', retryUsed: false },
+      };
     }
     const hasFollowUp = summary.status === 'COMPLETED' && summary.skinChange !== null;
 
