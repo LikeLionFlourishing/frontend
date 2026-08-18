@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { clsx } from '@/lib/clsx';
 
 interface Props {
@@ -73,48 +73,59 @@ function Column({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const mounted = useRef(false);
-  // 스크롤로 selected 를 바꾸면 그 변경이 아래 useLayoutEffect 를 다시 깨워
-  // scrollTo 가 걸린다. 사용자가 손으로 굴리는 중엔 그 자동 보정을 눌러 둔다.
-  const scrolling = useRef<number | undefined>(undefined);
+  const scrollTimer = useRef<number | undefined>(undefined);
+  // 손으로 굴리는 중엔 아래 useLayoutEffect 의 자동 보정 스크롤을 눌러 둔다.
+  const isScrolling = useRef(false);
 
-  // 선택 값을 가운데 밴드로 맞춘다.
-  // 첫 렌더는 즉시(auto) 맞춰야 한다. smooth 로 두면 애니메이션이 시작되기 전 화면이
-  // 맨 위(00)로 보인다.
+  /*
+   * `active` = 지금 밴드 한가운데 온 칸. **강조(파랑)는 이 값을 따른다.**
+   *
+   * 비선택 숫자색(#D5D5D5)이 밴드 배경색과 똑같아서, 스크롤이 멎을 때까지
+   * 강조를 미루면 밴드 안 숫자가 배경에 묻혀 안 보인다. 그래서 스크롤 도중에도
+   * 가운데 칸을 실시간으로 파랗게 칠하고, 부모(onSelect)로의 확정만 멎은 뒤 보낸다.
+   */
+  const [active, setActive] = useState(() => Math.max(0, values.indexOf(selected)));
+
+  // 선택 값을 가운데 밴드로 맞춘다. (첫 렌더·부모발 변경·클릭)
+  // 첫 렌더는 즉시(auto). smooth 로 두면 애니메이션 전 맨 위(00)가 잠깐 보인다.
   useLayoutEffect(() => {
     const index = values.indexOf(selected);
-    if (index < 0 || !ref.current || scrolling.current !== undefined) return;
+    if (index < 0 || !ref.current || isScrolling.current) return;
 
     ref.current.scrollTo({
       top: index * ITEM_HEIGHT,
       behavior: mounted.current ? 'smooth' : 'auto',
     });
+    setActive(index);
     mounted.current = true;
   }, [selected, values]);
 
   /*
-   * 이 컴포넌트는 스크롤 컨테이너다. 예전엔 선택이 클릭으로만 바뀌어서,
-   * 휠처럼 굴리면 숫자만 움직이고 파란 선택값은 밴드 밖으로 밀려나 깨져 보였다.
-   * 굴려서 가운데 온 값을 그때그때 선택으로 확정한다.
-   *
-   * scrollend 는 사파리 지원이 늦어 못 믿는다. 스크롤이 멎고 120ms 뒤
-   * 가장 가까운 칸을 계산해 확정하는 방식으로 대신한다.
+   * 이 컴포넌트는 스크롤 컨테이너다. 굴리면 가운데 온 칸을 그때그때 강조하고,
+   * 멎으면 그 값을 선택으로 확정한다. (scrollend 는 사파리 지원이 늦어 못 믿어서
+   * 120ms 디바운스로 대신한다)
    */
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const onScroll = () => {
-      window.clearTimeout(scrolling.current);
-      scrolling.current = window.setTimeout(() => {
-        scrolling.current = undefined;
-        const index = Math.round(el.scrollTop / ITEM_HEIGHT);
-        const value = values[Math.max(0, Math.min(values.length - 1, index))];
+      isScrolling.current = true;
+      const index = Math.max(
+        0,
+        Math.min(values.length - 1, Math.round(el.scrollTop / ITEM_HEIGHT)),
+      );
+      setActive(index); // 강조는 즉시 따라간다 — 밴드 안 숫자가 묻히지 않게
+      window.clearTimeout(scrollTimer.current);
+      scrollTimer.current = window.setTimeout(() => {
+        isScrolling.current = false;
+        const value = values[index];
         if (value !== undefined && value !== selected) onSelect(value);
       }, 120);
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => {
       el.removeEventListener('scroll', onScroll);
-      window.clearTimeout(scrolling.current);
+      window.clearTimeout(scrollTimer.current);
     };
   }, [values, selected, onSelect]);
 
@@ -126,8 +137,9 @@ function Column({
       className="flex-1 snap-y snap-mandatory overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       style={{ height: ITEM_HEIGHT * 3, paddingBlock: ITEM_HEIGHT }}
     >
-      {values.map((v) => {
-        const isSelected = v === selected;
+      {values.map((v, i) => {
+        // 강조는 밴드 한가운데 온 칸(active)을 따른다. 스크롤 도중에도 즉시 반응한다.
+        const isSelected = i === active;
         return (
           <button
             key={v}
@@ -137,7 +149,10 @@ function Column({
             onClick={() => onSelect(v)}
             style={{ height: ITEM_HEIGHT }}
             className={clsx(
-              'flex w-full snap-center items-center justify-center leading-none transition',
+              // transition 을 두지 않는다. 색이 150ms 걸려 물들면 빠르게 굴릴 때
+              // 가운데 온 숫자가 밴드색(#D5D5D5)과 같은 회색인 채로 지나가 묻힌다.
+              // 네이티브 피커처럼 즉시 파랑으로 바뀌게 둔다.
+              'flex w-full snap-center items-center justify-center leading-none',
               // 시안 32:53075 — 고른 값 46px 파랑, 이웃 30px #D5D5D5. 둘 다 Regular 다
               isSelected ? 'text-[46px] text-info' : 'text-[30px] text-panel',
             )}
