@@ -74,12 +74,12 @@ export interface AppearanceOption {
  * 검증한다. 아래 value 는 서버가 여섯 값을 확정하기 전까지 쓰는 임시 이름이다.
  */
 export const APPEARANCE_OPTIONS: AppearanceOption[] = [
-  { value: 'REDNESS', label: '붉어짐', image: 'redness' },
-  { value: 'BUMPS_UNEVEN', label: '돌기와 울퉁불퉁함', image: 'bumps-uneven' },
-  { value: 'PUS_BUMPS', label: '고름이 찬 돌기', image: 'pus-bumps' },
-  { value: 'ROUGHNESS_FLAKING', label: '각질/건조', image: 'roughness-flaking' },
-  { value: 'OILY_SHINE', label: '번들거림/유분', image: 'oily-shine' },
-  { value: 'OTHER', label: '기타', image: 'other' },
+  { value: 'APP_REDNESS', label: '붉어짐', image: 'redness' },
+  { value: 'APP_BUMP', label: '돌기와 울퉁불퉁함', image: 'bumps-uneven' },
+  { value: 'APP_PUS_BUMP', label: '고름이 찬 돌기', image: 'pus-bumps' },
+  { value: 'APP_DRYNESS', label: '각질/건조', image: 'roughness-flaking' },
+  { value: 'APP_OILINESS', label: '번들거림/유분', image: 'oily-shine' },
+  { value: 'APP_OTHER', label: '기타', image: 'other' },
 ];
 
 // --- 직전 상황 (피부보고2) -----------------------------------------------------

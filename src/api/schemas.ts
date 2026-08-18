@@ -87,5 +87,5 @@ export function seedPreCareChecks(
 ): PreCareCheckSelection {
   if (current.length > 0) return current;
   // 2026-08-18 시안의 `고름이 찬 돌기` 가 진물·고름 자리다.
-  return appearances.includes('PUS_BUMPS') ? ['PUS_OOZING_BLISTER'] : current;
+  return appearances.includes('APP_PUS_BUMP') ? ['PUS_OOZING_BLISTER'] : current;
 }
