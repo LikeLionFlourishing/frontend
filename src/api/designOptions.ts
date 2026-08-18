@@ -155,3 +155,34 @@ export const SENSATION_OPTIONS: { value: Sensation; label: string }[] = [
   { value: 'BREAKOUT', label: '트러블' },
   { value: 'EXCESS_SEBUM', label: '과피지' },
 ];
+
+// --- 관리 전 확인 (피부변화-의료) -----------------------------------------------
+
+/*
+ * 이 화면은 선택지를 서버(`/reference-data`)에서 그대로 받아 그린다.
+ * 다른 목록처럼 값·아이콘을 프론트가 들고 있을 이유가 없어서 라벨만 둔다.
+ */
+export const PRE_CARE_LABELS: Record<string, string> = {
+  SPREADING_RAPIDLY: '짧은 시간에 빠르게 넓어지고 있어요',
+  SEVERE_PAIN_HEAT_SWELLING: '평소보다 통증,열감,붓기가 심해요.',
+  PUS_OOZING_BLISTER: '고름,진물,물집이 보여요.',
+  NONE: '해당하는 변화가 없어요.',
+};
+
+/**
+ * 값 → 시안 문구.
+ *
+ * 서버가 주는 라벨과 시안 문구가 다르면 **같은 선택지가 화면마다 다른 이름**으로 보인다.
+ * 선택 화면은 아래 표를 쓰고 그 뒤 화면(확인·결과·기록)은 서버 라벨을 쓰기 때문이다.
+ * `useReportOptions` 가 서버 응답의 라벨을 이 표로 덮어써서 한 이름으로 맞춘다.
+ *
+ * 값(value)은 건드리지 않는다 — 서버가 검증하는 건 값이다.
+ */
+export const DESIGN_LABELS: Record<string, Record<string, string>> = {
+  areas: Object.fromEntries(AREA_OPTIONS.map((o) => [o.value, o.label])),
+  appearances: Object.fromEntries(APPEARANCE_OPTIONS.map((o) => [o.value, o.label])),
+  sensations: Object.fromEntries(SENSATION_OPTIONS.map((o) => [o.value, o.label])),
+  situations: Object.fromEntries(SITUATION_OPTIONS.map((o) => [o.value, o.label])),
+  careAvailability: Object.fromEntries(CARE_OPTIONS.map((o) => [o.value, o.label])),
+  preCareChecks: PRE_CARE_LABELS,
+};
