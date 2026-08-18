@@ -54,11 +54,14 @@ export function Report2Step({ situations, care, sensations, onChange, onNext }: 
   return (
     <div className="flex flex-col">
       {/*
-       * 시안 31:46026 — 타일 120×110, 모서리 17, 가로 간격 7.
-       * **세로 간격은 0 이다**(두 행의 y 가 217 / 327, 높이 109.71 → 이음새 1px).
+       * 시안 32:52054 — 격자 전체가 x 12..385(373 폭)로, 화면의 다른 요소(16)보다
+       * **4 더 왼쪽에서 시작한다.** 그래야 타일이 120 이 된다(안 그러면 118.7).
+       *
+       * 타일 120×110, 모서리 17, 가로 간격 7.
+       * **세로 간격은 0 이다**(두 행의 y 가 215 / 325, 높이 109.71 → 이음새 1px).
        * 렌더에서도 두 행이 붙어 한 덩어리로 보인다.
        */}
-      <div className="mt-[9px] grid grid-cols-3 gap-x-[7px] gap-y-0">
+      <div className="-ml-[4px] -mr-[1px] mt-[9px] grid grid-cols-3 gap-x-[7px] gap-y-0">
         {SITUATION_OPTIONS.map((option) => {
           const selected = situations.includes(option.value);
           return (
@@ -68,8 +71,8 @@ export function Report2Step({ situations, care, sensations, onChange, onNext }: 
               aria-pressed={selected}
               onClick={() => toggleSituation(option.value)}
               className={clsx(
-                // 시안: 아이콘 위 34, 글자 아래 22, 사이 15
-                'flex h-[110px] flex-col items-center gap-[15px] rounded-[17px] pb-[22px] pt-[34px] transition',
+                // 시안: 아이콘 위 30, 글자 위 69(= 아이콘 아래 16)
+                'flex h-[110px] flex-col items-center gap-[16px] rounded-[17px] pt-[30px] transition',
                 selected ? 'bg-info text-white' : 'bg-panel text-fg-muted',
               )}
             >
