@@ -51,8 +51,8 @@ export function LoginPage() {
       </header>
 
       <form
-        // 시안 — 문구 아래 122, 필드 사이 9
-        className="relative mt-[122px] flex flex-col gap-[9px]"
+        // 시안 — 문구 아래 122, 필드 사이 9. flex-1 로 남는 세로를 흡수한다.
+        className="relative mt-[122px] flex flex-1 flex-col gap-[9px]"
         onSubmit={(e) => {
           e.preventDefault();
           setTouched(true);
@@ -83,8 +83,14 @@ export function LoginPage() {
           <p className="px-2 text-sm text-caution-500">{loginError(login.error)}</p>
         )}
 
-        {/* 시안 기준 두 번째 필드 아래 186px 지점에 로그인 버튼 */}
-        <div className="pt-[186px]">
+        {/*
+         * 시안(874)에선 두 번째 필드 아래 186px 지점에 버튼이 온다.
+         * 그 간격을 고정하면 화면이 짧을 때(예: 360×800) 버튼과 회원가입 링크가
+         * 접혀 스크롤해야 보인다. mt-auto 로 남는 세로를 이 자리에 몰아 주면
+         * 874 에선 186px 그대로, 더 짧은 화면에선 알아서 줄어 한 화면에 담긴다.
+         * pt-10 은 화면이 아주 짧아도 버튼이 필드에 붙지 않게 하는 최소 간격이다.
+         */}
+        <div className="mt-auto pt-10">
           <PrimaryButton type="submit" disabled={login.isPending}>
             {login.isPending ? '로그인 중…' : '로그인'}
           </PrimaryButton>
