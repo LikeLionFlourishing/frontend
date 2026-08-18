@@ -61,14 +61,21 @@ export function SignupPage() {
 
   return (
     <div className="safe-top mx-auto flex min-h-dvh w-full max-w-app flex-col px-4">
-      {/* 시안 기준 제목 상단 170 (상태바 44 제외 → 126) */}
-      <header className="pt-[126px]">
-        <h1 className="text-[36px] font-bold leading-none text-fg">계정 만들기</h1>
-        <p className="mt-[16px] text-xs text-fg-muted">이메일로 간단하게 시작하세요.</p>
+      {/*
+       * 시안 32:53082 — 제목 상단 165(상태바 44 제외 → 121), 글상자 높이 48.
+       * 굵기는 **Medium** 이다. 인증·온보딩 화면은 보고 흐름과 달리 Bold 를 쓰지 않는다.
+       * 부제는 제목 글상자 바로 아래(간격 0)에서 시작한다.
+       */}
+      <header className="pt-[121px]">
+        <h1 className="h-[48px] text-[40px] font-medium leading-[48px] text-fg-muted">
+          계정 만들기
+        </h1>
+        <p className="text-xs text-fg-muted">이메일로 간단하게 시작하세요.</p>
       </header>
 
       <form
-        className="mt-[99px] flex flex-col gap-[7px]"
+        // 시안 — 부제 아래 95, 필드 사이 7
+        className="mt-[95px] flex flex-col gap-[7px]"
         onSubmit={(e) => {
           e.preventDefault();
           setTouched(true);
@@ -163,7 +170,7 @@ function ConsentStep({
     <div className="safe-top mx-auto flex min-h-dvh w-full max-w-app flex-col px-4">
       {/* 시안 기준 제목 상단 130 (상태바 44 제외 → 86) */}
       <header className="pt-[86px]">
-        <h1 className="text-[30px] font-bold leading-9 text-fg-muted">
+        <h1 className="text-[30px] font-medium leading-9 text-fg-muted">
           서비스 이용을 위해
           <br />
           동의가 필요해요
@@ -181,7 +188,7 @@ function ConsentStep({
             <div
               key={item.key}
               // 시안 31:45955 — 369×83, 모서리 26, 원 26, 라벨 SemiBold 16
-              className="flex h-[83px] items-center rounded-[26px] bg-panel pl-[25px] pr-9"
+              className="flex h-[83px] items-center rounded-[25px] bg-panel pl-[25px] pr-9"
             >
               <button
                 type="button"

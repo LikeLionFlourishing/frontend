@@ -37,20 +37,21 @@ export function TimeWheel({ value, onChange }: Props) {
       {/*
        * 선택 밴드는 두 조각이다. 시안에서 시·분이 각각 별도 사각형이라
        * 맞닿는 가운데에만 라운드가 겹쳐 보인다.
+       * 시안 32:53072 — 185×65, 모서리 **16**
        */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 gap-px"
         style={{ height: BAND_HEIGHT }}
       >
-        <span className="flex-1 rounded-card bg-panel" />
-        <span className="flex-1 rounded-card bg-panel" />
+        <span className="flex-1 rounded-[16px] bg-panel" />
+        <span className="flex-1 rounded-[16px] bg-panel" />
       </div>
 
       <div className="relative flex">
         <Column values={HOURS} selected={hour} onSelect={setHour} label="시" />
         {/* 콜론은 두 밴드가 맞닿는 지점 위에 뜬다 */}
-        <span className="pointer-events-none absolute inset-y-0 left-1/2 z-10 flex -translate-x-1/2 items-center text-[44px] font-medium leading-none text-fg">
+        <span className="pointer-events-none absolute inset-y-0 left-1/2 z-10 flex -translate-x-1/2 items-center text-[46px] font-normal leading-none text-fg-muted">
           :
         </span>
         <Column values={MINUTES} selected={minute} onSelect={setMinute} label="분" />
@@ -107,7 +108,8 @@ function Column({
             style={{ height: ITEM_HEIGHT }}
             className={clsx(
               'flex w-full snap-center items-center justify-center leading-none transition',
-              isSelected ? 'text-[44px] font-medium text-info' : 'text-[30px] text-panel',
+              // 시안 32:53075 — 고른 값 46px 파랑, 이웃 30px #D5D5D5. 둘 다 Regular 다
+              isSelected ? 'text-[46px] text-info' : 'text-[30px] text-panel',
             )}
           >
             {pad(v)}

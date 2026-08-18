@@ -57,7 +57,8 @@ export function LoginPage() {
       />
 
       <header className="relative">
-        <Wordmark height={45} />
+        {/* 시안 32:52941 — 204×46 */}
+        <Wordmark height={46} />
         {/* 시안의 설명 글상자는 두 줄에 28px (온보딩과 같다) */}
         <p className="mt-[19px] text-xs leading-[14px] text-fg-muted">
           오늘의 피부 상태를 간단하게 기록하고,
@@ -67,7 +68,8 @@ export function LoginPage() {
       </header>
 
       <form
-        className="relative mt-[110px] flex flex-col gap-[9px]"
+        // 시안 — 문구 아래 122, 필드 사이 9
+        className="relative mt-[122px] flex flex-col gap-[9px]"
         onSubmit={(e) => {
           e.preventDefault();
           if (canSubmit) login.mutate();

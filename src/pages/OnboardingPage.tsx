@@ -135,12 +135,14 @@ function toApiPermission(result: string): ApiNotificationPermission {
 
 // --- 화면 1. 서비스 이용범위 ------------------------------------------------------
 
-/** 시안(25:30540)의 4분할 소개. 문구와 아이콘 모두 시안 그대로다. */
+/**
+ * 시안 32:52939 의 **3분할** 소개. 문구와 아이콘 모두 시안 그대로다.
+ * (예전 시안은 4분할이었는데 세 칸으로 줄었다 — 구분선도 두 개다)
+ */
 const HIGHLIGHTS: { icon: IconName; title: string; caption: string }[] = [
-  { icon: 'clock', title: '30초 기록', caption: '간단하게' },
-  { icon: 'situation', title: '상황 기록', caption: '피부와 함께한 상황들' },
-  { icon: 'ai', title: 'AI 가이드', caption: '지금 가능한 관리 행동' },
-  { icon: 'progress', title: '경과확인', caption: '다음 날 변화 확인' },
+  { icon: 'clock', title: '기록하고', caption: '피부불편과 상황을 남겨요' },
+  { icon: 'ai', title: '안내받고', caption: '관리방법을 확인해요' },
+  { icon: 'progress', title: '경과확인', caption: '다음 날 변화 확인해요' },
 ];
 
 function IntroStep({ onStart }: { onStart: () => void }) {
@@ -198,7 +200,7 @@ function IntroStep({ onStart }: { onStart: () => void }) {
         <Mascot className="w-full" />
       </div>
 
-      <div className="relative mt-auto grid grid-cols-4 pb-[25px] pt-6">
+      <div className="relative mt-auto grid grid-cols-3 pb-[25px] pt-6">
         {HIGHLIGHTS.map((item, index) => (
           <div
             key={item.title}
@@ -259,7 +261,8 @@ function CheckInTimeStep({
             type="button"
             onClick={onSkipNotification}
             disabled={submitting}
-            className="mb-4 flex h-[79px] w-full items-center justify-center rounded-pill bg-card text-xs text-fg-muted disabled:text-panel-label"
+            // 시안 32:53070 — 373×79, 모서리 30, 바탕 #D5D5D5 20%, 글자 SemiBold 16
+            className="mb-4 flex h-[79px] w-full items-center justify-center rounded-[30px] bg-panel/20 text-body-strong text-fg-muted disabled:text-panel-label"
           >
             알림을 받지 않을게요
           </button>
@@ -293,8 +296,10 @@ function StepBody({
 }) {
   return (
     <>
-      {/* 시안 기준 제목 28px / 줄높이 36 */}
-      <h1 className="whitespace-pre-line text-[30px] font-bold leading-9 text-fg-muted">{title}</h1>
+      {/* 시안 32:53048 — 30px **Medium** / `검`. 인증·온보딩은 Bold 를 쓰지 않는다 */}
+      <h1 className="whitespace-pre-line text-[30px] font-medium leading-9 text-fg-muted">
+        {title}
+      </h1>
       {subtitle && <p className="mt-2 text-xs text-fg-muted">{subtitle}</p>}
       <div className="mt-[67px] flex flex-1 flex-col">{children}</div>
       <div className="safe-bottom bg-base pb-[53px] pt-4">{footer}</div>
