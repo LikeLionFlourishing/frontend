@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { auth, onboarding } from '@/api/endpoints';
 import { toUserMessage } from '@/api/problem';
+import { PushUnavailableError, subscribeToPush } from '@/lib/push';
 import { useAuthStore } from '@/stores/authStore';
 import { ArrowButton } from '@/components/StepLayout';
 import { TimeWheel } from '@/components/TimeWheel';
@@ -45,12 +46,32 @@ export function OnboardingPage() {
      * 권한을 묻는 건 거절을 두 번 시키는 셈이다.
      */
     mutationFn: async (wantsNotification: boolean) => {
-      const permission = wantsNotification ? await requestPermission() : await currentPermission();
+      let permission = await currentPermission();
+      // 브라우저 푸시 구독을 실제로 만들어 서버에 등록했는지. 이게 참이어야
+      // 서버가 보낼 대상이 생긴다. 권한만 받고 구독을 안 만들면 알림은 안 온다.
+      let pushEnabled = false;
+
+      if (wantsNotification) {
+        try {
+          // 권한 요청 + 브라우저 구독 생성 + `POST /push-subscriptions` 까지 한다.
+          await subscribeToPush();
+          pushEnabled = true;
+          permission = 'GRANTED';
+        } catch (error) {
+          if (!(error instanceof PushUnavailableError)) throw error;
+          /*
+           * 미지원·키없음·권한거부로 구독을 못 만들어도 온보딩은 막지 않는다.
+           * 알림만 못 켠 채로 완료하고, 나중에 설정 > 알림 설정에서 다시 켜게 둔다.
+           */
+          permission = error.reason === 'DENIED' ? 'DENIED' : await currentPermission();
+        }
+      }
+
       await onboarding.complete({
         consentVersion: consent.version,
         // 계약이 `true` 리터럴만 받는다. 필수 동의 없이는 가입 자체가 안 되므로 늘 참이다.
         sensitiveDataConsent: true,
-        notificationEnabled: wantsNotification && permission === 'GRANTED',
+        notificationEnabled: pushEnabled,
         notificationPermission: permission,
         /*
          * 시각은 알림을 끈 사람도 보낸다. 계약이 이 값으로 다음 날 경과 입력
@@ -58,10 +79,10 @@ export function OnboardingPage() {
          */
         notificationTime: profile.checkInTime,
         /*
-         * 계약은 `시작하기` 를 누른 것 자체를 알림 수신 동의로 본다.
-         * `notificationEnabled` 가 true 인데 이 값이 true 가 아니면 422 다.
+         * 계약은 `notificationEnabled` 가 true 면 동의도 true 를 요구한다(아니면 422).
+         * 구독이 실제로 성립했을 때만 함께 보낸다.
          */
-        ...(wantsNotification
+        ...(pushEnabled
           ? { notificationConsent: true, notificationConsentVersion: consent.version }
           : {}),
       });
@@ -104,13 +125,7 @@ export function OnboardingPage() {
   );
 }
 
-/** 알림 권한을 묻고 계약이 쓰는 값으로 옮긴다. */
-async function requestPermission(): Promise<ApiNotificationPermission> {
-  if (typeof Notification === 'undefined') return 'UNSUPPORTED';
-  return toApiPermission(await Notification.requestPermission());
-}
-
-/** 권한창을 띄우지 않고 지금 상태만 읽는다. (`알림을 받지 않을게요`) */
+/** 권한창을 띄우지 않고 지금 상태만 읽는다. (`알림을 받지 않을게요` · 구독 실패 후) */
 async function currentPermission(): Promise<ApiNotificationPermission> {
   if (typeof Notification === 'undefined') return 'UNSUPPORTED';
   return toApiPermission(Notification.permission);
