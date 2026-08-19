@@ -1,8 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-/** 동의 문구 버전. 서버에 그대로 저장되므로 문구를 바꾸면 이 값도 올려야 한다. */
-export const CONSENT_VERSION = '2026-08-15';
+/**
+ * 동의 문구 버전. 서버에 그대로 저장되므로 문구를 바꾸면 이 값도 올려야 한다.
+ *
+ * 서버가 받고 있는 활성 버전과 같아야 한다. 다르면 `PUT /me/onboarding` 이 422
+ * (`CONSENT_VERSION_NOT_ACCEPTED`) 로 막혀 온보딩을 끝낼 수 없다.
+ */
+export const CONSENT_VERSION = '2026-08-16';
 
 /**
  * 회원가입 2단계(시안 25:28767)에서 받은 동의.
@@ -33,6 +38,15 @@ export const useSignupConsentStore = create<SignupConsentState>()(
       patch: (partial) => set(partial),
       reset: () => set({ ...EMPTY }),
     }),
-    { name: 'jedaero.signup-consent' },
+    {
+      name: 'jedaero.signup-consent',
+      /*
+       * 저장해 둔 초안에는 예전 문구 버전이 들어 있다. 그 값을 새 버전으로 바꿔치기하면
+       * 사용자가 본 적 없는 문구에 동의한 것으로 기록되므로, 초안을 버리고 다시 받는다.
+       * 회원가입 2단계와 온보딩 완료 사이에 있던 사람만 동의를 다시 확인하게 된다.
+       */
+      version: 1,
+      migrate: () => ({ ...EMPTY }),
+    },
   ),
 );

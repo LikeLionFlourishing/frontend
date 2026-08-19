@@ -12,6 +12,7 @@ export type OnboardingRequest = S['OnboardingRequest'];
 export type NotificationSettings = S['NotificationSettings'];
 export type PushSubscription = S['PushSubscription'];
 export type NotificationPermission = S['NotificationPermission'];
+export type NotificationConsentInput = S['NotificationConsentInput'];
 
 export type Home = S['Home'];
 export type DailyCheckIn = S['DailyCheckIn'];
