@@ -7,6 +7,7 @@ import type {
   FollowUp,
   Home,
   InterpretReportRequest,
+  NotificationConsentInput,
   NotificationSettings,
   PushSubscription,
   Onboarding,
@@ -61,10 +62,16 @@ export const onboarding = {
 export const notifications = {
   getSettings: () => request<NotificationSettings>('/me/notification-settings'),
 
-  updateSettings: (enabled: boolean) =>
+  /*
+   * 계약상 PATCH 는 부분 갱신이라 보내지 않은 항목은 그대로 둔다. 그리고 알림을 켜려면
+   * 이번 요청의 `consent.agreed` 이거나 서버에 저장된 활성 버전 동의가 있어야 한다.
+   * 온보딩에서 알림을 건너뛴 사용자는 저장된 동의가 없으므로, 설정에서 켤 때 동의를
+   * 함께 실어 보내지 않으면 422 로 막힌다.
+   */
+  updateSettings: (enabled: boolean, consent?: NotificationConsentInput) =>
     request<NotificationSettings>('/me/notification-settings', {
       method: 'PATCH',
-      body: { enabled },
+      body: consent ? { enabled, consent } : { enabled },
     }),
 
   subscribePush: (body: {

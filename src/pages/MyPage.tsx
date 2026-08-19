@@ -160,7 +160,13 @@ function NotificationSheet({ open, onClose }: { open: boolean; onClose: () => vo
       if (next) {
         // 구독을 먼저 만든다. 실패하면(권한 거부 등) 설정은 건드리지 않는다.
         await subscribeToPush();
-        await notifications.updateSettings(true);
+        /*
+         * 켤 때는 수신 동의를 함께 보낸다. 온보딩에서 알림을 건너뛴 사용자는 저장된 동의가
+         * 없어서, 이 값이 빠지면 서버가 422 로 막는다. 버전은 조회 응답이 활성 버전을
+         * 담아 주므로 그것을 그대로 되돌려 준다.
+         */
+        const version = settingsQuery.data?.consent.version;
+        await notifications.updateSettings(true, version ? { agreed: true, version } : undefined);
       } else {
         await notifications.updateSettings(false);
         await unsubscribeFromPush();
