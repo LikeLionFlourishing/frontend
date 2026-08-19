@@ -19,6 +19,16 @@ import type { GuideSection, SkinReportDetail, SkinReportOptions } from '@/api/sc
 
 type CardKey = 'SUMMARY' | 'DO_TODAY' | 'AVOID_TODAY' | 'CHECK_NEXT' | 'SIMILAR' | 'INGREDIENTS';
 
+/*
+ * 카드 부제는 원래 서버 `guideSections[].description` 을 그대로 쓴다.
+ * 다만 `현재 기록 요약` 은 서버가 `두 문장으로 정리` 로 주는데, `한 문장` 피부 보고
+ * 브랜딩에 맞춰 화면에서만 한 문장으로 덮는다.
+ * TODO(백엔드): guideSection 설명 문구를 `한 문장` 으로 고치면 이 덮어쓰기를 지운다.
+ */
+const DESCRIPTION_OVERRIDE: Partial<Record<CardKey, string>> = {
+  SUMMARY: '오늘 남긴 기록을 한 문장으로 정리한 내용입니다.',
+};
+
 /** 화면 쪽 이름과 계약의 `GuideSection.key` 를 잇는다. */
 const SECTION_KEY: Record<CardKey, GuideSection['key']> = {
   SUMMARY: 'CURRENT_SUMMARY',
@@ -340,7 +350,7 @@ function Deck({
             ? report.careResult.similarExperience
               ? '가장 비슷한 기록 1건'
               : '아직 비슷한 기록이 없어요'
-            : (section?.description ?? '');
+            : (DESCRIPTION_OVERRIDE[card.key] ?? section?.description ?? '');
         return (
           <section
             key={card.key}
