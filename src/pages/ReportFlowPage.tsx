@@ -50,6 +50,12 @@ export function ReportFlowPage() {
   const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>(0);
   const [aiFailed, setAiFailed] = useState(false);
+  /*
+   * `어떻게 써야할지 잘 모르겠어요` 로 들어와 피부보고1·2 를 직접 거쳤는지.
+   * 문장을 쓰면 AI 가 정리해 확인(4)으로 바로 가고, 이 값은 거짓이다.
+   * 뒤로가기를 어디로 보낼지(확인→한 문장 vs 확인→피부보고2)가 이 값으로 갈린다.
+   */
+  const [manualSelect, setManualSelect] = useState(false);
 
   const draft = useReportDraftStore();
   const optionsQuery = useReportOptions();
@@ -75,7 +81,13 @@ export function ReportFlowPage() {
       const ok = result.processingStatus === 'SUCCESS';
       track(ok ? 'AI_STRUCTURING_SUCCEEDED' : 'AI_STRUCTURING_FAILED', { aiSucceeded: ok });
       applyInterpretation(result);
-      setStep(2);
+      /*
+       * 문장을 쓰면 AI 가 구조화해 **보고 내용 확인(4)** 으로 바로 간다.
+       * 실패해도 확인 화면에 `직접 선택해 주세요` 배너가 뜨고 각 항목을 수정으로 채운다.
+       * (수동 선택 피부보고1·2 는 `어떻게 써야할지 잘 모르겠어요` 로만 들어간다)
+       */
+      setManualSelect(false);
+      setStep(4);
     },
   });
 
@@ -221,6 +233,8 @@ export function ReportFlowPage() {
 
   const goBack = () => {
     if (step === 0) navigate('/');
+    // 문장 작성 → 확인(4)으로 바로 온 경우, 뒤로는 피부보고2 가 아니라 한 문장(1) 이다.
+    else if (step === 4 && !manualSelect) setStep(1);
     else setStep((s) => (s - 1) as Step);
   };
 
@@ -271,6 +285,7 @@ export function ReportFlowPage() {
            */
           onOpenAssist={() => {
             track('INPUT_ASSIST_OPENED');
+            setManualSelect(true);
             setStep(2);
           }}
           submitting={interpret.isPending}
