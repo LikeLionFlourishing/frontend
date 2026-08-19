@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import arrowRecord from '@/assets/arrow-record.svg';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
@@ -6,6 +6,7 @@ import { home as homeApi, notifications } from '@/api/endpoints';
 import { toUserMessage } from '@/api/problem';
 import { queryKeys } from '@/app/queryClient';
 import { Icon, type IconName } from '@/components/Icon';
+import { NotificationSheet } from '@/components/NotificationSheet';
 import { Sentences } from '@/components/Sentences';
 import { labelOf, labelsOf, useReportOptions } from '@/hooks/useReportOptions';
 import { formatShortDateParts } from '@/lib/date';
@@ -22,6 +23,7 @@ import type { Home, SkinReportOptions } from '@/api/schemas';
  */
 export function HomePage() {
   const navigate = useNavigate();
+  const [notifOpen, setNotifOpen] = useState(false);
 
   const homeQuery = useQuery({ queryKey: queryKeys.home, queryFn: homeApi.get });
   const optionsQuery = useReportOptions();
@@ -61,8 +63,13 @@ export function HomePage() {
       {/* 시안 기준 카드 180×192 두 장, 사이 7px */}
       <div className="mt-[9px] grid grid-cols-2 gap-[7px]">
         <RecentRecordCard data={data} options={optionsQuery.data} />
-        <NextCheckCard time={notificationQuery.data?.time ?? '17:30'} />
+        <NextCheckCard
+          time={notificationQuery.data?.time ?? '17:30'}
+          onOpenNotification={() => setNotifOpen(true)}
+        />
       </div>
+
+      <NotificationSheet open={notifOpen} onClose={() => setNotifOpen(false)} />
     </div>
   );
 }
@@ -284,7 +291,13 @@ function RecentRecordCard({
   );
 }
 
-function NextCheckCard({ time }: { time: string }) {
+function NextCheckCard({
+  time,
+  onOpenNotification,
+}: {
+  time: string;
+  onOpenNotification: () => void;
+}) {
   return (
     // 시안에서 이제 RECENT RECORD 와 같은 180×192 다
     <MiniCard label="NEXT CHECK" className="h-[192px]">
@@ -299,18 +312,19 @@ function NextCheckCard({ time }: { time: string }) {
       </div>
 
       {/*
-       * 시안(31:44594)에 새로 생긴 줄. 갈 화면이 아직 시안에 없어서 눌리지 않는다.
-       * 설정의 `알림 설정` 행과 같은 상태다. (docs/명세-대조.md 2-10)
+       * 시안(31:44594)에 새로 생긴 줄. 예전엔 갈 화면이 없어 비활성이었는데,
+       * 이제 설정과 같은 알림 설정 시트를 이 자리에서 바로 연다.
        */}
-      <div
-        aria-disabled="true"
-        className="mt-auto flex items-center justify-between text-xs text-fg opacity-60"
+      <button
+        type="button"
+        onClick={onOpenNotification}
+        className="mt-auto flex items-center justify-between text-xs text-fg"
       >
         알람 설정하기
         <span aria-hidden="true" className="text-fg-faint">
           ›
         </span>
-      </div>
+      </button>
     </MiniCard>
   );
 }
